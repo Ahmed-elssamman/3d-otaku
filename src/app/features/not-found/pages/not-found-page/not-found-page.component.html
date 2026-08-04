@@ -1,0 +1,23 @@
+<div class="min-h-[75vh] flex items-center justify-center px-4 py-20 cyber-grid-bg relative overflow-hidden text-center">
+  <div class="floating-orb w-96 h-96 bg-purple-600 -top-20 left-1/2 -translate-x-1/2"></div>
+
+  <div class="max-w-md glass-panel rounded-3xl p-10 border border-purple-500/40 shadow-2xl relative z-10 space-y-6">
+    <div class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-cyan-400 drop-shadow-[0_0_35px_rgba(236,72,153,0.5)]">
+      {{ text.code }}
+    </div>
+
+    <div class="space-y-2">
+      <h1 class="text-2xl font-bold text-white">{{ text.title }}</h1>
+      <p class="text-xs text-gray-400 leading-relaxed">{{ text.subtitle }}</p>
+    </div>
+
+    <div class="pt-4 flex flex-col gap-3">
+      <a routerLink="/">
+        <app-glow-button [text]="text.backHomeText" icon="pi pi-home" variant="primary" />
+      </a>
+      <a routerLink="/products">
+        <app-glow-button [text]="text.browseCatalogText" icon="pi pi-box" variant="secondary" />
+      </a>
+    </div>
+  </div>
+</div>

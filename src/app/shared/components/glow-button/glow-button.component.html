@@ -1,0 +1,14 @@
+<button
+  [type]="type()"
+  [disabled]="disabled()"
+  (click)="onClick()"
+  [class.vt-button-primary]="variant() === 'primary'"
+  [class.vt-button-secondary]="variant() === 'secondary'"
+  [class.vt-button-whatsapp]="variant() === 'accent'"
+  class="relative group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none text-xs sm:text-sm tracking-tight"
+>
+  @if (icon()) {
+    <i [class]="icon()" class="text-sm"></i>
+  }
+  <span>{{ text() }}</span>
+</button>

@@ -1,0 +1,128 @@
+<div class="min-h-[85vh] flex items-center justify-center px-4 py-16 vercel-grid-pattern relative overflow-hidden">
+  
+  <div class="w-full max-w-lg vt-card rounded-3xl p-8 sm:p-10 border border-neutral-800 shadow-2xl relative z-10">
+    
+    <!-- Header -->
+    <div class="text-center space-y-2 mb-6">
+      <div class="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 mx-auto flex items-center justify-center text-white">
+        <i class="pi pi-user-plus text-purple-400 text-base"></i>
+      </div>
+      <h1 class="text-2xl font-black text-white tracking-tight">
+        Join 3D Otaku Studio
+      </h1>
+      <p class="text-xs text-neutral-400">Create an account for custom prop quotes & order tracking.</p>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
+      
+      <!-- Full Name -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+          Full Name
+        </label>
+        <div class="relative">
+          <i class="pi pi-user absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
+          <input
+            type="text"
+            formControlName="fullName"
+            placeholder="Tanjiro Kamado"
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+          />
+        </div>
+        @if (registerForm.get('fullName')?.touched && registerForm.get('fullName')?.hasError('required')) {
+          <span class="text-[11px] text-red-400 mt-1 block">Full name is required</span>
+        }
+      </div>
+
+      <!-- Email Field -->
+      <div>
+        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+          Email Address
+        </label>
+        <div class="relative">
+          <i class="pi pi-envelope absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
+          <input
+            type="email"
+            formControlName="email"
+            placeholder="otaku@anime.com"
+            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+          />
+        </div>
+        @if (registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')) {
+          <span class="text-[11px] text-red-400 mt-1 block">Email is required</span>
+        }
+      </div>
+
+      <!-- Passwords Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+            Password
+          </label>
+          <div class="relative">
+            <i class="pi pi-lock absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
+            <input
+              type="password"
+              formControlName="password"
+              placeholder="••••••••"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+            Confirm Password
+          </label>
+          <div class="relative">
+            <i class="pi pi-lock absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
+            <input
+              type="password"
+              formControlName="confirmPassword"
+              placeholder="••••••••"
+              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
+            />
+          </div>
+        </div>
+      </div>
+
+      @if (registerForm.touched && registerForm.hasError('passwordMismatch')) {
+        <span class="text-[11px] text-red-400 block text-center">Passwords do not match</span>
+      }
+
+      <!-- Accept Terms -->
+      <div class="pt-1">
+        <label class="flex items-start gap-2 text-xs text-neutral-400 cursor-pointer">
+          <input
+            type="checkbox"
+            formControlName="acceptTerms"
+            class="mt-0.5 rounded border-neutral-800 bg-neutral-950 text-white focus:ring-purple-500 cursor-pointer"
+          />
+          <span>I agree to the <a routerLink="/about" class="text-white font-semibold underline">Terms of Service</a> & <a routerLink="/about" class="text-white font-semibold underline">Prop Safety Disclaimer</a></span>
+        </label>
+      </div>
+
+      <!-- Submit Button -->
+      <button
+        type="submit"
+        [disabled]="isSubmitting()"
+        class="w-full py-3 rounded-xl bg-white text-black font-bold text-xs shadow-sm hover:bg-neutral-200 transition-all cursor-pointer disabled:opacity-50 mt-2"
+      >
+        @if (isSubmitting()) {
+          <span>Creating Guild Account...</span>
+        } @else {
+          <span>Create Free Account</span>
+        }
+      </button>
+
+    </form>
+
+    <!-- Footer Link -->
+    <div class="mt-6 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-400">
+      <span>Already have an account? </span>
+      <a routerLink="/login" class="text-white font-bold hover:underline">Sign In</a>
+    </div>
+
+  </div>
+</div>

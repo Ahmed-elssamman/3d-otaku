@@ -1,0 +1,22 @@
+<div
+  [class.text-center]="align() === 'center'"
+  [class.text-left]="align() === 'left'"
+  [class.text-right]="align() === 'right'"
+  class="mb-10"
+>
+  @if (badge()) {
+    <span class="vt-badge vt-badge-accent mb-3">
+      {{ badge() }}
+    </span>
+  }
+
+  <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight mb-3 leading-tight">
+    {{ title() }}
+  </h2>
+
+  @if (subtitle()) {
+    <p class="text-neutral-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+      {{ subtitle() }}
+    </p>
+  }
+</div>

@@ -1,0 +1,124 @@
+<header class="sticky top-0 z-50 w-full vt-glass border-b border-neutral-800/80">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      
+      <!-- Brand Logo -->
+      <a routerLink="/" (click)="closeMobileMenu()" class="flex items-center gap-3 group cursor-pointer">
+        <div class="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-700 flex items-center justify-center text-white group-hover:border-purple-500 transition-colors">
+          <i class="pi pi-box text-purple-400 text-sm"></i>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="text-base font-bold text-white tracking-tight">3D OTAKU</span>
+          <span class="vt-badge vt-badge-accent text-[9px] px-1.5 py-0.2">STUDIO</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="hidden md:flex items-center gap-1 bg-neutral-950/80 p-1 rounded-xl border border-neutral-800">
+        @for (item of navItems; track item.link) {
+          <a
+            [routerLink]="item.link"
+            routerLinkActive="bg-neutral-800 text-white shadow-sm"
+            [routerLinkActiveOptions]="{ exact: item.link === '/' }"
+            class="px-4 py-1.5 rounded-lg text-xs font-medium text-neutral-400 hover:text-white hover:bg-neutral-900 transition-all flex items-center gap-1.5"
+          >
+            <i [class]="item.icon" class="text-[11px] opacity-70"></i>
+            <span>{{ item.label }}</span>
+          </a>
+        }
+      </nav>
+
+      <!-- Right Action Toolbar -->
+      <div class="hidden md:flex items-center gap-3">
+        <a
+          routerLink="/products"
+          class="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-900 border border-transparent hover:border-neutral-800 transition-all cursor-pointer"
+          title="Search Catalog"
+        >
+          <i class="pi pi-search text-sm"></i>
+        </a>
+
+        @if (authService.currentUser(); as user) {
+          <div class="flex items-center gap-2 bg-neutral-900 px-3 py-1.5 rounded-xl border border-neutral-800 text-xs">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="font-medium text-neutral-200">
+              {{ user.fullName }}
+            </span>
+            <button
+              (click)="onLogout()"
+              title="Logout"
+              class="ml-1 text-neutral-500 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <i class="pi pi-sign-out text-xs"></i>
+            </button>
+          </div>
+        } @else {
+          <a
+            routerLink="/login"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-neutral-300 hover:text-white hover:bg-neutral-900 border border-neutral-800 transition-all"
+          >
+            Sign In
+          </a>
+          <a
+            routerLink="/contact"
+            class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-neutral-200 transition-all flex items-center gap-1.5 shadow-sm"
+          >
+            <i class="pi pi-sparkles text-[10px]"></i>
+            <span>Custom Order</span>
+          </a>
+        }
+      </div>
+
+      <!-- Mobile Menu Trigger -->
+      <button
+        (click)="toggleMobileMenu()"
+        class="md:hidden p-2 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 hover:text-white cursor-pointer"
+      >
+        <i [class]="isMobileMenuOpen() ? 'pi pi-times' : 'pi pi-bars'" class="text-base"></i>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Mobile Dropdown -->
+  @if (isMobileMenuOpen()) {
+    <div class="md:hidden vt-glass border-b border-neutral-800 px-4 pt-2 pb-6 space-y-2">
+      @for (item of navItems; track item.link) {
+        <a
+          [routerLink]="item.link"
+          (click)="closeMobileMenu()"
+          routerLinkActive="bg-neutral-800 text-white"
+          [routerLinkActiveOptions]="{ exact: item.link === '/' }"
+          class="block px-3 py-2.5 rounded-lg text-xs font-medium text-neutral-300 hover:bg-neutral-900 transition-all flex items-center gap-2.5"
+        >
+          <i [class]="item.icon" class="text-sm text-neutral-400"></i>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+
+      <div class="pt-3 border-t border-neutral-800 flex flex-col gap-2">
+        @if (authService.currentUser(); as user) {
+          <div class="flex items-center justify-between px-3 py-2 bg-neutral-900 rounded-lg text-xs">
+            <span class="text-neutral-300 font-medium">{{ user.fullName }}</span>
+            <button (click)="onLogout()" class="text-red-400 font-semibold">Logout</button>
+          </div>
+        } @else {
+          <a
+            routerLink="/login"
+            (click)="closeMobileMenu()"
+            class="w-full text-center py-2 rounded-lg border border-neutral-800 text-neutral-300 text-xs font-medium"
+          >
+            Sign In
+          </a>
+          <a
+            routerLink="/contact"
+            (click)="closeMobileMenu()"
+            class="w-full text-center py-2 rounded-lg bg-white text-black text-xs font-bold shadow-sm"
+          >
+            Start Custom 3D Order
+          </a>
+        }
+      </div>
+    </div>
+  }
+</header>
