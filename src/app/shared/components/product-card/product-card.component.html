@@ -6,20 +6,22 @@
     </span>
   }
 
-  <!-- Image Container -->
-  <div class="relative h-60 overflow-hidden bg-neutral-950">
-    <img
-      [src]="product().image"
-      [alt]="product().name"
-      class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
-    />
-    <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
-    
-    <!-- Category pill -->
-    <span class="absolute bottom-3 left-3 z-10 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 bg-neutral-900/90 px-2.5 py-1 rounded-md border border-neutral-800 backdrop-blur-md">
-      {{ product().category }}
-    </span>
-  </div>
+  <!-- Image Container (Rendered ONLY if product has an image) -->
+  @if (hasImage()) {
+    <div class="relative h-60 overflow-hidden bg-neutral-950">
+      <img
+        [src]="product().image"
+        [alt]="product().name"
+        class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
+      
+      <!-- Category pill -->
+      <span class="absolute bottom-3 left-3 z-10 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 bg-neutral-900/90 px-2.5 py-1 rounded-md border border-neutral-800 backdrop-blur-md">
+        {{ product().category }}
+      </span>
+    </div>
+  }
 
   <!-- Content -->
   <div class="p-5 flex flex-col flex-grow justify-between bg-[#0a0a0a]">

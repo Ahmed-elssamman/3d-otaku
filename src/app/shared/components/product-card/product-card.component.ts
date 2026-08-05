@@ -17,10 +17,14 @@ export class ProductCardComponent {
   readonly product = input.required<Product>();
 
   readonly whatsAppUrl = computed(() => this.whatsAppService.getProductOrderUrl(this.product()));
-  readonly formattedPrice = computed(() => `$${this.product().price.toFixed(2)}`);
-  readonly formattedRating = computed(() => this.product().rating.toFixed(1));
+  readonly formattedPrice = computed(() => `$${(this.product().price || 0).toFixed(2)}`);
+  readonly formattedRating = computed(() => (this.product().rating || 5).toFixed(1));
   readonly displayBadge = computed(() => {
     const badge = this.product().badge;
     return badge && badge !== ProductBadge.NONE ? badge : null;
+  });
+  readonly hasImage = computed(() => {
+    const img = this.product().image;
+    return !!(img && typeof img === 'string' && img.trim().length > 0 && !img.includes('placeholder'));
   });
 }

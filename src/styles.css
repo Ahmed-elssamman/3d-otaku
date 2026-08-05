@@ -15,6 +15,10 @@
     --vt-cyan: #06b6d4;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     background-color: var(--vt-bg);
     color: #ededed;
@@ -29,17 +33,18 @@
   }
 }
 
-/* Vercel + IKEA Design System Utilities */
+/* Vercel + Anime Cyberpunk Design System Utilities */
 .vt-card {
   background-color: #0a0a0a;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .vt-card:hover {
   background-color: #111111;
-  border-color: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 255, 255, 0.03);
+  border-color: rgba(236, 72, 153, 0.4);
+  box-shadow: 0 16px 50px -10px rgba(236, 72, 153, 0.25), 0 0 30px rgba(168, 85, 247, 0.15);
+  transform: translateY(-4px) scale(1.01);
 }
 
 .vt-glass {
@@ -56,7 +61,9 @@
 }
 
 .vt-anime-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #c084fc 50%, #f472b6 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #c084fc 35%, #f472b6 70%, #38bdf8 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -94,62 +101,63 @@
   color: #cffafe;
 }
 
-.vt-button-primary {
-  background: #ffffff;
-  color: #000000;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+/* Animations */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.vt-button-primary:hover {
-  background: #e4e4e7;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+@keyframes floatAnime {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(0.5deg); }
 }
 
-.vt-button-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  font-weight: 600;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+@keyframes flameAura {
+  0%, 100% {
+    box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 50px rgba(168, 85, 247, 0.5), inset 0 0 30px rgba(236, 72, 153, 0.4);
+  }
 }
 
-.vt-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.3);
+.animate-float {
+  animation: floatAnime 6s ease-in-out infinite;
 }
 
-.vt-button-whatsapp {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25);
+.animate-flame {
+  animation: flameAura 4s ease-in-out infinite;
 }
 
-.vt-button-whatsapp:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.35);
+/* Holographic Shine Sweep Effect */
+.shine-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-sweep::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  transition: all 0.6s ease;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.shine-sweep:hover::after {
+  left: 120%;
+  opacity: 1;
 }
 
 .vercel-grid-pattern {
@@ -175,99 +183,21 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
-.admin-glow-border {
-  position: relative;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 1px rgba(34, 211, 238, 0.08), 0 0 40px rgba(217, 70, 239, 0.08);
-}
-
-.admin-section-title {
-  font-size: 1.125rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.admin-form-grid {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 1280px) {
-  .admin-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.admin-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.admin-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #737373;
-}
-
-.admin-action-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #ffffff;
-  background: linear-gradient(135deg, rgba(217, 70, 239, 0.24), rgba(34, 211, 238, 0.18));
-  border: 1px solid rgba(34, 211, 238, 0.22);
-}
-
-.admin-action-button-secondary {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.admin-table .p-datatable-table-container {
-  border-radius: 1.5rem;
-  overflow: hidden;
-}
-
-.admin-table .p-datatable-table {
-  background: transparent;
-}
-
-.admin-table .p-datatable-thead > tr > th {
-  background: rgba(255, 255, 255, 0.04);
-  color: #d4d4d8;
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.admin-table .p-datatable-tbody > tr {
-  background: rgba(255, 255, 255, 0.02);
-  color: #f5f5f5;
-}
-
-.admin-table .p-datatable-tbody > tr > td {
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000000;
+  background: #030308;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #262626;
+  background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 100%);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: linear-gradient(180deg, #f472b6 0%, #a855f7 100%);
 }
