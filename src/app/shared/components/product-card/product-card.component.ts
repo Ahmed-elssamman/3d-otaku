@@ -17,7 +17,7 @@ export class ProductCardComponent {
   readonly product = input.required<Product>();
 
   readonly whatsAppUrl = computed(() => this.whatsAppService.getProductOrderUrl(this.product()));
-  readonly formattedPrice = computed(() => `$${(this.product().price || 0).toFixed(2)}`);
+  readonly formattedPrice = computed(() => `${(this.product().price || 0).toLocaleString()} EGP`);
   readonly formattedRating = computed(() => (this.product().rating || 5).toFixed(1));
   readonly displayBadge = computed(() => {
     const badge = this.product().badge;

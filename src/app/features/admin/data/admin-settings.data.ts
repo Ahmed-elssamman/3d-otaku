@@ -7,7 +7,7 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   whatsappNumber: APP_CONSTANTS.WHATSAPP_NUMBER,
   whatsappDefaultMessage: 'Hello 3D Otaku, I want to place an order.',
   email: 'hello@3dotaku.com',
-  phone: '+20 100 123 4567',
+  phone: '+20 120 797 7464',
   address: 'Cairo, Egypt',
   facebookUrl: 'https://facebook.com/3dotaku',
   instagramUrl: 'https://instagram.com/3dotaku',
@@ -16,7 +16,7 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   heroTitle: 'Bring Anime Fantasy Into Tangible 3D Reality',
   heroSubtitle: 'Explore high-density PLA+ 3D printed anime katanas, demon daggers, cosplay masks, and desk collectibles. Inspect every model in 360° 3D before ordering.',
   heroImageUrl: 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?auto=format&fit=crop&w=1200&q=80',
-  defaultCurrency: 'USD',
+  defaultCurrency: 'EGP',
   deliveryNote: 'Production starts after order confirmation. Delivery windows vary by model size and finish.',
   safetyNote: APP_CONSTANTS.SAFETY_DISCLAIMER,
   maintenanceMode: false

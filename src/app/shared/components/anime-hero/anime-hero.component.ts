@@ -1,4 +1,3 @@
-import { CurrencyPipe } from '@angular/common';
 import {
   Component,
   computed,
@@ -23,7 +22,7 @@ import * as THREE from 'three';
 @Component({
   selector: 'app-anime-hero',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, GlowButtonComponent, Product3dViewerComponent],
+  imports: [RouterLink, GlowButtonComponent, Product3dViewerComponent],
   templateUrl: './anime-hero.component.html',
   styleUrl: './anime-hero.component.scss'
 })

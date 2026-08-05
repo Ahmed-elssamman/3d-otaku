@@ -1,34 +1,99 @@
-@if (product(); as prod) {
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+@if (isLoading()) {
+  <div class="max-w-7xl mx-auto px-4 py-20">
+    <app-otaku-loader text="Loading Product Details & 3D Engine..." />
+  </div>
+} @else if (product(); as prod) {
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 select-none">
 
-    <!-- Top Breadcrumb Bar -->
-    <div class="flex items-center justify-between text-xs">
+    <!-- Top Breadcrumb Navigation Bar -->
+    <div class="flex items-center justify-between text-xs border-b border-neutral-800/80 pb-4">
       <a
         routerLink="/products"
-        class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 transition-colors cursor-pointer"
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 transition-all cursor-pointer shadow-md"
       >
-        <i class="pi pi-arrow-left text-[10px]"></i>
-        <span>Back to Catalog</span>
+        <i class="pi pi-arrow-left text-xs text-pink-400"></i>
+        <span class="font-bold">Back to Catalog</span>
       </a>
 
-      <span class="vt-badge">
-        {{ prod.category }}
-      </span>
+      <div class="flex items-center gap-2">
+        <span class="vt-badge vt-badge-pink">
+          {{ prod.category }}
+        </span>
+        <span class="vt-badge">
+          ID: {{ prod.id || prod._id || 'PROD' }}
+        </span>
+      </div>
     </div>
 
-    <!-- Main Product Section (3D Viewer + Specs) -->
+    <!-- Main Stage Grid: Left = 3D / Image Stage + Thumbnails, Right = Specs & CTA -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
       
-      <!-- Left Column: 3D Model Viewer with @defer -->
-      <div class="lg:col-span-7">
-        @defer (on viewport) {
-          <app-product-3d-viewer [product]="prod" />
-        } @placeholder {
-          <app-otaku-loader text="Preparing 3D Interactive Model..." />
-        }
+      <!-- Left Column: Main Viewport Stage + Thumbnails Bar -->
+      <div class="lg:col-span-7 space-y-4">
+        
+        <!-- Main Stage Container (Displays 3D Model OR Active Image) -->
+        <div class="relative w-full rounded-3xl overflow-hidden vt-card border border-purple-500/40 bg-neutral-950 p-2 shadow-[0_0_60px_rgba(139,92,246,0.25)] min-h-[500px] md:min-h-[660px] flex items-center justify-center">
+          
+          @if (activeStageMode() === '3d' && has3dModel()) {
+            <app-product-3d-viewer [product]="prod" class="w-full h-full" />
+          } @else {
+            <div class="relative w-full h-[500px] md:h-[660px] rounded-2xl overflow-hidden bg-neutral-950 flex items-center justify-center group">
+              <img
+                [src]="selectedImageUrl() || prod.image"
+                [alt]="prod.name"
+                class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
+              
+              <div class="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-neutral-950/80 backdrop-blur-md border border-white/10 text-xs text-neutral-300 pointer-events-none">
+                <span class="font-bold text-white block">{{ prod.name }}</span>
+                <span class="text-[11px] text-pink-400 font-semibold">High-Definition Photo Preview</span>
+              </div>
+            </div>
+          }
+
+        </div>
+
+        <!-- Interactive Thumbnail Switcher Bar (3D Model Button + Image Thumbnails) -->
+        <div class="p-3 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-2">
+          <p class="text-[11px] font-bold uppercase tracking-widest text-neutral-400 px-1">
+            ⚡ Select Display Mode & Angles:
+          </p>
+
+          <div class="flex flex-wrap items-center gap-3">
+            
+            <!-- 1. 3D Model Engine Thumbnail Button -->
+            @if (has3dModel()) {
+              <button
+                (click)="switchTo3d()"
+                [class]="activeStageMode() === '3d' ? 'border-pink-500 bg-pink-500/20 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] scale-105' : 'border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-neutral-700 hover:text-white'"
+                class="h-20 px-4 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer shadow-md"
+              >
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white shadow-inner">
+                  <i class="pi pi-box text-sm animate-pulse"></i>
+                </div>
+                <span class="text-[11px] font-extrabold uppercase tracking-wider">Interactive 3D</span>
+              </button>
+            }
+
+            <!-- 2. Gallery Image Thumbnail Cards -->
+            @for (imgUrl of galleryImages(); track imgUrl; let i = $index) {
+              <button
+                (click)="switchToImage(imgUrl)"
+                [class]="activeStageMode() === 'image' && selectedImageUrl() === imgUrl ? 'border-purple-500 ring-2 ring-purple-500 scale-105 opacity-100 shadow-[0_0_20px_rgba(168,85,247,0.5)]' : 'border-neutral-800 opacity-60 hover:opacity-100'"
+                class="relative h-20 w-20 rounded-xl overflow-hidden border bg-neutral-900 transition-all duration-300 cursor-pointer"
+              >
+                <img [src]="imgUrl" [alt]="prod.name + ' image ' + i" class="w-full h-full object-cover object-center" />
+                <div class="absolute inset-0 bg-black/20 hover:bg-transparent transition-colors"></div>
+              </button>
+            }
+
+          </div>
+        </div>
+
       </div>
 
-      <!-- Right Column: Details & Ordering -->
+      <!-- Right Column: Product Specs & Direct WhatsApp Order -->
       <div class="lg:col-span-5 space-y-6">
         
         <!-- Header & Title -->
@@ -45,7 +110,7 @@
           <div class="flex items-center gap-3 text-xs">
             <div class="flex items-center gap-1 text-amber-400 font-bold">
               <i class="pi pi-star-fill text-[11px]"></i>
-              <span>{{ prod.rating }} / 5.0</span>
+              <span>{{ prod.rating || 5.0 }} / 5.0</span>
             </div>
             <span class="text-neutral-600">•</span>
             <span class="text-emerald-400 font-semibold flex items-center gap-1">
@@ -56,14 +121,14 @@
         </div>
 
         <!-- Price Display Card -->
-        <div class="p-4 rounded-2xl bg-neutral-950 border border-neutral-800 flex items-center justify-between">
+        <div class="p-5 rounded-2xl bg-neutral-950 border border-purple-500/30 flex items-center justify-between shadow-lg">
           <div>
-            <span class="text-[10px] uppercase font-bold text-neutral-500 block">Total Price</span>
+            <span class="text-[10px] uppercase font-bold text-neutral-400 block">Total Price</span>
             <span class="text-3xl font-black text-white">
               {{ formattedPrice() }}
             </span>
           </div>
-          <span class="vt-badge vt-badge-accent">
+          <span class="vt-badge vt-badge-accent text-xs">
             High Density PLA+
           </span>
         </div>
@@ -73,30 +138,30 @@
           {{ prod.description }}
         </p>
 
-        <!-- IKEA Specifications Table -->
+        <!-- Specifications Table -->
         <div class="space-y-2 pt-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">Specifications & Build</h3>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">Specifications & Build Specs</h3>
           <div class="grid grid-cols-2 gap-2.5">
             <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
               <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Material</span>
-              <span class="text-xs font-bold text-white">{{ prod.material }}</span>
+              <span class="text-xs font-bold text-white">{{ prod.material || 'PLA+ Filament' }}</span>
             </div>
             <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
               <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Dimensions</span>
-              <span class="text-xs font-bold text-white">{{ prod.size }}</span>
+              <span class="text-xs font-bold text-white">{{ prod.size || '1:1 Scale' }}</span>
             </div>
             <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
               <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Weight</span>
-              <span class="text-xs font-bold text-white">{{ prod.weight }}</span>
+              <span class="text-xs font-bold text-white">{{ prod.weight || '450g' }}</span>
             </div>
             <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
               <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Print Time</span>
-              <span class="text-xs font-bold text-white">{{ prod.printTime }}</span>
+              <span class="text-xs font-bold text-white">{{ prod.printTime || '18 hrs' }}</span>
             </div>
           </div>
         </div>
 
-        <!-- SAFETY NOTE -->
+        <!-- Safety Notice -->
         <div class="p-4 rounded-xl bg-neutral-950 border border-pink-500/30 text-xs text-neutral-300 flex items-start gap-3">
           <i class="pi pi-shield text-pink-400 text-base shrink-0 mt-0.5"></i>
           <div>
@@ -105,44 +170,46 @@
           </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="space-y-2.5 pt-2">
+        <!-- Action CTA Buttons -->
+        <div class="space-y-3 pt-2">
           <a
             [href]="whatsAppUrl()"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold text-sm text-center flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
           >
-            <i class="pi pi-whatsapp text-base"></i>
-            <span>Order on WhatsApp</span>
+            <i class="pi pi-whatsapp text-lg"></i>
+            <span>Order Directly via WhatsApp</span>
           </a>
 
           <a
             routerLink="/contact"
-            class="w-full py-3 px-6 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-semibold text-xs text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
+            class="w-full py-3.5 px-6 rounded-2xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-bold text-xs text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <i class="pi pi-sparkles text-purple-400"></i>
-            <span>Request Custom 3D Version</span>
+            <span>Request Custom 3D Forge Version</span>
           </a>
         </div>
 
         <!-- Tags -->
-        <div class="pt-3 border-t border-neutral-800 flex flex-wrap items-center gap-2">
-          <span class="text-xs font-semibold text-neutral-500">Tags:</span>
-          @for (tag of prod.tags; track tag) {
-            <span class="px-2.5 py-1 rounded-md bg-neutral-950 border border-neutral-800 text-[11px] font-medium text-neutral-300">
-              #{{ tag }}
-            </span>
-          }
-        </div>
+        @if (prod.tags && prod.tags.length > 0) {
+          <div class="pt-3 border-t border-neutral-800 flex flex-wrap items-center gap-2">
+            <span class="text-xs font-semibold text-neutral-500">Tags:</span>
+            @for (tag of prod.tags; track tag) {
+              <span class="px-2.5 py-1 rounded-md bg-neutral-950 border border-neutral-800 text-[11px] font-medium text-neutral-300">
+                #{{ tag }}
+              </span>
+            }
+          </div>
+        }
 
       </div>
 
     </div>
 
-    <!-- Related Products -->
+    <!-- Related Anime Props -->
     @if (relatedProducts().length > 0) {
-      <div class="pt-10 border-t border-neutral-800 space-y-6">
+      <div class="pt-12 border-t border-neutral-800 space-y-6">
         <h2 class="text-2xl font-black text-white tracking-tight">
           Related Anime Props
         </h2>

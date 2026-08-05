@@ -1,135 +1,109 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+<div class="space-y-12 pb-24 select-none">
 
-  <!-- Header Banner -->
-  <div class="relative rounded-3xl vt-card p-8 sm:p-10 border border-neutral-800 overflow-hidden text-center shadow-2xl">
-    <div class="subtle-glow w-72 h-72 bg-purple-600/20 top-0 left-1/3"></div>
-
-    <div class="relative z-10 max-w-2xl mx-auto space-y-3">
-      <span class="vt-badge vt-badge-accent">
-        Complete 3D Armory Catalog
-      </span>
-      <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight">
-        Anime Prop <span class="vt-anime-gradient">Armory & Figures</span>
-      </h1>
-      <p class="text-neutral-400 text-xs sm:text-sm leading-relaxed">
-        Browse handcrafted 3D printed props, swords, daggers, and desk figures.
-      </p>
-    </div>
-  </div>
-
-  <!-- Main IKEA Style Catalog Layout: Sidebar + Grid -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+  <!-- 1. Three.js Animated Header Banner -->
+  <div class="relative rounded-3xl overflow-hidden bg-[#030308] border border-purple-500/30 p-8 lg:p-12 shadow-[0_0_60px_rgba(139,92,246,0.2)]">
     
-    <!-- IKEA Style Sidebar Filter -->
-    <aside class="lg:col-span-3 vt-card rounded-2xl p-5 border border-neutral-800 space-y-6">
-      
-      <!-- Filter Header -->
-      <div class="flex items-center justify-between pb-3 border-b border-neutral-800">
-        <h3 class="text-sm font-bold text-white flex items-center gap-2">
-          <i class="pi pi-sliders-h text-neutral-400 text-xs"></i>
-          <span>Filters</span>
-        </h3>
-        @if (searchTerm() || selectedCategory() !== 'All' || maxPriceFilter() < 1500) {
-          <button (click)="resetFilters()" class="text-[11px] font-semibold text-purple-400 hover:underline cursor-pointer">
-            Reset All
+    <!-- Three.js Canvas -->
+    <div class="absolute inset-0 z-0 opacity-70 pointer-events-none flex items-center justify-center">
+      <canvas #productsCanvas class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- Glow Orbs -->
+    <div class="subtle-glow w-96 h-96 bg-pink-600/20 -top-20 -left-20 blur-[130px] pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-4 max-w-3xl">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 text-xs font-extrabold uppercase tracking-widest shadow-md">
+        <span class="w-2 h-2 rounded-full bg-pink-400 animate-ping"></span>
+        <span>Anime 3D Print Armory</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+        Explore 1:1 Scale <span class="vt-anime-gradient">Anime Masterpieces</span>
+      </h1>
+
+      <p class="text-neutral-300 text-sm sm:text-base leading-relaxed">
+        From Nichirin katanas and shinobi kunais to wearable samurai masks — inspect every item in real-time 3D before ordering.
+      </p>
+
+      <!-- Category Filter Pills Bar -->
+      <div class="pt-4 flex flex-wrap items-center gap-2">
+        @for (category of categoryOptions; track category) {
+          <button
+            (click)="onCategorySelect(category)"
+            [class]="selectedCategory() === category ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-pink-400 shadow-[0_0_20px_rgba(236,72,153,0.5)] scale-105' : 'bg-neutral-900/90 text-neutral-300 border-neutral-800 hover:border-neutral-700 hover:text-white'"
+            class="px-4 py-2 rounded-2xl border text-xs font-extrabold transition-all duration-300 cursor-pointer flex items-center gap-2 backdrop-blur-md"
+          >
+            <span>{{ category }}</span>
           </button>
         }
       </div>
+    </div>
+  </div>
 
+  <!-- 2. Search & Controls Filter Bar -->
+  <div class="p-6 rounded-3xl bg-neutral-950/90 border border-neutral-800 backdrop-blur-xl shadow-xl space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+      
       <!-- Search Input -->
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Search Catalog</label>
-        <div class="relative">
-          <i class="pi pi-search absolute left-3 top-3 text-neutral-500 text-xs"></i>
-          <input
-            type="text"
-            [value]="searchTerm()"
-            (input)="onSearchChange($event)"
-            placeholder="Search katana, kunai..."
-            class="w-full pl-9 pr-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-          />
-        </div>
-      </div>
-
-      <!-- Category Filter -->
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">Category</label>
-        <div class="space-y-1">
-          @for (category of categoryOptions; track category) {
-            <button
-              (click)="onCategorySelect(category)"
-              [class.bg-neutral-800]="selectedCategory() === category"
-              [class.text-white]="selectedCategory() === category"
-              [class.font-bold]="selectedCategory() === category"
-              [class.text-neutral-400]="selectedCategory() !== category"
-              class="w-full text-left px-3 py-2 rounded-lg text-xs transition-colors flex items-center justify-between cursor-pointer hover:bg-neutral-900"
-            >
-              <span>{{ category }}</span>
-              <i [class]="selectedCategory() === category ? 'pi pi-check text-purple-400 text-[10px]' : ''"></i>
-            </button>
-          }
-        </div>
-      </div>
-
-      <!-- Price Range Filter -->
-      <div>
-        <div class="flex justify-between text-xs font-semibold text-neutral-300 mb-2">
-          <span class="text-[11px] uppercase font-bold text-neutral-400">Max Price</span>
-          <span class="text-purple-400 font-bold">${{ maxPriceFilter() }}</span>
-        </div>
+      <div class="md:col-span-6 relative">
+        <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400 text-sm"></i>
         <input
-          type="range"
-          min="50"
-          max="3000"
-          step="50"
-          [value]="maxPriceFilter()"
-          (input)="onPriceChange($event)"
-          class="w-full accent-white cursor-pointer"
+          type="text"
+          [value]="searchTerm()"
+          (input)="onSearchChange($event)"
+          placeholder="Search by Katana, Kunai, Tanjiro, Naruto, Zoro..."
+          class="w-full pl-11 pr-4 py-3 rounded-2xl bg-neutral-900 border border-neutral-800 text-white text-xs placeholder-neutral-500 focus:outline-none focus:border-pink-500 transition-all"
         />
       </div>
 
-    </aside>
-
-    <!-- Product Grid & Toolbar -->
-    <main class="lg:col-span-9 space-y-6">
-      
-      <!-- Toolbar (Count & Sort) -->
-      <div class="vt-card rounded-2xl p-4 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
-        <span class="text-neutral-400 font-medium">
-          Showing <strong class="text-white font-bold">{{ filteredProducts.length }}</strong> items
-        </span>
-
-        <div class="flex items-center gap-2">
-          <span class="text-neutral-500 font-medium shrink-0">Sort By:</span>
-          <select
-            [value]="selectedSort()"
-            (change)="onSortSelect($event)"
-            class="px-3 py-2 rounded-xl bg-neutral-950 border border-neutral-800 text-neutral-200 text-xs font-medium focus:outline-none focus:border-purple-500 cursor-pointer"
-          >
-            @for (option of sortOptions; track option.value) {
-              <option [value]="option.value" class="bg-[#0a0a0a] text-white">
-                {{ option.label }}
-              </option>
-            }
-          </select>
-        </div>
+      <!-- Sort Dropdown -->
+      <div class="md:col-span-3">
+        <select
+          [value]="selectedSort()"
+          (change)="onSortSelect($event)"
+          class="w-full px-4 py-3 rounded-2xl bg-neutral-900 border border-neutral-800 text-white text-xs focus:outline-none focus:border-purple-500 transition-all cursor-pointer"
+        >
+          @for (sortOpt of sortOptions; track sortOpt.value) {
+            <option [value]="sortOpt.value" class="bg-neutral-950 text-white">
+              {{ sortOpt.label }}
+            </option>
+          }
+        </select>
       </div>
 
-      <!-- Grid / Loader / Empty State -->
-      @if (isLoading()) {
-        <app-otaku-loader text="Fetching Catalog..." />
-      } @else if (filteredProducts.length === 0) {
-        <app-empty-state (actionClick)="resetFilters()" />
-      } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          @for (product of filteredProducts; track product.id) {
-            <app-product-card [product]="product" />
-          }
-        </div>
-      }
+      <!-- Reset Filters Button -->
+      <div class="md:col-span-3 flex justify-end">
+        <button
+          (click)="resetFilters()"
+          class="w-full py-3 px-4 rounded-2xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-300 text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <i class="pi pi-refresh text-xs text-pink-400"></i>
+          <span>Reset Filters</span>
+        </button>
+      </div>
 
-    </main>
-
+    </div>
   </div>
+
+  <!-- 3. Products List Stage -->
+  @if (isLoading()) {
+    <div class="py-20">
+      <app-otaku-loader text="Fetching Live Anime 3D Models..." />
+    </div>
+  } @else if (filteredProducts.length === 0) {
+    <app-empty-state
+      icon="pi pi-box"
+      title="No Anime Products Found"
+      description="No products matched your search or category filters. Try resetting filters or searching for another prop."
+      actionText="Reset All Filters"
+      (action)="resetFilters()"
+    />
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      @for (product of filteredProducts; track product.id) {
+        <app-product-card [product]="product" />
+      }
+    </div>
+  }
 
 </div>
