@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, map } from 'rxjs';
+import { Observable, of, map, tap } from 'rxjs';
 import { Product } from '../models/product.model';
 import { Category } from '../models/category.model';
 import { ProductQuery } from '../../features/products/models/product-query.model';
@@ -8,7 +8,6 @@ import { ApiService } from '../api/api.service';
 import { API_ENDPOINTS } from '../api/api-endpoints';
 import { environment } from '../../../environments/environment';
 import { APP_CONSTANTS } from '../constants/app.constants';
-import { MOCK_PRODUCTS } from '../../features/admin/data/mock-products.data';
 
 @Injectable({
   providedIn: 'root'
@@ -17,18 +16,18 @@ export class ProductService {
   private api = inject(ApiService);
   private productsSignal = signal<Product[]>(this.loadFromStorage());
 
-  allProducts = computed(() => this.productsSignal().filter(product => product.isActive));
-  featuredProducts = computed(() => this.productsSignal().filter(product => product.isActive && product.isFeatured));
+  allProducts = computed(() => this.productsSignal().filter(product => product.isActive !== false));
+  featuredProducts = computed(() => this.productsSignal().filter(product => product.isFeatured));
   adminProducts = computed(() => this.productsSignal());
 
   getProducts(query?: ProductQuery): Observable<PaginatedResponse<Product>> {
     if (environment.useMockApi) {
-      let items = this.productsSignal().filter(p => p.isActive);
+      let items = this.productsSignal();
 
       if (query?.search) {
         const searchLower = query.search.toLowerCase();
         items = items.filter(
-          p => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower)
+          p => p.name.toLowerCase().includes(searchLower) || (p.description || '').toLowerCase().includes(searchLower)
         );
       }
 
@@ -38,24 +37,6 @@ export class ProductService {
 
       if (query?.featured) {
         items = items.filter(p => p.isFeatured);
-      }
-
-      if (query?.minPrice !== undefined) {
-        items = items.filter(p => p.price >= query.minPrice!);
-      }
-
-      if (query?.maxPrice !== undefined) {
-        items = items.filter(p => p.price <= query.maxPrice!);
-      }
-
-      if (query?.sort) {
-        if (query.sort === 'price_low') {
-          items.sort((a, b) => a.price - b.price);
-        } else if (query.sort === 'price_high') {
-          items.sort((a, b) => b.price - a.price);
-        } else if (query.sort === 'rating') {
-          items.sort((a, b) => b.rating - a.rating);
-        }
       }
 
       const page = query?.page || 1;
@@ -90,6 +71,12 @@ export class ProductService {
           return { ...res, data: normalized };
         }
         return res;
+      }),
+      tap(res => {
+        if (res.data && res.data.length > 0) {
+          this.productsSignal.set(res.data);
+          this.saveToStorage();
+        }
       })
     );
   }
@@ -97,7 +84,7 @@ export class ProductService {
   getFeaturedProducts(limit: number = 6): Observable<ApiResponse<Product[]>> {
     if (environment.useMockApi) {
       const featured = this.productsSignal()
-        .filter(p => p.isActive && p.isFeatured)
+        .filter(p => p.isFeatured)
         .slice(0, limit);
 
       return of({
@@ -117,6 +104,12 @@ export class ProductService {
           return { ...res, data: normalized };
         }
         return res;
+      }),
+      tap(res => {
+        if (res.data && res.data.length > 0) {
+          this.productsSignal.set(res.data);
+          this.saveToStorage();
+        }
       })
     );
   }
@@ -152,9 +145,7 @@ export class ProductService {
     if (environment.useMockApi) {
       const categoriesMap = new Map<string, number>();
       this.productsSignal().forEach(p => {
-        if (p.isActive) {
-          categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
-        }
+        categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
       });
 
       const categories: Category[] = Array.from(categoriesMap.entries()).map(([name, count], index) => ({
@@ -162,7 +153,7 @@ export class ProductService {
         name,
         slug: name.toLowerCase().replace(/\s+/g, '-'),
         description: `${name} items`,
-        image: 'assets/images/placeholder.webp',
+        image: '',
         productsCount: count
       }));
 
@@ -241,13 +232,13 @@ export class ProductService {
 
   loadFromStorage(): Product[] {
     const raw = localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.PRODUCTS);
-    if (!raw) return [...MOCK_PRODUCTS];
+    if (!raw) return [];
 
     try {
       const parsed = JSON.parse(raw) as Product[];
-      return parsed.length ? parsed : [...MOCK_PRODUCTS];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
-      return [...MOCK_PRODUCTS];
+      return [];
     }
   }
 }

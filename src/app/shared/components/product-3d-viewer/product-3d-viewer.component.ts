@@ -130,8 +130,8 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.hasError.set(false);
 
     const parent = canvas.parentElement;
-    const width = parent?.clientWidth || 600;
-    const height = parent?.clientHeight || 540;
+    const width = parent?.clientWidth || 700;
+    const height = parent?.clientHeight || 660;
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color('#050505');
@@ -150,18 +150,18 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.controls.autoRotateSpeed = 3.0;
 
     // Studio Lights setup for crisp anime aesthetic
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.4);
     this.scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+    const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.8);
     dirLight1.position.set(1, 2, 3);
     this.scene.add(dirLight1);
 
-    const dirLight2 = new THREE.DirectionalLight(0xec4899, 0.8);
+    const dirLight2 = new THREE.DirectionalLight(0xec4899, 1.0);
     dirLight2.position.set(-2, -1, -1);
     this.scene.add(dirLight2);
 
-    const dirLight3 = new THREE.DirectionalLight(0x3b82f6, 0.8);
+    const dirLight3 = new THREE.DirectionalLight(0x3b82f6, 1.0);
     dirLight3.position.set(2, -1, -2);
     this.scene.add(dirLight3);
 
@@ -187,9 +187,9 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     const format = this.detectedFormat();
 
     const material = new THREE.MeshStandardMaterial({
-      color: 0xcccccc,
-      metalness: 0.3,
-      roughness: 0.35
+      color: 0xdddddd,
+      metalness: 0.35,
+      roughness: 0.3
     });
 
     if (format === 'STL') {
@@ -255,11 +255,12 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
     const maxDim = Math.max(size.x, size.y, size.z);
     const fov = this.camera.fov * (Math.PI / 180);
-    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.6;
+    // Adjusted camera distance multiplier to 1.05 for LARGE, IMPRESSIVE 3D model framing
+    let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.05;
 
-    if (isNaN(cameraZ) || cameraZ === 0) cameraZ = 50;
+    if (isNaN(cameraZ) || cameraZ === 0) cameraZ = 40;
 
-    this.camera.position.set(0, size.y * 0.2, cameraZ);
+    this.camera.position.set(0, size.y * 0.15, cameraZ);
     this.camera.lookAt(0, 0, 0);
     this.controls.target.set(0, 0, 0);
     this.controls.update();
