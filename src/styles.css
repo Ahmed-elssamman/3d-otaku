@@ -10,8 +10,9 @@
     --vt-border-strong: rgba(255, 255, 255, 0.2);
     --vt-white: #ffffff;
     --vt-muted: #888888;
-    --vt-purple: #a855f7;
-    --vt-pink: #ec4899;
+    --vt-red: #ef4444;
+    --vt-crimson: #dc2626;
+    --vt-amber: #f59e0b;
     --vt-cyan: #06b6d4;
   }
 
@@ -33,7 +34,7 @@
   }
 }
 
-/* Vercel + Anime Cyberpunk Design System Utilities */
+/* Vercel + Fiery Crimson Anime Design System Utilities */
 .vt-card {
   background-color: #0a0a0a;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -42,16 +43,16 @@
 
 .vt-card:hover {
   background-color: #111111;
-  border-color: rgba(236, 72, 153, 0.4);
-  box-shadow: 0 16px 50px -10px rgba(236, 72, 153, 0.25), 0 0 30px rgba(168, 85, 247, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 16px 50px -10px rgba(239, 68, 68, 0.3), 0 0 30px rgba(244, 63, 94, 0.2);
   transform: translateY(-4px) scale(1.01);
 }
 
 .vt-glass {
-  background: rgba(10, 10, 10, 0.75);
+  background: rgba(10, 10, 10, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
 }
 
 .vt-gradient-text {
@@ -61,9 +62,9 @@
 }
 
 .vt-anime-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #c084fc 35%, #f472b6 70%, #38bdf8 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #ef4444 35%, #f43f5e 70%, #f59e0b 100%);
   background-size: 200% 200%;
-  animation: gradientShift 6s ease infinite;
+  animation: gradientShift 5s ease infinite;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -84,21 +85,62 @@
 }
 
 .vt-badge-accent {
-  background: rgba(168, 85, 247, 0.12);
-  border-color: rgba(168, 85, 247, 0.3);
-  color: #e9d5ff;
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
 }
 
 .vt-badge-pink {
-  background: rgba(236, 72, 153, 0.12);
-  border-color: rgba(236, 72, 153, 0.3);
-  color: #fbcfe8;
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #fecdd3;
 }
 
 .vt-badge-cyan {
   background: rgba(6, 182, 212, 0.12);
   border-color: rgba(6, 182, 212, 0.3);
   color: #cffafe;
+}
+
+/* Glow Button Class Utilities */
+.vt-button-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.875rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  box-shadow: 0 10px 30px -5px rgba(239, 68, 68, 0.5);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.vt-button-primary:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 15px 40px -5px rgba(239, 68, 68, 0.7);
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 50%, #dc2626 100%);
+}
+
+.vt-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.875rem;
+  font-weight: 700;
+  color: #ededed;
+  background: rgba(15, 15, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+}
+
+.vt-button-secondary:hover {
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #ffffff;
+  transform: translateY(-2px);
 }
 
 /* Animations */
@@ -115,10 +157,10 @@
 
 @keyframes flameAura {
   0%, 100% {
-    box-shadow: 0 0 25px rgba(236, 72, 153, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.2);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.4), inset 0 0 15px rgba(245, 158, 11, 0.3);
   }
   50% {
-    box-shadow: 0 0 50px rgba(168, 85, 247, 0.5), inset 0 0 30px rgba(236, 72, 153, 0.4);
+    box-shadow: 0 0 55px rgba(244, 63, 94, 0.6), inset 0 0 35px rgba(239, 68, 68, 0.5);
   }
 }
 
@@ -171,16 +213,16 @@
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.15;
+  opacity: 0.18;
   pointer-events: none;
 }
 
 .admin-panel,
 .admin-card {
-  background: linear-gradient(180deg, rgba(15, 17, 28, 0.92) 0%, rgba(9, 10, 18, 0.94) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(25, 10, 15, 0.92) 0%, rgba(10, 10, 15, 0.94) 100%);
+  border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: 1.5rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
 }
 
 /* Custom Scrollbar */
@@ -194,10 +236,18 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #ec4899 0%, #8b5cf6 100%);
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #f472b6 0%, #a855f7 100%);
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+}
+
+/* Suppress PrimeUI / PrimeNG license alerts */
+.p-license-banner,
+.p-license-toast,
+[class*="license"],
+[id*="license"] {
+  display: none !important;
 }

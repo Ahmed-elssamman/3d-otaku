@@ -16,13 +16,25 @@ export class ProductService {
   private api = inject(ApiService);
   private productsSignal = signal<Product[]>(this.loadFromStorage());
 
-  allProducts = computed(() => this.productsSignal().filter(product => product.isActive !== false));
-  featuredProducts = computed(() => this.productsSignal().filter(product => product.isFeatured));
+  allProducts = computed(() =>
+    this.productsSignal().filter(p => p.isActive !== false && this.hasImageOrModel(p))
+  );
+
+  featuredProducts = computed(() =>
+    this.productsSignal().filter(p => p.isFeatured && this.hasImageOrModel(p))
+  );
+
   adminProducts = computed(() => this.productsSignal());
+
+  private hasImageOrModel(p: Product): boolean {
+    const hasImg = !!(p.image && typeof p.image === 'string' && p.image.trim().length > 0 && !p.image.includes('placeholder'));
+    const hasModel = !!(p.modelUrl && typeof p.modelUrl === 'string' && p.modelUrl.trim().length > 0);
+    return hasImg || hasModel;
+  }
 
   getProducts(query?: ProductQuery): Observable<PaginatedResponse<Product>> {
     if (environment.useMockApi) {
-      let items = this.productsSignal();
+      let items = this.productsSignal().filter(p => this.hasImageOrModel(p));
 
       if (query?.search) {
         const searchLower = query.search.toLowerCase();
@@ -64,10 +76,12 @@ export class ProductService {
     return this.api.getPaginated<Product>(API_ENDPOINTS.products.list, query as Record<string, unknown>).pipe(
       map(res => {
         if (res.data) {
-          const normalized = res.data.map(p => ({
-            ...p,
-            id: p.id || p._id || ''
-          }));
+          const normalized = res.data
+            .map(p => ({
+              ...p,
+              id: p.id || p._id || ''
+            }))
+            .filter(p => this.hasImageOrModel(p));
           return { ...res, data: normalized };
         }
         return res;
@@ -84,7 +98,7 @@ export class ProductService {
   getFeaturedProducts(limit: number = 6): Observable<ApiResponse<Product[]>> {
     if (environment.useMockApi) {
       const featured = this.productsSignal()
-        .filter(p => p.isFeatured)
+        .filter(p => p.isFeatured && this.hasImageOrModel(p))
         .slice(0, limit);
 
       return of({
@@ -97,10 +111,12 @@ export class ProductService {
     return this.api.get<Product[]>(API_ENDPOINTS.products.featured, { limit }).pipe(
       map(res => {
         if (res.data) {
-          const normalized = res.data.map(p => ({
-            ...p,
-            id: p.id || p._id || ''
-          }));
+          const normalized = res.data
+            .map(p => ({
+              ...p,
+              id: p.id || p._id || ''
+            }))
+            .filter(p => this.hasImageOrModel(p));
           return { ...res, data: normalized };
         }
         return res;
@@ -114,38 +130,37 @@ export class ProductService {
     );
   }
 
-  getProductBySlug(slug: string): Observable<ApiResponse<Product>> {
+  getProductByIdOrSlug(idOrSlug: string): Observable<ApiResponse<Product>> {
     if (environment.useMockApi) {
-      const found = this.productsSignal().find(p => p.slug === slug);
-      if (!found) {
-        return of({
-          success: false,
-          message: 'Product not found.',
-          data: null as unknown as Product
-        });
-      }
+      const found = this.productsSignal().find(p => p.id === idOrSlug || p._id === idOrSlug || p.slug === idOrSlug);
       return of({
-        success: true,
-        message: 'Product details fetched successfully.',
-        data: found
+        success: !!found,
+        message: found ? 'Product details fetched successfully.' : 'Product not found.',
+        data: found as Product
       });
     }
 
-    return this.api.get<Product>(API_ENDPOINTS.products.details(slug)).pipe(
+    return this.api.get<Product>(API_ENDPOINTS.products.details(idOrSlug)).pipe(
       map(res => {
         if (res.data) {
-          return { ...res, data: { ...res.data, id: res.data.id || res.data._id || '' } };
+          return { ...res, data: { ...res.data, id: res.data.id || res.data._id || idOrSlug } };
         }
         return res;
       })
     );
   }
 
+  getProductBySlug(slug: string): Observable<ApiResponse<Product>> {
+    return this.getProductByIdOrSlug(slug);
+  }
+
   getCategories(): Observable<ApiResponse<Category[]>> {
     if (environment.useMockApi) {
       const categoriesMap = new Map<string, number>();
       this.productsSignal().forEach(p => {
-        categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
+        if (this.hasImageOrModel(p)) {
+          categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
+        }
       });
 
       const categories: Category[] = Array.from(categoriesMap.entries()).map(([name, count], index) => ({

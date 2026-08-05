@@ -14,7 +14,7 @@ export class WhatsAppService {
     const text = `${settings.whatsappDefaultMessage}\n` +
       `Product: ${product.name}\n` +
       `Category: ${product.category}\n` +
-      `Price: $${product.price.toFixed(2)}\n` +
+      `Price: ${product.price} EGP\n` +
       `Slug: ${product.slug}\n` +
       `Can you send me more details?`;
     return `https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(text)}`;
