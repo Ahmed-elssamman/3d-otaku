@@ -24,6 +24,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/product-details/pages/product-details-page/product-details-page.component').then(m => m.ProductDetailsPageComponent)
       },
       {
+        path: 'cart',
+        loadComponent: () => import('./features/cart/pages/cart-page/cart-page.component').then(m => m.CartPageComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/orders/pages/orders-page/orders-page.component').then(m => m.OrdersPageComponent)
+      },
+      {
         path: 'login',
         canActivate: [guestGuard],
         loadComponent: () => import('./features/auth/login/login-page/login-page.component').then(m => m.LoginPageComponent)

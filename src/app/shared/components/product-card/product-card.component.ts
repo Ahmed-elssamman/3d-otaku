@@ -1,8 +1,9 @@
 import { Component, input, inject, computed } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { ProductBadge } from '@core/enums/product-badge.enum';
 import { Product } from '@core/models/product.model';
 import { WhatsAppService } from '@core/services/whatsapp.service';
+import { CartService } from '@core/services/cart.service';
 
 @Component({
   selector: 'app-product-card',
@@ -13,6 +14,8 @@ import { WhatsAppService } from '@core/services/whatsapp.service';
 })
 export class ProductCardComponent {
   private readonly whatsAppService = inject(WhatsAppService);
+  private readonly cartService = inject(CartService);
+  private readonly router = inject(Router);
 
   readonly product = input.required<Product>();
 
@@ -27,4 +30,11 @@ export class ProductCardComponent {
     const img = this.product().image;
     return !!(img && typeof img === 'string' && img.trim().length > 0 && !img.includes('placeholder'));
   });
+
+  addToCartAndCheckout(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.cartService.addItem(this.product(), 1);
+    this.router.navigate(['/cart']);
+  }
 }

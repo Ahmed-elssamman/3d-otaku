@@ -1,0 +1,154 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 select-none">
+
+  <!-- Page Header & Search Bar -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-800/80 pb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-neutral-400 mb-2">
+        <a routerLink="/products" class="hover:text-pink-400 transition-colors flex items-center gap-1">
+          <i class="pi pi-arrow-left text-[10px]"></i>
+          <span>Back to Store</span>
+        </a>
+        <span>/</span>
+        <span class="text-white font-semibold">My Orders & Tracking</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-white flex items-center gap-3">
+        <span>My Orders History</span>
+        <span class="vt-badge vt-badge-accent text-xs font-bold px-3 py-1">
+          {{ orders().length }} Orders
+        </span>
+      </h1>
+    </div>
+
+    <!-- Search / Track Input -->
+    <div class="w-full md:w-80">
+      <div class="relative">
+        <i class="pi pi-search absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500 text-sm"></i>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by Order # or Phone..."
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white text-xs outline-none focus:border-purple-500 transition-colors"
+        />
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="py-20 text-center text-neutral-400">
+      <i class="pi pi-spin pi-spinner text-3xl text-purple-400 mb-3 block"></i>
+      <span>Loading order details...</span>
+    </div>
+  } @else if (filteredOrders().length === 0) {
+    <!-- Empty Orders State -->
+    <div class="py-20 text-center vt-card rounded-3xl p-8 max-w-xl mx-auto space-y-6 border border-purple-500/20 shadow-xl">
+      <div class="w-20 h-20 rounded-2xl bg-neutral-900 border border-neutral-800 mx-auto flex items-center justify-center text-3xl text-neutral-500">
+        <i class="pi pi-box text-pink-400"></i>
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-white">No Orders Found</h2>
+        <p class="text-neutral-400 text-xs leading-relaxed max-w-sm mx-auto">
+          You haven't placed any 3D anime orders yet, or no orders match your search criteria.
+        </p>
+      </div>
+      <a
+        routerLink="/products"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:scale-105 text-white font-bold text-xs transition-all shadow-md cursor-pointer"
+      >
+        <i class="pi pi-box text-xs"></i>
+        <span>Explore Products & Place Order</span>
+      </a>
+    </div>
+  } @else {
+    <!-- Orders Cards List -->
+    <div class="space-y-6">
+      @for (order of filteredOrders(); track order.orderNumber) {
+        <div class="vt-card p-6 rounded-3xl border border-neutral-800 bg-neutral-950/90 space-y-6 shadow-xl hover:border-purple-500/40 transition-all">
+          
+          <!-- Order Card Top Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-800 pb-4">
+            
+            <div class="space-y-1">
+              <div class="flex items-center gap-3">
+                <span class="text-lg font-black text-white tracking-wider">
+                  #{{ order.orderNumber }}
+                </span>
+                <span [class]="'px-3 py-1 rounded-full border text-[11px] font-extrabold uppercase tracking-wider ' + getStatusBadgeClass(order.status)">
+                  {{ getStatusLabel(order.status) }}
+                </span>
+              </div>
+              <p class="text-xs text-neutral-400">
+                Placed on: <span class="text-neutral-200 font-semibold">{{ order.createdAt | date:'mediumDate' }}</span>
+              </p>
+            </div>
+
+            <a
+              [href]="getWhatsAppLink(order)"
+              target="_blank"
+              class="self-start sm:self-auto px-4 py-2 rounded-xl bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+            >
+              <i class="pi pi-whatsapp text-sm"></i>
+              <span>Follow up on WhatsApp</span>
+            </a>
+
+          </div>
+
+          <!-- Items Grid -->
+          <div class="space-y-3">
+            <h4 class="text-xs uppercase font-bold text-neutral-400 tracking-wider">Order Items:</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              @for (item of order.items; track item.productId) {
+                <div class="p-3 rounded-2xl bg-neutral-900 border border-neutral-800/80 flex items-center gap-3">
+                  <div class="w-14 h-14 rounded-xl overflow-hidden bg-neutral-950 border border-neutral-800 shrink-0">
+                    <img [src]="item.productImage" [alt]="item.productName" class="w-full h-full object-cover" />
+                  </div>
+                  <div class="min-w-0 flex-grow">
+                    <h5 class="text-xs font-bold text-white truncate">{{ item.productName }}</h5>
+                    <span class="text-[10px] text-purple-400 font-semibold block">Product ID: {{ item.productId }}</span>
+                    <div class="flex items-center justify-between text-[11px] text-neutral-400 mt-1">
+                      <span>Qty: {{ item.quantity }}</span>
+                      <span class="font-bold text-white">{{ item.lineTotal.toLocaleString() }} EGP</span>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Customer Address & Summary Footer Bar -->
+          <div class="pt-4 border-t border-neutral-800 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
+            
+            <div class="space-y-1 max-w-md">
+              <span class="text-[10px] uppercase font-bold text-neutral-500 tracking-wider block">Delivery Destination:</span>
+              <p class="text-neutral-300 font-medium">
+                <strong class="text-white">{{ order.customer.fullName }}</strong> ({{ order.customer.phone }})
+              </p>
+              <p class="text-neutral-400 text-[11px] truncate">
+                {{ order.customer.governorate }} - {{ order.customer.address }}
+              </p>
+            </div>
+
+            <!-- Price Breakdown Pill -->
+            <div class="bg-neutral-900 p-4 rounded-2xl border border-neutral-800 flex items-center gap-6 self-start md:self-auto">
+              <div>
+                <span class="text-[10px] text-neutral-500 uppercase block">Subtotal</span>
+                <span class="font-bold text-neutral-300">{{ order.subtotal.toLocaleString() }} EGP</span>
+              </div>
+              <div class="border-l border-neutral-800 pl-6">
+                <span class="text-[10px] text-neutral-500 uppercase block">Shipping</span>
+                <span class="font-bold text-neutral-300">{{ order.deliveryFee.toLocaleString() }} EGP</span>
+              </div>
+              <div class="border-l border-neutral-800 pl-6">
+                <span class="text-[10px] text-neutral-500 uppercase block">Grand Total</span>
+                <span class="text-lg font-black text-emerald-400">{{ order.totalAmount.toLocaleString() }} EGP</span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

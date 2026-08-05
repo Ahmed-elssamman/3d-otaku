@@ -10,6 +10,8 @@ import { Product3dViewerComponent } from '@shared/components/product-3d-viewer/p
 import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
 import { ProductCardComponent } from '@shared/components/product-card/product-card.component';
 
+import { CartService } from '@core/services/cart.service';
+
 export type DisplayStageMode = '3d' | 'image';
 
 @Component({
@@ -27,9 +29,18 @@ export type DisplayStageMode = '3d' | 'image';
 export class ProductDetailsPageComponent implements OnInit {
   private readonly productService = inject(ProductService);
   private readonly whatsAppService = inject(WhatsAppService);
+  private readonly cartService = inject(CartService);
   private readonly seoService = inject(SeoService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+
+  addToCartAndCheckout(): void {
+    const prod = this.product();
+    if (prod) {
+      this.cartService.addItem(prod, 1);
+      this.router.navigate(['/cart']);
+    }
+  }
 
   readonly slug = input<string>();
   readonly productBadgeNone = ProductBadge.NONE;

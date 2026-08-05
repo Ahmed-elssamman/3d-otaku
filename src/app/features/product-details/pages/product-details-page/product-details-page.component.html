@@ -172,15 +172,13 @@
 
         <!-- Action CTA Buttons -->
         <div class="space-y-3 pt-2">
-          <a
-            [href]="whatsAppUrl()"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-extrabold text-sm text-center flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
+          <button
+            (click)="addToCartAndCheckout()"
+            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm text-center flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
           >
-            <i class="pi pi-whatsapp text-lg"></i>
-            <span>Order Directly via WhatsApp</span>
-          </a>
+            <i class="pi pi-shopping-bag text-lg"></i>
+            <span>Add to Cart & Order via WhatsApp</span>
+          </button>
 
           <a
             routerLink="/contact"

@@ -65,15 +65,13 @@
           <i class="pi pi-eye text-[11px] opacity-70"></i>
           <span>Details</span>
         </a>
-        <a
-          [href]="whatsAppUrl()"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="px-3 py-2 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+        <button
+          (click)="addToCartAndCheckout($event)"
+          class="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
         >
-          <i class="pi pi-whatsapp text-xs"></i>
-          <span>WhatsApp</span>
-        </a>
+          <i class="pi pi-shopping-bag text-xs"></i>
+          <span>Order Now</span>
+        </button>
       </div>
     </div>
   </div>

@@ -5,9 +5,9 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   brandName: APP_CONSTANTS.BRAND_NAME,
   slogan: APP_CONSTANTS.BRAND_SLOGAN,
   whatsappNumber: APP_CONSTANTS.WHATSAPP_NUMBER,
-  whatsappDefaultMessage: 'Hello 3D Otaku, I want to place an order.',
+  whatsappDefaultMessage: 'Hello 3D Otaku, I want to place a new order.',
   email: 'hello@3dotaku.com',
-  phone: '+20 120 797 7464',
+  phone: '+20 11 12961724',
   address: 'Cairo, Egypt',
   facebookUrl: 'https://facebook.com/3dotaku',
   instagramUrl: 'https://instagram.com/3dotaku',
@@ -19,5 +19,8 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   defaultCurrency: 'EGP',
   deliveryNote: 'Production starts after order confirmation. Delivery windows vary by model size and finish.',
   safetyNote: APP_CONSTANTS.SAFETY_DISCLAIMER,
-  maintenanceMode: false
+  maintenanceMode: false,
+  deliveryFee: 60,
+  deliveryDays: '3 - 5 Business Days',
+  deliveryInfoNote: 'Worldwide and nationwide delivery. Production starts immediately after WhatsApp order confirmation.'
 };

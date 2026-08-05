@@ -57,7 +57,10 @@ export class AdminSettingsPageComponent implements OnInit {
     defaultCurrency: ['EGP', [Validators.required]],
     deliveryNote: ['', [Validators.required]],
     safetyNote: ['', [Validators.required]],
-    maintenanceMode: [false]
+    maintenanceMode: [false],
+    deliveryFee: [60, [Validators.required, Validators.min(0)]],
+    deliveryDays: ['3 - 5 Business Days', [Validators.required]],
+    deliveryInfoNote: ['']
   });
 
   ngOnInit(): void {

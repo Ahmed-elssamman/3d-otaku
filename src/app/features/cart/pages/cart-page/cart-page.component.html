@@ -1,0 +1,339 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 select-none">
+
+  <!-- Header Breadcrumb & Title -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-800/80 pb-6">
+    <div>
+      <div class="flex items-center gap-2 text-xs text-neutral-400 mb-2">
+        <a routerLink="/products" class="hover:text-pink-400 transition-colors flex items-center gap-1">
+          <i class="pi pi-arrow-left text-[10px]"></i>
+          <span>Back to Catalog</span>
+        </a>
+        <span>/</span>
+        <span class="text-white font-semibold">Shopping Cart & Checkout</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-black text-white flex items-center gap-3">
+        <span>Shopping Cart</span>
+        <span class="vt-badge vt-badge-pink text-xs font-bold px-3 py-1">
+          {{ itemCount() }} Items
+        </span>
+      </h1>
+    </div>
+
+    @if (items().length > 0) {
+      <button
+        (click)="clearCart()"
+        class="self-start md:self-auto px-4 py-2 rounded-xl bg-neutral-900 hover:bg-red-950/40 border border-neutral-800 hover:border-red-500/50 text-neutral-400 hover:text-red-400 text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md"
+      >
+        <i class="pi pi-trash text-xs"></i>
+        <span>Clear Cart</span>
+      </button>
+    }
+  </div>
+
+  @if (items().length === 0) {
+    <!-- Empty Cart State -->
+    <div class="py-20 text-center vt-card rounded-3xl p-8 max-w-2xl mx-auto space-y-6 border border-purple-500/20 shadow-[0_0_50px_rgba(168,85,247,0.15)]">
+      <div class="w-24 h-24 rounded-3xl bg-neutral-900 border border-neutral-800 mx-auto flex items-center justify-center text-4xl text-neutral-600 shadow-inner">
+        <i class="pi pi-shopping-bag text-purple-400 animate-bounce"></i>
+      </div>
+      <div class="space-y-2">
+        <h2 class="text-2xl font-black text-white">Your Cart is Currently Empty</h2>
+        <p class="text-neutral-400 text-sm max-w-md mx-auto leading-relaxed">
+          You haven't added any 3D anime models or weapons to your cart yet. Explore our forge catalog and craft your reality!
+        </p>
+      </div>
+      <a
+        routerLink="/products"
+        class="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-amber-500 hover:scale-105 text-white font-black text-sm transition-all shadow-[0_0_25px_rgba(239,68,68,0.5)] cursor-pointer"
+      >
+        <i class="pi pi-box text-base"></i>
+        <span>Browse 3D Anime Catalog</span>
+      </a>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left Column (Items List + Delivery Info Form) -->
+      <div class="lg:col-span-7 space-y-8">
+        
+        <!-- Cart Items List Card -->
+        <div class="space-y-4">
+          <h2 class="text-lg font-black text-white flex items-center gap-2">
+            <i class="pi pi-list text-pink-400"></i>
+            <span>Cart Items Summary</span>
+          </h2>
+
+          <div class="space-y-3">
+            @for (item of items(); track getProductId(item)) {
+              <div class="vt-card p-4 rounded-2xl border border-neutral-800/90 bg-neutral-950 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg hover:border-purple-500/40 transition-all">
+                
+                <!-- Product Thumbnail & Info -->
+                <div class="flex items-center gap-4 w-full sm:w-auto">
+                  <div class="w-20 h-20 rounded-xl overflow-hidden bg-neutral-900 border border-neutral-800 shrink-0">
+                    <img
+                      [src]="item.product.image"
+                      [alt]="item.product.name"
+                      class="w-full h-full object-cover object-center"
+                    />
+                  </div>
+
+                  <div class="space-y-1 min-w-0">
+                    <span class="vt-badge vt-badge-accent text-[10px]">
+                      {{ item.product.category }}
+                    </span>
+                    <h3 class="text-base font-bold text-white truncate max-w-[200px] sm:max-w-[240px]">
+                      {{ item.product.name }}
+                    </h3>
+                    <p class="text-xs text-neutral-400 font-semibold">
+                      Unit Price: {{ (item.product.price || 0).toLocaleString() }} EGP
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Quantity Controls & Line Price -->
+                <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-800">
+                  
+                  <!-- Quantity Stepper -->
+                  <div class="flex items-center gap-2 bg-neutral-900 p-1 rounded-xl border border-neutral-800">
+                    <button
+                      (click)="decrementQuantity(getProductId(item), item.quantity)"
+                      class="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                      title="Decrease"
+                    >
+                      <i class="pi pi-minus text-[10px]"></i>
+                    </button>
+                    <span class="w-8 text-center text-sm font-black text-white">
+                      {{ item.quantity }}
+                    </span>
+                    <button
+                      (click)="incrementQuantity(getProductId(item), item.quantity)"
+                      class="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center text-xs transition-colors cursor-pointer"
+                      title="Increase"
+                    >
+                      <i class="pi pi-plus text-[10px]"></i>
+                    </button>
+                  </div>
+
+                  <!-- Line Total -->
+                  <div class="text-right min-w-[90px]">
+                    <span class="text-[10px] text-neutral-500 uppercase font-semibold block">Total</span>
+                    <span class="text-base font-black text-pink-400">
+                      {{ ((item.product.price || 0) * item.quantity).toLocaleString() }} EGP
+                    </span>
+                  </div>
+
+                  <!-- Remove Button -->
+                  <button
+                    (click)="removeItem(getProductId(item))"
+                    class="p-2 rounded-xl text-neutral-500 hover:text-red-400 hover:bg-red-950/40 transition-colors cursor-pointer"
+                    title="Remove item"
+                  >
+                    <i class="pi pi-times text-sm"></i>
+                  </button>
+
+                </div>
+
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Delivery Customer Details Form -->
+        <div class="vt-card p-6 rounded-3xl border border-neutral-800/90 bg-neutral-950/90 space-y-6 shadow-xl">
+          <div class="border-b border-neutral-800 pb-4">
+            <h2 class="text-xl font-black text-white flex items-center gap-2">
+              <i class="pi pi-user text-emerald-400"></i>
+              <span>Customer & Delivery Details</span>
+            </h2>
+            <p class="text-xs text-neutral-400 mt-1">
+              Please fill out your delivery details accurately. They will be included directly in your WhatsApp order message.
+            </p>
+          </div>
+
+          <form [formGroup]="deliveryForm" class="space-y-4">
+            
+            <!-- Full Name & Primary Phone -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-neutral-300 block">
+                  Full Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  formControlName="fullName"
+                  placeholder="e.g. Ahmed Samir"
+                  class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+                />
+                @if (deliveryForm.controls.fullName.invalid && deliveryForm.controls.fullName.touched) {
+                  <p class="text-[11px] text-red-400 font-medium">Please enter your full name (at least 3 characters).</p>
+                }
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-neutral-300 block">
+                  Primary Phone Number <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  formControlName="phone"
+                  placeholder="01112961724"
+                  class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+                />
+                @if (deliveryForm.controls.phone.invalid && deliveryForm.controls.phone.touched) {
+                  <p class="text-[11px] text-red-400 font-medium">Please enter a valid phone number (10-15 digits).</p>
+                }
+              </div>
+            </div>
+
+            <!-- Secondary Phone & Governorate -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-neutral-300 block">
+                  Alternative Phone <span class="text-neutral-500 text-[10px]">(Optional)</span>
+                </label>
+                <input
+                  type="tel"
+                  formControlName="secondaryPhone"
+                  placeholder="01012345678"
+                  class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold text-neutral-300 block">
+                  Governorate / City <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  formControlName="governorate"
+                  placeholder="e.g. Cairo - Madinaty"
+                  class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+                />
+                @if (deliveryForm.controls.governorate.invalid && deliveryForm.controls.governorate.touched) {
+                  <p class="text-[11px] text-red-400 font-medium">Please specify your governorate or city.</p>
+                }
+              </div>
+            </div>
+
+            <!-- Detailed Address -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-neutral-300 block">
+                Detailed Delivery Address <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                formControlName="address"
+                placeholder="Street name, building/apartment number..."
+                class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+              />
+              @if (deliveryForm.controls.address.invalid && deliveryForm.controls.address.touched) {
+                <p class="text-[11px] text-red-400 font-medium">Please enter detailed address for accurate shipping.</p>
+              }
+            </div>
+
+            <!-- Additional Notes -->
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-neutral-300 block">
+                Order Notes / Requests <span class="text-neutral-500 text-[10px]">(Optional)</span>
+              </label>
+              <textarea
+                formControlName="notes"
+                rows="2"
+                placeholder="Preferred delivery times, custom colors, or specific instructions..."
+                class="w-full px-4 py-3 rounded-xl bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-white text-sm outline-none transition-colors"
+              ></textarea>
+            </div>
+
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Right Column (Order Summary & Checkout Button) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <div class="vt-card p-6 rounded-3xl border border-purple-500/40 bg-neutral-950/95 space-y-6 shadow-[0_0_40px_rgba(168,85,247,0.15)] sticky top-24">
+          
+          <div class="border-b border-neutral-800 pb-4 flex items-center justify-between">
+            <h2 class="text-xl font-black text-white">Order Summary</h2>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-bold">
+              WhatsApp Order
+            </span>
+          </div>
+
+          <!-- Price Breakdown -->
+          <div class="space-y-3 text-sm">
+            
+            <div class="flex items-center justify-between text-neutral-300">
+              <span>Items Subtotal ({{ itemCount() }}):</span>
+              <span class="font-bold text-white">{{ subtotal().toLocaleString() }} EGP</span>
+            </div>
+
+            <div class="flex items-center justify-between text-neutral-300">
+              <span class="flex items-center gap-1.5">
+                <i class="pi pi-truck text-emerald-400 text-xs"></i>
+                <span>Shipping Fee:</span>
+              </span>
+              <span class="font-bold text-white">{{ deliveryFee().toLocaleString() }} EGP</span>
+            </div>
+
+            <div class="flex items-center justify-between text-neutral-300">
+              <span class="flex items-center gap-1.5">
+                <i class="pi pi-clock text-amber-400 text-xs"></i>
+                <span>Estimated Delivery:</span>
+              </span>
+              <span class="font-extrabold text-amber-300 text-xs bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                {{ deliveryDays() }}
+              </span>
+            </div>
+
+            <div class="pt-3 border-t border-neutral-800 flex items-center justify-between text-base">
+              <span class="font-black text-white">Grand Total:</span>
+              <span class="text-2xl font-black text-emerald-400">
+                {{ totalPrice().toLocaleString() }} EGP
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Delivery Note Banner -->
+          <div class="p-4 rounded-2xl bg-neutral-900 border border-neutral-800 text-xs text-neutral-300 space-y-1">
+            <div class="flex items-center gap-2 font-bold text-white">
+              <i class="pi pi-info-circle text-pink-400"></i>
+              <span>Delivery & Printing Note:</span>
+            </div>
+            <p class="text-[11px] text-neutral-400 leading-relaxed">
+              {{ deliveryInfoNote() }}
+            </p>
+          </div>
+
+          <!-- WhatsApp Checkout Button -->
+          <div class="space-y-3 pt-2">
+            <button
+              (click)="submitOrderToWhatsApp()"
+              [disabled]="isSubmittingOrder()"
+              [class.opacity-60]="isSubmittingOrder()"
+              class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white font-black text-base text-center flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(16,185,129,0.4)] hover:scale-[1.02] transition-all cursor-pointer"
+            >
+              @if (isSubmittingOrder()) {
+                <i class="pi pi-spin pi-spinner text-xl"></i>
+                <span>Creating Order...</span>
+              } @else {
+                <i class="pi pi-whatsapp text-2xl animate-pulse"></i>
+                <span>Complete Order via WhatsApp</span>
+              }
+            </button>
+
+            <p class="text-[11px] text-center text-neutral-400">
+              🔒 WhatsApp will open with a formatted order message including your items, grand total, and delivery address.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+</div>
