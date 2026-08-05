@@ -3,8 +3,9 @@ import { RouterLink, Router } from '@angular/router';
 import { ProductService } from '@core/services/product.service';
 import { WhatsAppService } from '@core/services/whatsapp.service';
 import { SeoService } from '@core/services/seo.service';
+import { ProductBadge } from '@core/enums/product-badge.enum';
 import { Product } from '@core/models/product.model';
-import { PRODUCT_SPECS_CONFIG, SAFETY_NOTE_TEXT, ProductSpecItem } from '../../product-details.control';
+import { PRODUCT_SPECS_CONFIG, ProductSpecItem } from '../../product-details.control';
 import { Product3dViewerComponent } from '@shared/components/product-3d-viewer/product-3d-viewer.component';
 import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
 import { ProductCardComponent } from '@shared/components/product-card/product-card.component';
@@ -28,10 +29,12 @@ export class ProductDetailsPageComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly slug = input.required<string>();
+  readonly productBadgeNone = ProductBadge.NONE;
 
   readonly product = signal<Product | null>(null);
+  readonly isLoading = signal<boolean>(true);
   readonly specsConfig: ProductSpecItem[] = PRODUCT_SPECS_CONFIG;
-  readonly safetyNote = SAFETY_NOTE_TEXT;
+  readonly safetyNote = computed(() => this.product()?.safetyNote ?? '');
 
   readonly whatsAppUrl = computed(() => {
     const prod = this.product();
@@ -52,7 +55,27 @@ export class ProductDetailsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const found = this.productService.getProductBySlug(this.slug());
+    this.isLoading.set(true);
+    this.productService.getProductBySlug(this.slug()).subscribe({
+      next: (res) => {
+        if (res.data) {
+          this.product.set(res.data);
+          this.seoService.setTitle(`${res.data.name} - 3D Anime Model`);
+          this.seoService.setMetaDescription(`${res.data.name} (${res.data.category}). ${res.data.description}`);
+        } else {
+          this.fallbackLocalSlug();
+        }
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.fallbackLocalSlug();
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  private fallbackLocalSlug(): void {
+    const found = this.productService.getProductById(this.slug()) || this.productService.allProducts().find(p => p.slug === this.slug());
     if (found) {
       this.product.set(found);
       this.seoService.setTitle(`${found.name} - 3D Anime Model`);

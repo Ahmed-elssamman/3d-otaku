@@ -1,21 +1,40 @@
 import { ProductCategory } from '../enums/product-category.enum';
 import { ProductBadge } from '../enums/product-badge.enum';
+import { ProductMaterial } from '../enums/product-material.enum';
+import { ProductModelType } from '../enums/product-model-type.enum';
 
 export interface Product {
   id: string;
+  _id?: string;
   slug: string;
   name: string;
   category: ProductCategory;
+  shortDescription: string;
   description: string;
   price: number;
+  discountPrice?: number | null;
   rating: number;
   image: string;
+  gallery: string[];
   modelUrl: string;
+  modelType: ProductModelType | string;
+  posterImage?: string | null;
   tags: string[];
-  material: string;
+  material: ProductMaterial;
+  finish: string;
+  color: string;
   size: string;
   weight: string;
   printTime: string;
+  layerHeight?: string | null;
+  infill?: string | null;
   isFeatured: boolean;
+  isActive: boolean;
   badge?: ProductBadge;
+  safetyNote: string;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  keywords?: string[] | null;
+  createdAt: string;
+  updatedAt: string;
 }

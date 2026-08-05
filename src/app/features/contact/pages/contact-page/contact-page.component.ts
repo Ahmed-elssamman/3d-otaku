@@ -2,6 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { WhatsAppService } from '@core/services/whatsapp.service';
 import { SeoService } from '@core/services/seo.service';
+import { CustomOrderService } from '../../services/custom-order.service';
 import { PRODUCT_TYPE_OPTIONS, COLOR_FINISH_OPTIONS, CUSTOM_FAQ_ITEMS, FaqItem } from '../../contact.control';
 import { CustomOrderRequest } from '@core/models/custom-order-request.model';
 
@@ -15,6 +16,7 @@ import { CustomOrderRequest } from '@core/models/custom-order-request.model';
 export class ContactPageComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly whatsAppService = inject(WhatsAppService);
+  private readonly customOrderService = inject(CustomOrderService);
   private readonly seoService = inject(SeoService);
 
   readonly productTypeOptions: string[] = PRODUCT_TYPE_OPTIONS;
@@ -33,6 +35,7 @@ export class ContactPageComponent implements OnInit {
   });
 
   readonly isSubmitted = signal<boolean>(false);
+  readonly isSubmitting = signal<boolean>(false);
   readonly generatedWhatsAppUrl = signal<string>('');
 
   ngOnInit(): void {
@@ -46,11 +49,32 @@ export class ContactPageComponent implements OnInit {
       return;
     }
 
+    this.isSubmitting.set(true);
     const request: CustomOrderRequest = this.customForm.value;
     const url = this.whatsAppService.getCustomOrderUrl(request);
     this.generatedWhatsAppUrl.set(url);
-    this.isSubmitted.set(true);
 
-    window.open(url, '_blank');
+    this.customOrderService.createCustomOrder({
+      fullName: request.fullName,
+      phone: request.phone,
+      whatsappNumber: request.phone,
+      email: request.email,
+      productIdea: request.productType,
+      description: request.details,
+      preferredColor: request.colorFinish,
+      estimatedSize: request.dimensions,
+      referenceImageUrl: request.referenceUrl
+    }).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.isSubmitted.set(true);
+        window.open(url, '_blank');
+      },
+      error: () => {
+        this.isSubmitting.set(false);
+        this.isSubmitted.set(true);
+        window.open(url, '_blank');
+      }
+    });
   }
 }

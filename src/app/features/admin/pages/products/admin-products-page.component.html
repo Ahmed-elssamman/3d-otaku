@@ -1,0 +1,69 @@
+<section class="space-y-6">
+  <p-toolbar styleClass="admin-card border-0">
+    <ng-template #start>
+      <div>
+        <h2 class="text-2xl font-black text-white">Catalog Manager</h2>
+        <p class="text-sm text-neutral-400">Search, filter, duplicate, and remove products with local persistence.</p>
+      </div>
+    </ng-template>
+    <ng-template #end>
+      <a routerLink="/admin/products/new" class="admin-action-button">Add Product</a>
+    </ng-template>
+  </p-toolbar>
+
+  <div class="grid gap-4 xl:grid-cols-4">
+    <div class="admin-card p-4">
+      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Search</label>
+      <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearchTermChange($event)" class="w-full" placeholder="Search by product name" />
+    </div>
+    <div class="admin-card p-4">
+      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Category</label>
+      <p-select [options]="categoryOptions" optionLabel="label" optionValue="value" [ngModel]="selectedCategory()" (ngModelChange)="onCategoryChange($event)" appendTo="body" class="w-full" />
+    </div>
+    <div class="admin-card p-4">
+      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Featured</label>
+      <p-select [options]="featuredFilterOptions" optionLabel="label" optionValue="value" [ngModel]="selectedFeaturedFilter()" (ngModelChange)="onFeaturedFilterChange($event)" appendTo="body" class="w-full" />
+    </div>
+    <div class="admin-card p-4">
+      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Sort</label>
+      <p-select [options]="sortOptions" optionLabel="label" optionValue="value" [ngModel]="selectedSort()" (ngModelChange)="onSortChange($event)" appendTo="body" class="w-full" />
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="grid gap-4 md:grid-cols-2">
+      <p-skeleton height="18rem" borderRadius="1.5rem" />
+      <p-skeleton height="18rem" borderRadius="1.5rem" />
+    </div>
+  } @else {
+    <app-admin-product-table
+      [products]="filteredProducts()"
+      [totalRecords]="filteredProducts().length"
+      [first]="first()"
+      [rows]="rows()"
+      (pageChange)="onPageChange($event)"
+      (edit)="editProduct($event)"
+      (duplicate)="duplicateProduct($event)"
+      (delete)="deleteProduct($event)"
+      (preview)="openPreview($event)"
+    />
+  }
+
+  <p-dialog
+    header="Product Preview"
+    [modal]="true"
+    [visible]="previewVisible()"
+    [style]="{ width: 'min(1100px, 95vw)' }"
+    (visibleChange)="previewVisible.set($event)"
+  >
+    @if (selectedPreviewProduct(); as product) {
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-xl font-bold text-white">{{ product.name }}</h3>
+          <p class="text-sm text-neutral-400">{{ product.shortDescription }}</p>
+        </div>
+        <app-admin-file-preview [imageUrl]="product.image" [modelUrl]="product.modelUrl" [posterImage]="product.posterImage ?? null" [productName]="product.name" />
+      </div>
+    }
+  </p-dialog>
+</section>

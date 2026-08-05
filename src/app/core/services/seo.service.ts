@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
-import { APP_CONSTANTS } from '../constants/app.constants';
+import { AdminSettingsService } from '../../features/admin/services/admin-settings.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,9 +8,11 @@ import { APP_CONSTANTS } from '../constants/app.constants';
 export class SeoService {
   private readonly titleService = inject(Title);
   private readonly metaService = inject(Meta);
+  private readonly adminSettingsService = inject(AdminSettingsService);
 
   setTitle(pageTitle: string): void {
-    const fullTitle = pageTitle ? `${pageTitle} | ${APP_CONSTANTS.BRAND_NAME}` : `${APP_CONSTANTS.BRAND_NAME} - ${APP_CONSTANTS.BRAND_SLOGAN}`;
+    const settings = this.adminSettingsService.getSettings();
+    const fullTitle = pageTitle ? `${pageTitle} | ${settings.brandName}` : `${settings.brandName} - ${settings.slogan}`;
     this.titleService.setTitle(fullTitle);
   }
 

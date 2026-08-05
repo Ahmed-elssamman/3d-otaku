@@ -1,0 +1,42 @@
+<div class="grid gap-4 xl:grid-cols-2">
+  <div class="admin-card overflow-hidden p-3">
+    <div class="mb-3 flex items-center justify-between">
+      <h4 class="text-sm font-bold text-white">Image Preview</h4>
+      <span class="text-xs text-neutral-500">{{ productName() }}</span>
+    </div>
+    @if (imageUrl()) {
+      <img [src]="imageUrl()" [alt]="productName()" class="h-72 w-full rounded-2xl object-cover" />
+    } @else {
+      <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
+        Main image preview will appear here.
+      </div>
+    }
+  </div>
+
+  <div class="admin-card overflow-hidden p-3">
+    <div class="mb-3 flex items-center justify-between">
+      <h4 class="text-sm font-bold text-white">3D Preview</h4>
+      <span class="text-xs text-neutral-500">Deferred render</span>
+    </div>
+    @if (modelUrl()) {
+      @defer (on viewport) {
+        <model-viewer
+          [attr.src]="modelUrl()"
+          [attr.poster]="posterImage() || imageUrl()"
+          camera-controls
+          auto-rotate
+          shadow-intensity="1"
+          style="width: 100%; height: 288px;"
+        ></model-viewer>
+      } @placeholder {
+        <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
+          Loading 3D preview...
+        </div>
+      }
+    } @else {
+      <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
+        Enter a model URL to preview the 3D asset.
+      </div>
+    }
+  </div>
+</div>

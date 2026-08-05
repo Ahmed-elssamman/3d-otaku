@@ -41,11 +41,18 @@ export class LoginPageComponent implements OnInit {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    setTimeout(() => {
-      const email = this.loginForm.value.email;
-      this.authService.login(email);
-      this.isSubmitting.set(false);
-      this.router.navigate(['/products']);
-    }, 600);
+    const email = this.loginForm.value.email ?? '';
+    const password = this.loginForm.value.password ?? '';
+
+    this.authService.login({ email, password }).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.router.navigate([this.authService.isAdmin() ? '/admin/dashboard' : '/products']);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set(err?.message || 'Unable to sign in with those credentials.');
+      }
+    });
   }
 }

@@ -33,7 +33,7 @@
         
         <!-- Header & Title -->
         <div>
-          @if (prod.badge) {
+          @if (prod.badge && prod.badge !== productBadgeNone) {
             <span class="vt-badge vt-badge-pink mb-2">
               {{ prod.badge }}
             </span>
@@ -101,7 +101,7 @@
           <i class="pi pi-shield text-pink-400 text-base shrink-0 mt-0.5"></i>
           <div>
             <strong class="block text-white mb-0.5">Safety & Decorative Notice:</strong>
-            <p class="leading-relaxed text-neutral-400 text-[11px]">{{ safetyNote }}</p>
+            <p class="leading-relaxed text-neutral-400 text-[11px]">{{ safetyNote() }}</p>
           </div>
         </div>
 

@@ -29,7 +29,7 @@
           <i class="pi pi-sliders-h text-neutral-400 text-xs"></i>
           <span>Filters</span>
         </h3>
-        @if (searchTerm() || selectedCategory() !== 'All' || maxPriceFilter() < 150) {
+        @if (searchTerm() || selectedCategory() !== 'All' || maxPriceFilter() < 1500) {
           <button (click)="resetFilters()" class="text-[11px] font-semibold text-purple-400 hover:underline cursor-pointer">
             Reset All
           </button>
@@ -79,9 +79,9 @@
         </div>
         <input
           type="range"
-          min="20"
-          max="150"
-          step="5"
+          min="50"
+          max="3000"
+          step="50"
           [value]="maxPriceFilter()"
           (input)="onPriceChange($event)"
           class="w-full accent-white cursor-pointer"
@@ -96,7 +96,7 @@
       <!-- Toolbar (Count & Sort) -->
       <div class="vt-card rounded-2xl p-4 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
         <span class="text-neutral-400 font-medium">
-          Showing <strong class="text-white font-bold">{{ filteredProducts().length }}</strong> items
+          Showing <strong class="text-white font-bold">{{ filteredProducts.length }}</strong> items
         </span>
 
         <div class="flex items-center gap-2">
@@ -118,11 +118,11 @@
       <!-- Grid / Loader / Empty State -->
       @if (isLoading()) {
         <app-otaku-loader text="Fetching Catalog..." />
-      } @else if (filteredProducts().length === 0) {
+      } @else if (filteredProducts.length === 0) {
         <app-empty-state (actionClick)="resetFilters()" />
       } @else {
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-          @for (product of filteredProducts(); track product.id) {
+          @for (product of filteredProducts; track product.id) {
             <app-product-card [product]="product" />
           }
         </div>

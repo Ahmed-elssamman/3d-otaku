@@ -1,234 +1,253 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, of, map } from 'rxjs';
 import { Product } from '../models/product.model';
-import { ProductCategory } from '../enums/product-category.enum';
-import { ProductBadge } from '../enums/product-badge.enum';
+import { Category } from '../models/category.model';
+import { ProductQuery } from '../../features/products/models/product-query.model';
+import { ApiResponse, PaginatedResponse } from '../models/api-response.model';
+import { ApiService } from '../api/api.service';
+import { API_ENDPOINTS } from '../api/api-endpoints';
+import { environment } from '../../../environments/environment';
+import { APP_CONSTANTS } from '../constants/app.constants';
+import { MOCK_PRODUCTS } from '../../features/admin/data/mock-products.data';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private readonly productsSignal = signal<Product[]>([
-    {
-      id: 'prod-01',
-      slug: 'shadow-katana-display',
-      name: 'Shadow Katana Display',
-      category: ProductCategory.SWORDS,
-      description: 'Handcrafted 3D printed anime katana designed for wall display and cosplay showcase. Highly detailed tsuka guard and dark matte finish.',
-      price: 89.99,
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shadow-katana.glb',
-      tags: ['Anime Sword', 'Cosplay Prop', 'Display Blade'],
-      material: 'Premium PLA+',
-      size: '104 cm',
-      weight: '450g',
-      printTime: '18 hrs',
-      isFeatured: true,
-      badge: ProductBadge.HOT
-    },
-    {
-      id: 'prod-02',
-      slug: 'demon-edge-dagger',
-      name: 'Demon Edge Dagger',
-      category: ProductCategory.DAGGERS,
-      description: 'Fierce demon slayer inspired ritual dagger featuring jagged blade geometry and dark purple accent wraps.',
-      price: 49.99,
-      rating: 4.8,
-      image: 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/demon-edge-dagger.glb',
-      tags: ['Dagger', 'Demon Prop', 'Collectible'],
-      material: 'Matte PLA',
-      size: '38 cm',
-      weight: '210g',
-      printTime: '9 hrs',
-      isFeatured: true,
-      badge: ProductBadge.NEW
-    },
-    {
-      id: 'prod-03',
-      slug: 'neon-shinobi-blade',
-      name: 'Neon Shinobi Blade',
-      category: ProductCategory.SWORDS,
-      description: 'Cyberpunk ninjato short blade with futuristic geometric tsuba guard and neon-inspired edge grooves.',
-      price: 79.99,
-      rating: 4.95,
-      image: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shadow-katana.glb',
-      tags: ['Cyberpunk', 'Shinobi', 'Anime Blade'],
-      material: 'PLA+ Reinforced',
-      size: '72 cm',
-      weight: '340g',
-      printTime: '14 hrs',
-      isFeatured: true,
-      badge: ProductBadge.LIMITED
-    },
-    {
-      id: 'prod-04',
-      slug: 'crimson-anime-sword',
-      name: 'Crimson Anime Sword',
-      category: ProductCategory.SWORDS,
-      description: 'Bold red tsuka flame pattern fantasy blade. Lightweight decorative prop designed for convention displays.',
-      price: 94.99,
-      rating: 4.7,
-      image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shadow-katana.glb',
-      tags: ['Crimson Blade', 'Cosplay', 'Flame Guard'],
-      material: 'High Density PLA',
-      size: '100 cm',
-      weight: '480g',
-      printTime: '20 hrs',
-      isFeatured: false,
-      badge: ProductBadge.BESTSELLER
-    },
-    {
-      id: 'prod-05',
-      slug: 'dragon-fang-kunai',
-      name: 'Dragon Fang Kunai Set',
-      category: ProductCategory.DAGGERS,
-      description: 'Set of 3 dragon engraved ninja kunai prop throwers with ring handles. Perfect for anime cosplay accessories.',
-      price: 34.99,
-      rating: 4.85,
-      image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/demon-edge-dagger.glb',
-      tags: ['Kunai', 'Ninja Accessory', '3 Piece Set'],
-      material: 'Eco PLA',
-      size: '24 cm each',
-      weight: '120g total',
-      printTime: '6 hrs',
-      isFeatured: true,
-      badge: ProductBadge.HOT
-    },
-    {
-      id: 'prod-06',
-      slug: 'cyber-samurai-mask',
-      name: 'Cyber Samurai Mask',
-      category: ProductCategory.COSPLAY_PROPS,
-      description: 'Wearable futuristic samurai mempo half-mask with ventilation filters and adjustable strap mount points.',
-      price: 64.99,
-      rating: 4.9,
-      image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/cyber-samurai-mask.glb',
-      tags: ['Wearable Prop', 'Cyberpunk Mask', 'Samurai'],
-      material: 'Flexible PLA+',
-      size: '18 x 15 cm',
-      weight: '190g',
-      printTime: '11 hrs',
-      isFeatured: true,
-      badge: ProductBadge.NEW
-    },
-    {
-      id: 'prod-07',
-      slug: 'otaku-desk-dragon',
-      name: 'Otaku Desk Dragon',
-      category: ProductCategory.DESK_MODELS,
-      description: 'Articulated 3D printed anime dragon figure with smooth moving spine and detailed horned head for setup decoration.',
-      price: 29.99,
-      rating: 4.92,
-      image: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/otaku-desk-dragon.glb',
-      tags: ['Desk Figurine', 'Articulated', 'Dragon'],
-      material: 'Matte Silk PLA',
-      size: '45 cm extended',
-      weight: '160g',
-      printTime: '8 hrs',
-      isFeatured: true,
-      badge: ProductBadge.BESTSELLER
-    },
-    {
-      id: 'prod-08',
-      slug: 'moon-breathing-blade',
-      name: 'Moon Breathing Blade',
-      category: ProductCategory.SWORDS,
-      description: 'Intricate crescent moon blade pattern katana with purple gradient hilts and textured tsuka-ito.',
-      price: 99.99,
-      rating: 5.0,
-      image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shadow-katana.glb',
-      tags: ['Moon Blade', 'Cosplay Katana', 'Premium'],
-      material: 'Ultra PLA+',
-      size: '108 cm',
-      weight: '510g',
-      printTime: '22 hrs',
-      isFeatured: false,
-      badge: ProductBadge.LIMITED
-    },
-    {
-      id: 'prod-09',
-      slug: 'phantom-tanto',
-      name: 'Phantom Tanto',
-      category: ProductCategory.DAGGERS,
-      description: 'Sleek stealth assassin tanto blade with minimalist sheath mount and textured grip.',
-      price: 42.99,
-      rating: 4.65,
-      image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/demon-edge-dagger.glb',
-      tags: ['Tanto', 'Assassin Dagger', 'Stealth'],
-      material: 'Black PLA',
-      size: '32 cm',
-      weight: '180g',
-      printTime: '7 hrs',
-      isFeatured: false
-    },
-    {
-      id: 'prod-10',
-      slug: 'shonen-hero-emblem',
-      name: 'Shonen Hero Emblem',
-      category: ProductCategory.COLLECTIBLES,
-      description: '3D wall mount emblem badge featuring layered anime power symbols and desk stand display base.',
-      price: 24.99,
-      rating: 4.78,
-      image: 'https://images.unsplash.com/photo-1563089145-599997674d42?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shonen-hero-emblem.glb',
-      tags: ['Collectible Emblem', 'Desk Decor', 'Anime Logo'],
-      material: 'Matte PLA',
-      size: '15 cm diameter',
-      weight: '110g',
-      printTime: '5 hrs',
-      isFeatured: false
-    },
-    {
-      id: 'prod-11',
-      slug: 'titan-hunter-blade',
-      name: 'Titan Hunter Blade',
-      category: ProductCategory.SWORDS,
-      description: 'Mechanical trigger handle dual sword prop used by titan ODM gear hunters. Removable blade segments.',
-      price: 119.99,
-      rating: 4.95,
-      image: 'https://images.unsplash.com/photo-1595590424283-b8f17842773f?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/shadow-katana.glb',
-      tags: ['ODM Prop', 'Titan Hunter', 'Mechanical Sword'],
-      material: 'High Impact PLA+',
-      size: '88 cm',
-      weight: '590g',
-      printTime: '26 hrs',
-      isFeatured: false,
-      badge: ProductBadge.HOT
-    },
-    {
-      id: 'prod-12',
-      slug: 'mystic-fox-mask',
-      name: 'Mystic Fox Kitsune Mask',
-      category: ProductCategory.COSPLAY_PROPS,
-      description: 'Traditional Kitsune fox mask reimagined in futuristic neon anime 3D print form. Lightweight wall or face display.',
-      price: 54.99,
-      rating: 4.88,
-      image: 'https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=800&q=80',
-      modelUrl: 'assets/models/cyber-samurai-mask.glb',
-      tags: ['Fox Mask', 'Kitsune', 'Anime Cosplay'],
-      material: 'Pure White PLA',
-      size: '22 x 16 cm',
-      weight: '220g',
-      printTime: '12 hrs',
-      isFeatured: false,
-      badge: ProductBadge.NEW
+  private api = inject(ApiService);
+  private productsSignal = signal<Product[]>(this.loadFromStorage());
+
+  allProducts = computed(() => this.productsSignal().filter(product => product.isActive));
+  featuredProducts = computed(() => this.productsSignal().filter(product => product.isActive && product.isFeatured));
+  adminProducts = computed(() => this.productsSignal());
+
+  getProducts(query?: ProductQuery): Observable<PaginatedResponse<Product>> {
+    if (environment.useMockApi) {
+      let items = this.productsSignal().filter(p => p.isActive);
+
+      if (query?.search) {
+        const searchLower = query.search.toLowerCase();
+        items = items.filter(
+          p => p.name.toLowerCase().includes(searchLower) || p.description.toLowerCase().includes(searchLower)
+        );
+      }
+
+      if (query?.category && query.category !== 'all' && query.category !== 'All Categories') {
+        items = items.filter(p => p.category === query.category);
+      }
+
+      if (query?.featured) {
+        items = items.filter(p => p.isFeatured);
+      }
+
+      if (query?.minPrice !== undefined) {
+        items = items.filter(p => p.price >= query.minPrice!);
+      }
+
+      if (query?.maxPrice !== undefined) {
+        items = items.filter(p => p.price <= query.maxPrice!);
+      }
+
+      if (query?.sort) {
+        if (query.sort === 'price_low') {
+          items.sort((a, b) => a.price - b.price);
+        } else if (query.sort === 'price_high') {
+          items.sort((a, b) => b.price - a.price);
+        } else if (query.sort === 'rating') {
+          items.sort((a, b) => b.rating - a.rating);
+        }
+      }
+
+      const page = query?.page || 1;
+      const limit = query?.limit || 12;
+      const totalItems = items.length;
+      const totalPages = Math.ceil(totalItems / limit) || 1;
+      const start = (page - 1) * limit;
+      const paginatedData = items.slice(start, start + limit);
+
+      return of({
+        success: true,
+        message: 'Products fetched successfully.',
+        data: paginatedData,
+        meta: {
+          page,
+          limit,
+          totalItems,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1
+        }
+      });
     }
-  ]);
 
-  readonly allProducts = computed(() => this.productsSignal());
-  readonly featuredProducts = computed(() => this.productsSignal().filter(p => p.isFeatured));
+    return this.api.getPaginated<Product>(API_ENDPOINTS.products.list, query as Record<string, unknown>).pipe(
+      map(res => {
+        if (res.data) {
+          const normalized = res.data.map(p => ({
+            ...p,
+            id: p.id || p._id || ''
+          }));
+          return { ...res, data: normalized };
+        }
+        return res;
+      })
+    );
+  }
 
-  getProductBySlug(slug: string): Product | null {
-    const found = this.productsSignal().find(p => p.slug === slug);
-    return found || null;
+  getFeaturedProducts(limit: number = 6): Observable<ApiResponse<Product[]>> {
+    if (environment.useMockApi) {
+      const featured = this.productsSignal()
+        .filter(p => p.isActive && p.isFeatured)
+        .slice(0, limit);
+
+      return of({
+        success: true,
+        message: 'Featured products fetched successfully.',
+        data: featured
+      });
+    }
+
+    return this.api.get<Product[]>(API_ENDPOINTS.products.featured, { limit }).pipe(
+      map(res => {
+        if (res.data) {
+          const normalized = res.data.map(p => ({
+            ...p,
+            id: p.id || p._id || ''
+          }));
+          return { ...res, data: normalized };
+        }
+        return res;
+      })
+    );
+  }
+
+  getProductBySlug(slug: string): Observable<ApiResponse<Product>> {
+    if (environment.useMockApi) {
+      const found = this.productsSignal().find(p => p.slug === slug);
+      if (!found) {
+        return of({
+          success: false,
+          message: 'Product not found.',
+          data: null as unknown as Product
+        });
+      }
+      return of({
+        success: true,
+        message: 'Product details fetched successfully.',
+        data: found
+      });
+    }
+
+    return this.api.get<Product>(API_ENDPOINTS.products.details(slug)).pipe(
+      map(res => {
+        if (res.data) {
+          return { ...res, data: { ...res.data, id: res.data.id || res.data._id || '' } };
+        }
+        return res;
+      })
+    );
+  }
+
+  getCategories(): Observable<ApiResponse<Category[]>> {
+    if (environment.useMockApi) {
+      const categoriesMap = new Map<string, number>();
+      this.productsSignal().forEach(p => {
+        if (p.isActive) {
+          categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
+        }
+      });
+
+      const categories: Category[] = Array.from(categoriesMap.entries()).map(([name, count], index) => ({
+        id: `cat_${index + 1}`,
+        name,
+        slug: name.toLowerCase().replace(/\s+/g, '-'),
+        description: `${name} items`,
+        image: 'assets/images/placeholder.webp',
+        productsCount: count
+      }));
+
+      return of({
+        success: true,
+        message: 'Categories fetched successfully.',
+        data: categories
+      });
+    }
+
+    return this.api.get<Category[]>(API_ENDPOINTS.products.categories);
+  }
+
+  getProductById(id: string): Product | null {
+    return this.productsSignal().find(product => product.id === id || product._id === id) || null;
+  }
+
+  createProduct(product: Product): void {
+    this.productsSignal.update(products => [product, ...products]);
+    this.saveToStorage();
+  }
+
+  updateProduct(id: string, product: Product): void {
+    this.productsSignal.update(products =>
+      products.map(item => (item.id === id || item._id === id ? product : item))
+    );
+    this.saveToStorage();
+  }
+
+  deleteProduct(id: string): void {
+    this.productsSignal.update(products => products.filter(product => product.id !== id && product._id !== id));
+    this.saveToStorage();
+  }
+
+  duplicateProduct(id: string): Product | null {
+    const source = this.getProductById(id);
+    if (!source) return null;
+
+    const timestamp = Date.now().toString();
+    const duplicate: Product = {
+      ...source,
+      id: `prod-${timestamp}`,
+      slug: `${source.slug}-copy-${timestamp.slice(-4)}`,
+      name: `${source.name} Copy`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    this.createProduct(duplicate);
+    return duplicate;
+  }
+
+  toggleFeatured(id: string): void {
+    const product = this.getProductById(id);
+    if (!product) return;
+    this.updateProduct(id, {
+      ...product,
+      isFeatured: !product.isFeatured,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  toggleActive(id: string): void {
+    const product = this.getProductById(id);
+    if (!product) return;
+    this.updateProduct(id, {
+      ...product,
+      isActive: !product.isActive,
+      updatedAt: new Date().toISOString()
+    });
+  }
+
+  saveToStorage(): void {
+    localStorage.setItem(APP_CONSTANTS.STORAGE_KEYS.PRODUCTS, JSON.stringify(this.productsSignal()));
+  }
+
+  loadFromStorage(): Product[] {
+    const raw = localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.PRODUCTS);
+    if (!raw) return [...MOCK_PRODUCTS];
+
+    try {
+      const parsed = JSON.parse(raw) as Product[];
+      return parsed.length ? parsed : [...MOCK_PRODUCTS];
+    } catch {
+      return [...MOCK_PRODUCTS];
+    }
   }
 }

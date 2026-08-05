@@ -1,5 +1,5 @@
 import { Component, signal, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { NAV_ITEMS, NavItem } from './app-header.control';
 import { AuthService } from '@core/services/auth.service';
 
@@ -12,6 +12,7 @@ import { AuthService } from '@core/services/auth.service';
 })
 export class AppHeaderComponent {
   readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   readonly navItems: NavItem[] = NAV_ITEMS;
   readonly isMobileMenuOpen = signal<boolean>(false);
 
@@ -26,5 +27,6 @@ export class AppHeaderComponent {
   onLogout(): void {
     this.authService.logout();
     this.closeMobileMenu();
+    this.router.navigate(['/']);
   }
 }

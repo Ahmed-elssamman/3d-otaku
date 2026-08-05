@@ -1,5 +1,6 @@
 import { Component, input, inject, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ProductBadge } from '@core/enums/product-badge.enum';
 import { Product } from '@core/models/product.model';
 import { WhatsAppService } from '@core/services/whatsapp.service';
 
@@ -18,4 +19,8 @@ export class ProductCardComponent {
   readonly whatsAppUrl = computed(() => this.whatsAppService.getProductOrderUrl(this.product()));
   readonly formattedPrice = computed(() => `$${this.product().price.toFixed(2)}`);
   readonly formattedRating = computed(() => this.product().rating.toFixed(1));
+  readonly displayBadge = computed(() => {
+    const badge = this.product().badge;
+    return badge && badge !== ProductBadge.NONE ? badge : null;
+  });
 }

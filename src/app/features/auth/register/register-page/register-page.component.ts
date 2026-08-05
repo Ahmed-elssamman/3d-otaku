@@ -49,11 +49,20 @@ export class RegisterPageComponent implements OnInit {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    setTimeout(() => {
-      const { fullName, email } = this.registerForm.value;
-      this.authService.register(fullName, email);
-      this.isSubmitting.set(false);
-      this.router.navigate(['/products']);
-    }, 600);
+    const fullName = this.registerForm.value.fullName ?? '';
+    const email = this.registerForm.value.email ?? '';
+    const password = this.registerForm.value.password ?? '';
+    const confirmPassword = this.registerForm.value.confirmPassword ?? '';
+
+    this.authService.register({ fullName, email, password, confirmPassword }).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.router.navigate(['/products']);
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        this.errorMessage.set(err?.message || 'Unable to register account. Please try again.');
+      }
+    });
   }
 }

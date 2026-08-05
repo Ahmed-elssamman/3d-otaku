@@ -1,7 +1,12 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './core/layouts/main-layout/main-layout.component';
+import { guestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
+  {
+    path: 'admin',
+    loadChildren: () => import('./features/admin/admin.routes').then(m => m.ADMIN_ROUTES)
+  },
   {
     path: '',
     component: MainLayoutComponent,
@@ -20,10 +25,12 @@ export const routes: Routes = [
       },
       {
         path: 'login',
+        canActivate: [guestGuard],
         loadComponent: () => import('./features/auth/login/login-page/login-page.component').then(m => m.LoginPageComponent)
       },
       {
         path: 'register',
+        canActivate: [guestGuard],
         loadComponent: () => import('./features/auth/register/register-page/register-page.component').then(m => m.RegisterPageComponent)
       },
       {
