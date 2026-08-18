@@ -39,6 +39,15 @@
       <button
         type="button"
         class="viewer-action"
+        aria-label="Rotate / Flip upright"
+        title="Flip / Rotate upright"
+        (click)="rotateModelX()"
+      >
+        <i class="pi pi-sync"></i>
+      </button>
+      <button
+        type="button"
+        class="viewer-action"
         aria-label="Zoom in"
         title="Zoom in"
         (click)="zoomIn()"
@@ -106,6 +115,33 @@
         <i class="pi pi-refresh"></i>
         Try again
       </button>
+    </div>
+  }
+
+  <!-- Color Selector HUD -->
+  @if (isLoaded()) {
+    <div class="viewer-color-bar" role="toolbar" aria-label="3D Model Color Palette">
+      <span class="color-bar-label">
+        <i class="pi pi-palette"></i>
+        <span>Color:</span>
+      </span>
+      <div class="color-bar-swatches">
+        @for (color of colorOptions; track color.hex) {
+          <button
+            type="button"
+            class="color-bar-btn"
+            [class.active]="selectedColor() === color.hex"
+            [style.background-color]="color.hex"
+            [attr.title]="color.name"
+            [attr.aria-label]="color.name"
+            (click)="setModelColor(color.hex)"
+          >
+            @if (selectedColor() === color.hex) {
+              <i class="pi pi-check color-check" [class.color-check--light]="color.hex === '#18181b'"></i>
+            }
+          </button>
+        }
+      </div>
     </div>
   }
 

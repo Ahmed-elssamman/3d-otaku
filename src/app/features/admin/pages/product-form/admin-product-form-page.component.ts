@@ -19,7 +19,6 @@ import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
 import { InputNumber } from 'primeng/inputnumber';
 import { InputText } from 'primeng/inputtext';
-import { Message } from 'primeng/message';
 import { Select } from 'primeng/select';
 import { Textarea } from 'primeng/textarea';
 import { ToggleSwitch } from 'primeng/toggleswitch';
@@ -35,6 +34,13 @@ import {
 } from '../../data/admin-products.data';
 import { AdminFilePreviewComponent } from '../../components/admin-file-preview.component';
 import { AdminSettingsService } from '../../services/admin-settings.service';
+
+export interface FormValidationError {
+  id: string;
+  field: string;
+  message: string;
+  category: string;
+}
 
 function productPricingValidator(control: AbstractControl): ValidationErrors | null {
   const price = control.get('price')?.value as number | null;
@@ -65,7 +71,6 @@ function productionRangeValidator(control: AbstractControl): ValidationErrors | 
     Button,
     InputNumber,
     InputText,
-    Message,
     CurrencyPipe,
     Select,
     Textarea,
@@ -100,6 +105,7 @@ export class AdminProductFormPageComponent implements OnInit {
   isUploadingPoster = signal<boolean>(false);
   isUploadingSocial = signal<boolean>(false);
   isSubmitting = signal<boolean>(false);
+  attemptedSubmit = signal<boolean>(false);
   selectedModelFileName = signal<string>('');
   galleryUploadProgress = signal<string>('');
   galleryPreviewUrls = signal<string[]>([]);
@@ -149,6 +155,56 @@ export class AdminProductFormPageComponent implements OnInit {
   previewModelType = computed(() => (this.productForm.controls.modelType.value as ProductModelType) ?? ProductModelType.GLB);
   previewPoster = computed(() => this.productForm.controls.posterImage.value || this.productForm.controls.mainImage.value);
   previewProductName = computed(() => this.productForm.controls.name.value || 'Product Preview');
+
+  validationErrors = computed<FormValidationError[]>(() => {
+    const errors: FormValidationError[] = [];
+    const f = this.productForm.controls;
+
+    if (f.name.invalid) {
+      errors.push({ id: 'field-name', field: 'Product Name', message: 'Name is required.', category: 'Basic Info' });
+    }
+    if (f.slug.invalid) {
+      errors.push({ id: 'field-slug', field: 'Slug', message: 'Valid lowercase slug required (e.g. zoro-katana).', category: 'Basic Info' });
+    }
+    if (f.category.invalid) {
+      errors.push({ id: 'field-category', field: 'Category', message: 'Category must be selected.', category: 'Basic Info' });
+    }
+    if (f.shortDescription.invalid) {
+      errors.push({ id: 'field-short-description', field: 'Short Description', message: 'Short summary is required.', category: 'Basic Info' });
+    }
+    if (f.description.invalid) {
+      errors.push({ id: 'field-description', field: 'Full Description', message: 'Detailed description is required.', category: 'Basic Info' });
+    }
+    if (f.price.invalid) {
+      errors.push({ id: 'field-price', field: 'Regular Price', message: 'Price must be greater than 0 EGP.', category: 'Basic Info' });
+    }
+    if (this.productForm.hasError('invalidDiscount')) {
+      errors.push({ id: 'field-discount', field: 'Discount Price', message: 'Discount must be lower than regular price.', category: 'Basic Info' });
+    }
+    if (f.material.invalid) {
+      errors.push({ id: 'field-material', field: 'Material', message: 'Material must be selected.', category: 'Specifications' });
+    }
+    if (f.finish.invalid) {
+      errors.push({ id: 'field-finish', field: 'Finish', message: 'Finish specification is required.', category: 'Specifications' });
+    }
+    if (f.color.invalid) {
+      errors.push({ id: 'field-color', field: 'Color', message: 'Color is required (e.g. Black / Gold).', category: 'Specifications' });
+    }
+    if (f.size.invalid) {
+      errors.push({ id: 'field-size', field: 'Size / Dimensions', message: 'Dimensions are required (e.g. 104 cm).', category: 'Specifications' });
+    }
+    if (f.weight.invalid) {
+      errors.push({ id: 'field-weight', field: 'Weight', message: 'Weight is required (e.g. 450 g).', category: 'Specifications' });
+    }
+    if (f.printTime.invalid) {
+      errors.push({ id: 'field-print-time', field: 'Print Time', message: 'Print time estimate is required.', category: 'Specifications' });
+    }
+    if (f.isMadeToOrder.value && (f.productionTimeMin.invalid || f.productionTimeMax.invalid || this.productForm.hasError('invalidProductionRange'))) {
+      errors.push({ id: 'field-production-time', field: 'Production Range', message: 'Enter a valid production range (Max >= Min).', category: 'Specifications' });
+    }
+
+    return errors;
+  });
 
   constructor() {
     this.productForm.controls.name.valueChanges.subscribe(value => {
@@ -425,9 +481,17 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   saveProduct(continueEditing: boolean): void {
+    this.attemptedSubmit.set(true);
+
     if (this.productForm.invalid) {
       this.productForm.markAllAsTouched();
-      this.messageService.add({ severity: 'warn', summary: 'Validation Error', detail: 'Please fill in all required fields marked in red.' });
+      const count = this.validationErrors().length;
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Incomplete Product Form',
+        detail: `Please fix the ${count} required field${count > 1 ? 's' : ''} listed in the error panel.`
+      });
+      this.scrollToFirstInvalidField();
       return;
     }
 
@@ -470,6 +534,27 @@ export class AdminProductFormPageComponent implements OnInit {
         }
       });
     }
+  }
+
+  scrollToField(fieldId: string): void {
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const targetInput = el.querySelector('input, textarea, select, .p-select, .p-inputnumber-input') as HTMLElement | null;
+      targetInput?.focus?.();
+    }
+  }
+
+  private scrollToFirstInvalidField(): void {
+    setTimeout(() => {
+      const firstInvalid = document.querySelector(
+        '.admin-field.has-error input, .admin-field.has-error textarea, .admin-field.has-error .p-select, .admin-field .ng-invalid'
+      ) as HTMLElement | null;
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid.focus?.();
+      }
+    }, 120);
   }
 
   cancel(): void {
