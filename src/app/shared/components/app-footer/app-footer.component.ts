@@ -18,6 +18,8 @@ export class AppFooterComponent {
   currentYear = new Date().getFullYear();
   linkGroups = FOOTER_LINK_GROUPS;
   whatsappUrl = computed(() => this.whatsAppService.getDirectChatUrl());
+  phoneUrl = computed(() => this.settings().phone ? 'tel:' + this.settings().phone.replace(/[^0-9+]/g, '') : '');
+  emailUrl = computed(() => this.settings().email ? 'mailto:' + this.settings().email : '');
   socialLinks = computed(() => [
     { id: 'facebook', label: 'Facebook', url: this.settings().facebookUrl, icon: 'pi pi-facebook' },
     { id: 'instagram', label: 'Instagram', url: this.settings().instagramUrl, icon: 'pi pi-instagram' },

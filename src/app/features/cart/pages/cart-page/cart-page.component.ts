@@ -50,6 +50,8 @@ export class CartPageComponent implements OnInit {
     return typeof fee === 'number' && fee >= 0 ? fee : null;
   });
   totalEstimate = computed(() => this.subtotal() + (this.deliveryFee() ?? 0));
+  phoneUrl = computed(() => this.settings().phone ? 'tel:' + this.settings().phone.replace(/[^0-9+]/g, '') : '');
+  whatsappSupportUrl = computed(() => this.whatsAppService.getDirectChatUrl());
   itemViews = computed<CartViewItem[]>(() => this.items().map(item => {
     const discount = item.product.discountPrice;
     const unitPrice = typeof discount === 'number' && discount >= 0 && discount < item.product.price ? discount : item.product.price;

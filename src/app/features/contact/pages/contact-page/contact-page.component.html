@@ -1,9 +1,102 @@
 <main class="mx-auto max-w-6xl space-y-16 px-4 py-12 sm:px-6 lg:px-8">
-  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 lg:p-12"><span class="vt-badge vt-badge-pink">Custom design review</span><h1 class="mt-4 max-w-4xl text-3xl font-black text-white sm:text-5xl">Have a design in mind? Let’s check if we can print it.</h1><p class="mt-4 max-w-3xl text-neutral-300">Sending your design does not commit you to purchase. We will review its printability and contact you with availability, price, and production time.</p></header>
+  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 lg:p-12">
+    <span class="vt-badge vt-badge-pink">Direct Contact & Support</span>
+    <h1 class="mt-4 max-w-4xl text-3xl font-black text-white sm:text-5xl">
+      {{ settings().brandName || '3D Otaku' }} Support & Custom Design Review
+    </h1>
+    <p class="mt-4 max-w-3xl text-neutral-300">
+      {{ settings().slogan || 'Have questions or a custom anime prop in mind? Connect directly with our studio or submit your design for feasibility review.' }}
+    </p>
+  </header>
 
-  <section class="grid gap-6 md:grid-cols-3" aria-label="Custom request process"><article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-pink-400">01</span><h2 class="mt-3 font-bold text-white">Share the design</h2><p class="mt-2 text-sm text-neutral-400">Send a permitted model page, reference, or written idea.</p></article><article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-purple-400">02</span><h2 class="mt-3 font-bold text-white">Feasibility review</h2><p class="mt-2 text-sm text-neutral-400">The store reviews printability, dimensions, material, rights, and production needs.</p></article><article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-cyan-400">03</span><h2 class="mt-3 font-bold text-white">Quote and confirmation</h2><p class="mt-2 text-sm text-neutral-400">If feasible, continue on WhatsApp to confirm price and production time.</p></article></section>
+  <!-- Direct Store Contact Channels from Admin Settings -->
+  <section aria-label="Direct Contact Channels">
+    <h2 class="text-2xl font-black text-white mb-6">Contact Channels</h2>
+    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      
+      <!-- WhatsApp Support -->
+      @if (settings().whatsappNumber) {
+        <a [href]="whatsappDirectUrl()" target="_blank" rel="noopener noreferrer" class="group rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 to-neutral-950 p-5 transition-all hover:border-emerald-400 hover:scale-[1.02] shadow-lg">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30">
+            <i class="pi pi-whatsapp text-xl"></i>
+          </div>
+          <h3 class="mt-3 font-bold text-white">WhatsApp Support</h3>
+          <p class="mt-1 text-sm font-semibold text-emerald-400">{{ settings().whatsappNumber }}</p>
+          <span class="mt-2 block text-xs text-neutral-400">Instant chat & order tracking</span>
+        </a>
+      }
 
-  <section class="rounded-3xl border border-amber-500/30 bg-amber-950/15 p-6"><h2 class="font-bold text-white">Using MakerWorld as a discovery source</h2><p class="mt-2 text-sm leading-relaxed text-neutral-300">You may <a href="https://makerworld.com/en" target="_blank" rel="noopener noreferrer" class="font-bold text-amber-300 underline">search MakerWorld</a>, review the model page, check whether permitted files are available, and send the page URL. Each model can have a different license; some prohibit commercial use or selling printed copies. Do not send a file unless you own it or have permission to request a printed copy.</p></section>
+      <!-- Direct Phone Call -->
+      @if (settings().phone) {
+        <a [href]="phoneUrl()" class="group rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-950/20 to-neutral-950 p-5 transition-all hover:border-purple-400 hover:scale-[1.02] shadow-lg">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30">
+            <i class="pi pi-phone text-xl"></i>
+          </div>
+          <h3 class="mt-3 font-bold text-white">Direct Phone Call</h3>
+          <p class="mt-1 text-sm font-semibold text-purple-300">{{ settings().phone }}</p>
+          <span class="mt-2 block text-xs text-neutral-400">Call for immediate inquiries</span>
+        </a>
+      }
+
+      <!-- Official Email -->
+      @if (settings().email) {
+        <a [href]="emailUrl()" class="group rounded-2xl border border-pink-500/30 bg-gradient-to-b from-pink-950/20 to-neutral-950 p-5 transition-all hover:border-pink-400 hover:scale-[1.02] shadow-lg">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-500/20 text-pink-400 group-hover:bg-pink-500/30">
+            <i class="pi pi-envelope text-xl"></i>
+          </div>
+          <h3 class="mt-3 font-bold text-white">Email Us</h3>
+          <p class="mt-1 text-sm font-semibold text-pink-300 truncate">{{ settings().email }}</p>
+          <span class="mt-2 block text-xs text-neutral-400">Commercial & custom quotes</span>
+        </a>
+      }
+
+      <!-- Store Location -->
+      @if (settings().address) {
+        <div class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5 shadow-lg">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300">
+            <i class="pi pi-map-marker text-xl"></i>
+          </div>
+          <h3 class="mt-3 font-bold text-white">Workshop & Studio</h3>
+          <p class="mt-1 text-sm font-semibold text-neutral-200">{{ settings().address }}</p>
+          <span class="mt-2 block text-xs text-neutral-400">Production and dispatch hub</span>
+        </div>
+      }
+
+    </div>
+
+    <!-- Social Media Channels & Working Hours -->
+    @if (socialLinks().length > 0 || settings().deliveryDays) {
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-800/80 bg-neutral-950/60 p-4 text-xs text-neutral-400">
+        @if (settings().deliveryDays) {
+          <div class="flex items-center gap-2">
+            <i class="pi pi-clock text-amber-400"></i>
+            <span><strong>Working & Delivery Hours:</strong> {{ settings().deliveryDays }}</span>
+          </div>
+        }
+        @if (socialLinks().length > 0) {
+          <div class="flex items-center gap-3">
+            <span class="font-bold text-neutral-300">Follow Our Studio:</span>
+            @for (link of socialLinks(); track link.id) {
+              <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label" class="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white">
+                <i [class]="link.icon"></i>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="grid gap-6 md:grid-cols-3" aria-label="Custom request process">
+    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-pink-400">01</span><h2 class="mt-3 font-bold text-white">Share the design</h2><p class="mt-2 text-sm text-neutral-400">Send a permitted model page, reference, or written idea.</p></article>
+    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-purple-400">02</span><h2 class="mt-3 font-bold text-white">Feasibility review</h2><p class="mt-2 text-sm text-neutral-400">The store reviews printability, dimensions, material, rights, and production needs.</p></article>
+    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-cyan-400">03</span><h2 class="mt-3 font-bold text-white">Quote and confirmation</h2><p class="mt-2 text-sm text-neutral-400">If feasible, continue on WhatsApp to confirm price and production time.</p></article>
+  </section>
+
+  <section class="rounded-3xl border border-amber-500/30 bg-amber-950/15 p-6">
+    <h2 class="font-bold text-white">Using MakerWorld as a discovery source</h2>
+    <p class="mt-2 text-sm leading-relaxed text-neutral-300">You may <a href="https://makerworld.com/en" target="_blank" rel="noopener noreferrer" class="font-bold text-amber-300 underline">search MakerWorld</a>, review the model page, check whether permitted files are available, and send the page URL. Each model can have a different license; some prohibit commercial use or selling printed copies. Do not send a file unless you own it or have permission to request a printed copy.</p>
+  </section>
 
   @if (isSubmitted()) {
     <section class="rounded-3xl border border-purple-500/40 bg-neutral-950 p-8 text-center" aria-live="polite">
