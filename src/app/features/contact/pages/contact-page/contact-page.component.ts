@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CustomOrderRequest } from '@core/models/custom-order-request.model';
 import { SeoService } from '@core/services/seo.service';
 import { WhatsAppService } from '@core/services/whatsapp.service';
 import { CustomOrderService } from '../../services/custom-order.service';
+import { AdminSettingsService } from '../../../admin/services/admin-settings.service';
 import { CUSTOM_FAQ_ITEMS, DESIGN_SOURCE_OPTIONS, MATERIAL_OPTIONS, PRODUCT_TYPE_OPTIONS } from '../../contact.control';
 import { AnalyticsService } from '@core/services/analytics.service';
 import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
@@ -19,8 +20,21 @@ export class ContactPageComponent implements OnInit {
   private formBuilder = inject(FormBuilder);
   private whatsAppService = inject(WhatsAppService);
   private customOrderService = inject(CustomOrderService);
+  private adminSettingsService = inject(AdminSettingsService);
   private seoService = inject(SeoService);
   private analytics = inject(AnalyticsService);
+
+  settings = this.adminSettingsService.settings;
+
+  phoneUrl = computed(() => this.settings().phone ? 'tel:' + this.settings().phone.replace(/[^0-9+]/g, '') : '');
+  emailUrl = computed(() => this.settings().email ? 'mailto:' + this.settings().email : '');
+  whatsappDirectUrl = computed(() => this.whatsAppService.getDirectChatUrl());
+  socialLinks = computed(() => [
+    { id: 'facebook', label: 'Facebook', url: this.settings().facebookUrl, icon: 'pi pi-facebook' },
+    { id: 'instagram', label: 'Instagram', url: this.settings().instagramUrl, icon: 'pi pi-instagram' },
+    { id: 'tiktok', label: 'TikTok', url: this.settings().tiktokUrl, icon: 'pi pi-tiktok' },
+    { id: 'youtube', label: 'YouTube', url: this.settings().youtubeUrl, icon: 'pi pi-youtube' }
+  ].filter(link => Boolean(link.url?.trim())));
 
   designSourceOptions = DESIGN_SOURCE_OPTIONS;
   productTypeOptions = PRODUCT_TYPE_OPTIONS;

@@ -1,6 +1,54 @@
 <main class="mx-auto max-w-7xl space-y-20 px-4 py-14 sm:px-6 lg:px-8">
-  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 text-center lg:p-14"><span class="vt-badge vt-badge-pink">About 3D Otaku</span><h1 class="mx-auto mt-4 max-w-4xl text-4xl font-black text-white sm:text-6xl">Anime-inspired pieces with clear product information</h1><p class="mx-auto mt-5 max-w-3xl text-neutral-300">The storefront is built to help customers compare what is available, understand product-specific materials and dimensions, and request a custom feasibility review when needed.</p></header>
-  <section aria-labelledby="principles-title"><h2 id="principles-title" class="mb-8 text-3xl font-black text-white">How the store helps you decide</h2><div class="grid gap-5 md:grid-cols-3">@for (principle of servicePrinciples; track principle.id) { <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><i [class]="principle.icon" class="text-2xl text-pink-400"></i><h3 class="mt-4 font-bold text-white">{{ principle.title }}</h3><p class="mt-2 text-sm leading-relaxed text-neutral-400">{{ principle.description }}</p></article> }</div></section>
-  <section aria-labelledby="process-title" class="rounded-3xl border border-neutral-800 bg-neutral-950 p-8 lg:p-12"><h2 id="process-title" class="text-3xl font-black text-white">From selection to delivery preparation</h2><div class="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">@for (step of workflowSteps; track step.id) { <article class="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5"><i [class]="step.icon" class="text-purple-400"></i><h3 class="mt-4 font-bold text-white">{{ step.title }}</h3><p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p></article> }</div></section>
-  <section class="rounded-3xl border border-pink-500/30 bg-pink-950/15 p-8 text-center"><h2 class="text-2xl font-black text-white">Start with a product or an idea</h2><p class="mx-auto mt-3 max-w-2xl text-neutral-300">Browse the live catalog for product-specific information, or send a custom design for review.</p><div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><a routerLink="/products" class="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white">Browse products</a><a routerLink="/contact" class="rounded-xl border border-neutral-700 px-6 py-3 font-bold text-white">Request a custom review</a></div></section>
+  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 text-center lg:p-14">
+    <span class="vt-badge vt-badge-pink">About {{ settings().brandName || '3D Otaku' }}</span>
+    <h1 class="mx-auto mt-4 max-w-4xl text-4xl font-black text-white sm:text-6xl">
+      {{ settings().heroTitle || 'Anime-inspired pieces with clear product information' }}
+    </h1>
+    <p class="mx-auto mt-5 max-w-3xl text-neutral-300">
+      {{ settings().slogan || 'The storefront is built to help customers compare what is available, understand product-specific materials and dimensions, and request a custom feasibility review when needed.' }}
+    </p>
+  </header>
+
+  <section aria-labelledby="principles-title">
+    <h2 id="principles-title" class="mb-8 text-3xl font-black text-white">How the store helps you decide</h2>
+    <div class="grid gap-5 md:grid-cols-3">
+      @for (principle of servicePrinciples; track principle.id) {
+        <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
+          <i [class]="principle.icon" class="text-2xl text-pink-400"></i>
+          <h3 class="mt-4 font-bold text-white">{{ principle.title }}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-neutral-400">{{ principle.description }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section aria-labelledby="process-title" class="rounded-3xl border border-neutral-800 bg-neutral-950 p-8 lg:p-12">
+    <h2 id="process-title" class="text-3xl font-black text-white">From selection to delivery preparation</h2>
+    <div class="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+      @for (step of workflowSteps; track step.id) {
+        <article class="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
+          <i [class]="step.icon" class="text-purple-400"></i>
+          <h3 class="mt-4 font-bold text-white">{{ step.title }}</h3>
+          <p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="rounded-3xl border border-pink-500/30 bg-pink-950/15 p-8 text-center">
+    <h2 class="text-2xl font-black text-white">Start with a product or connect directly</h2>
+    <p class="mx-auto mt-3 max-w-2xl text-neutral-300">
+      Browse the live catalog for product-specific information, or reach out to our team directly.
+    </p>
+    <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+      <a routerLink="/products" class="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white">Browse products</a>
+      @if (whatsappUrl()) {
+        <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" class="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white flex items-center justify-center gap-2">
+          <i class="pi pi-whatsapp"></i>
+          <span>Direct WhatsApp</span>
+        </a>
+      }
+      <a routerLink="/contact" class="rounded-xl border border-neutral-700 px-6 py-3 font-bold text-white">Contact & Custom Review</a>
+    </div>
+  </section>
 </main>

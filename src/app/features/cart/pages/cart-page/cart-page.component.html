@@ -33,6 +33,26 @@
         <p class="mt-5 rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs leading-relaxed text-amber-100">Creating the order does not mean payment is complete. The server confirms the order total and the store confirms the next step.</p>
         @if (submitError()) { <p class="mt-4 text-sm text-red-300" role="alert">{{ submitError() }}</p> }
         <button type="button" (click)="submitOrderToWhatsApp()" [disabled]="isSubmittingOrder()" class="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 font-black text-white disabled:opacity-50">@if (isSubmittingOrder()) { Creating order… } @else { Create order and continue }</button>
+
+        @if (settings().whatsappNumber || settings().phone) {
+          <div class="mt-5 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 text-xs text-neutral-400">
+            <span class="block font-bold text-neutral-200">Need support before placing your order?</span>
+            <div class="mt-2 flex flex-wrap items-center gap-3">
+              @if (settings().whatsappNumber) {
+                <a [href]="whatsappSupportUrl()" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
+                  <i class="pi pi-whatsapp"></i>
+                  <span>WhatsApp Help</span>
+                </a>
+              }
+              @if (settings().phone) {
+                <a [href]="phoneUrl()" class="flex items-center gap-1.5 text-purple-300 hover:text-purple-200 font-semibold transition-colors">
+                  <i class="pi pi-phone"></i>
+                  <span>{{ settings().phone }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
       </aside>
     </div>
   }
