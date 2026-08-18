@@ -3,4 +3,5 @@ export interface UploadResult {
   fileName: string;
   size: number;
   mimeType: string;
+  productId?: string;
 }

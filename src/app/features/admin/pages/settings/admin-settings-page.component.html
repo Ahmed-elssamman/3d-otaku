@@ -102,6 +102,14 @@
               <label class="admin-label">Default Currency</label>
               <input pInputText formControlName="defaultCurrency" class="w-full" />
             </div>
+            <div class="admin-card p-4">
+              <label class="admin-label">Delivery Fee (Store Currency, Optional)</label>
+              <input pInputText type="number" formControlName="deliveryFee" class="w-full" />
+            </div>
+            <div class="admin-card p-4">
+              <label class="admin-label">Estimated Delivery Timeframe</label>
+              <input pInputText formControlName="deliveryDays" class="w-full" placeholder="Configured delivery timeframe" />
+            </div>
             <div class="admin-card flex items-center justify-between p-4">
               <div>
                 <label class="admin-label">Maintenance Mode</label>
@@ -110,12 +118,16 @@
               <p-toggleswitch formControlName="maintenanceMode" />
             </div>
             <div class="admin-card p-4 xl:col-span-2">
+              <label class="admin-label">Delivery Info Note (Storefront & WhatsApp Note)</label>
+              <textarea pTextarea formControlName="deliveryInfoNote" class="w-full" rows="3"></textarea>
+            </div>
+            <div class="admin-card p-4 xl:col-span-2">
               <label class="admin-label">Delivery Note</label>
-              <textarea pTextarea formControlName="deliveryNote" class="w-full" rows="4"></textarea>
+              <textarea pTextarea formControlName="deliveryNote" class="w-full" rows="3"></textarea>
             </div>
             <div class="admin-card p-4 xl:col-span-2">
               <label class="admin-label">Safety Note</label>
-              <textarea pTextarea formControlName="safetyNote" class="w-full" rows="4"></textarea>
+              <textarea pTextarea formControlName="safetyNote" class="w-full" rows="3"></textarea>
             </div>
           </div>
         </p-tabpanel>

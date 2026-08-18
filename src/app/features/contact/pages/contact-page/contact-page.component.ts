@@ -1,22 +1,12 @@
-import {
-  Component,
-  inject,
-  signal,
-  OnInit,
-  AfterViewInit,
-  OnDestroy,
-  ElementRef,
-  viewChild,
-  NgZone
-} from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { WhatsAppService } from '@core/services/whatsapp.service';
-import { SeoService } from '@core/services/seo.service';
-import { CustomOrderService } from '../../services/custom-order.service';
-import { PRODUCT_TYPE_OPTIONS, COLOR_FINISH_OPTIONS, CUSTOM_FAQ_ITEMS, FaqItem } from '../../contact.control';
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CustomOrderRequest } from '@core/models/custom-order-request.model';
-import { environment } from '../../../../../environments/environment.prod';
-import * as THREE from 'three';
+import { SeoService } from '@core/services/seo.service';
+import { WhatsAppService } from '@core/services/whatsapp.service';
+import { CustomOrderService } from '../../services/custom-order.service';
+import { CUSTOM_FAQ_ITEMS, DESIGN_SOURCE_OPTIONS, MATERIAL_OPTIONS, PRODUCT_TYPE_OPTIONS } from '../../contact.control';
+import { AnalyticsService } from '@core/services/analytics.service';
+import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
 @Component({
   selector: 'app-contact-page',
@@ -25,184 +15,115 @@ import * as THREE from 'three';
   templateUrl: './contact-page.component.html',
   styleUrl: './contact-page.component.scss'
 })
-export class ContactPageComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly fb = inject(FormBuilder);
-  private readonly whatsAppService = inject(WhatsAppService);
-  private readonly customOrderService = inject(CustomOrderService);
-  private readonly seoService = inject(SeoService);
-  private readonly ngZone = inject(NgZone);
+export class ContactPageComponent implements OnInit {
+  private formBuilder = inject(FormBuilder);
+  private whatsAppService = inject(WhatsAppService);
+  private customOrderService = inject(CustomOrderService);
+  private seoService = inject(SeoService);
+  private analytics = inject(AnalyticsService);
 
-  readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('contactCanvas');
+  designSourceOptions = DESIGN_SOURCE_OPTIONS;
+  productTypeOptions = PRODUCT_TYPE_OPTIONS;
+  materialOptions = MATERIAL_OPTIONS;
+  faqItems = CUSTOM_FAQ_ITEMS;
+  isSubmitted = signal<boolean>(false);
+  isSubmitting = signal<boolean>(false);
+  wasPersisted = signal<boolean>(false);
+  requestNumber = signal<string>('');
+  generatedWhatsAppUrl = signal<string>('');
+  submitError = signal<string>('');
 
-  readonly productTypeOptions: string[] = PRODUCT_TYPE_OPTIONS;
-  readonly colorFinishOptions: string[] = COLOR_FINISH_OPTIONS;
-  readonly faqItems: FaqItem[] = CUSTOM_FAQ_ITEMS;
-
-  readonly whatsAppNumber = environment.whatsAppNumber;
-  readonly storePhone = environment.storePhone;
-
-  readonly customForm: FormGroup = this.fb.group({
+  customForm = this.formBuilder.nonNullable.group({
     fullName: ['', [Validators.required, Validators.minLength(3)]],
-    email: ['', [Validators.required, Validators.email]],
-    phone: ['', [Validators.required]],
-    productType: [PRODUCT_TYPE_OPTIONS[0], [Validators.required]],
-    dimensions: ['Standard 100 cm', [Validators.required]],
-    colorFinish: [COLOR_FINISH_OPTIONS[0], [Validators.required]],
-    referenceUrl: [''],
-    details: ['', [Validators.required, Validators.minLength(10)]]
+    phone: ['', [Validators.required, Validators.pattern(/^\+?[0-9\s-]{8,20}$/)]],
+    email: ['', [Validators.email]],
+    designSource: [DESIGN_SOURCE_OPTIONS[0].value, [Validators.required]],
+    referenceUrl: ['', [Validators.pattern(/^https:\/\/.+/i)]],
+    productType: [PRODUCT_TYPE_OPTIONS[0].value, [Validators.required]],
+    dimensions: [''],
+    material: [''],
+    colorFinish: [''],
+    quantity: [1, [Validators.required, Validators.min(1), Validators.max(99)]],
+    details: ['', [Validators.required, Validators.minLength(10)]],
+    rightsConfirmed: [false, [Validators.requiredTrue]]
   });
 
-  readonly isSubmitted = signal<boolean>(false);
-  readonly isSubmitting = signal<boolean>(false);
-  readonly generatedWhatsAppUrl = signal<string>('');
-
-  private scene?: THREE.Scene;
-  private camera?: THREE.PerspectiveCamera;
-  private renderer?: THREE.WebGLRenderer;
-  private particleSystem?: THREE.Points;
-  private animationFrameId?: number;
-
   ngOnInit(): void {
-    this.seoService.setTitle('Custom 3D Anime Forge Order & Contact - 3D Otaku');
-    this.seoService.setMetaDescription('Submit your custom anime 3D print request or weapon replica idea directly via form or WhatsApp.');
-  }
-
-  ngAfterViewInit(): void {
-    setTimeout(() => this.initContact3dScene(), 50);
-  }
-
-  ngOnDestroy(): void {
-    this.cleanContact3dScene();
+    this.seoService.setTitle('Request a custom 3D model review');
+    this.seoService.setMetaDescription('Send a design or idea for printability, rights, price, and production review before placing a custom order.');
+    this.analytics.track(AnalyticsEventName.CUSTOM_REQUEST_START);
   }
 
   onSubmit(): void {
-    if (this.customForm.invalid) {
+    if (this.customForm.invalid || this.isSubmitting()) {
       this.customForm.markAllAsTouched();
       return;
     }
 
+    const form = this.customForm.getRawValue();
+    if (form.designSource !== 'written-idea' && !form.referenceUrl.trim()) {
+      this.submitError.set('Add an HTTPS model or reference URL for the selected design source.');
+      return;
+    }
+
     this.isSubmitting.set(true);
-    const request: CustomOrderRequest = this.customForm.value;
-    const url = this.whatsAppService.getCustomOrderUrl(request);
-    this.generatedWhatsAppUrl.set(url);
+    this.submitError.set('');
+    const request: CustomOrderRequest = {
+      fullName: form.fullName,
+      phone: form.phone,
+      designSource: form.designSource,
+      productType: form.productType,
+      dimensions: form.dimensions,
+      colorFinish: form.colorFinish,
+      quantity: form.quantity,
+      details: form.details,
+      rightsConfirmed: form.rightsConfirmed,
+      ...(form.email ? { email: form.email } : {}),
+      ...(form.referenceUrl ? { referenceUrl: form.referenceUrl } : {}),
+      ...(form.material ? { material: form.material } : {})
+    };
 
     this.customOrderService.createCustomOrder({
       fullName: request.fullName,
       phone: request.phone,
       whatsappNumber: request.phone,
-      email: request.email,
+      email: request.email ?? '',
       productIdea: request.productType,
       description: request.details,
       preferredColor: request.colorFinish,
       estimatedSize: request.dimensions,
-      referenceImageUrl: request.referenceUrl
+      referenceImageUrl: request.referenceUrl,
+      designSource: request.designSource,
+      quantity: request.quantity,
+      preferredMaterial: request.material,
+      rightsConfirmed: request.rightsConfirmed
     }).subscribe({
-      next: () => {
+      next: response => {
         this.isSubmitting.set(false);
+        this.wasPersisted.set(true);
+        this.requestNumber.set(response.data.id);
+        this.generatedWhatsAppUrl.set(this.whatsAppService.getCustomOrderUrl(request, response.data.id));
         this.isSubmitted.set(true);
-        window.open(url, '_blank');
+        this.analytics.track(AnalyticsEventName.CUSTOM_REQUEST_SUBMIT, { persisted: true, design_source: request.designSource });
       },
       error: () => {
         this.isSubmitting.set(false);
+        this.wasPersisted.set(false);
+        this.requestNumber.set('');
+        this.generatedWhatsAppUrl.set(this.whatsAppService.getCustomOrderUrl(request));
+        this.submitError.set('The API did not save this request. You can use the WhatsApp-only fallback below; no persisted request number has been created.');
         this.isSubmitted.set(true);
-        window.open(url, '_blank');
+        this.analytics.track(AnalyticsEventName.CUSTOM_REQUEST_SUBMIT, { persisted: false, design_source: request.designSource });
       }
     });
   }
 
   resetForm(): void {
-    this.customForm.reset({
-      productType: PRODUCT_TYPE_OPTIONS[0],
-      dimensions: 'Standard 100 cm',
-      colorFinish: COLOR_FINISH_OPTIONS[0]
-    });
+    this.customForm.reset({ designSource: DESIGN_SOURCE_OPTIONS[0].value, productType: PRODUCT_TYPE_OPTIONS[0].value, quantity: 1, rightsConfirmed: false });
     this.isSubmitted.set(false);
-  }
-
-  private initContact3dScene(): void {
-    const canvas = this.canvasRef()?.nativeElement;
-    if (!canvas) return;
-
-    this.cleanContact3dScene();
-
-    const parent = canvas.parentElement;
-    const width = parent?.clientWidth || window.innerWidth;
-    const height = parent?.clientHeight || 450;
-
-    this.scene = new THREE.Scene();
-
-    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    this.camera.position.z = 10;
-
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    const particleCount = 200;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    const colorChoices = [
-      new THREE.Color(0xec4899),
-      new THREE.Color(0x10b981),
-      new THREE.Color(0x38bdf8)
-    ];
-
-    for (let i = 0; i < particleCount; i++) {
-      const idx = i * 3;
-      positions[idx] = (Math.random() - 0.5) * 16;
-      positions[idx + 1] = (Math.random() - 0.5) * 16;
-      positions[idx + 2] = (Math.random() - 0.5) * 16;
-
-      const c = colorChoices[Math.floor(Math.random() * colorChoices.length)];
-      colors[idx] = c.r;
-      colors[idx + 1] = c.g;
-      colors[idx + 2] = c.b;
-    }
-
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.09,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.75
-    });
-
-    this.particleSystem = new THREE.Points(particleGeo, particleMat);
-    this.scene.add(this.particleSystem);
-
-    this.ngZone.runOutsideAngular(() => {
-      let clock = new THREE.Clock();
-      const animate = () => {
-        if (!this.renderer || !this.scene || !this.camera) return;
-        this.animationFrameId = requestAnimationFrame(animate);
-
-        const elapsedTime = clock.getElapsedTime();
-
-        if (this.particleSystem) {
-          this.particleSystem.rotation.y = elapsedTime * 0.05;
-        }
-
-        this.renderer.render(this.scene, this.camera);
-      };
-      animate();
-    });
-  }
-
-  private cleanContact3dScene(): void {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = undefined;
-    }
-    if (this.renderer) {
-      this.renderer.dispose();
-      this.renderer = undefined;
-    }
-    this.scene = undefined;
-    this.camera = undefined;
-    this.particleSystem = undefined;
+    this.wasPersisted.set(false);
+    this.requestNumber.set('');
+    this.generatedWhatsAppUrl.set('');
+    this.submitError.set('');
   }
 }

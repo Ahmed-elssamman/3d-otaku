@@ -1,89 +1,126 @@
-<div class="relative rounded-3xl overflow-hidden vt-card border border-purple-500/40 p-2 shadow-[0_0_50px_rgba(139,92,246,0.25)] group">
-  
-  <!-- Interactive 3D Status Badge -->
-  <div class="absolute top-4 left-4 z-20 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-neutral-900/90 backdrop-blur-md border border-purple-500/40 text-neutral-200 text-xs font-semibold shadow-md">
-    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-    <span class="font-extrabold uppercase tracking-wider text-[11px] text-pink-300">Real-Time 3D Engine ({{ detectedFormat() }})</span>
-  </div>
+<section
+  #viewerShell
+  class="viewer-shell"
+  [class.viewer-compact]="compact()"
+  [class.viewer-fullscreen]="isFullscreen()"
+  [attr.aria-label]="resolvedModelName() + ' interactive 3D viewer'"
+>
+  <div class="aura aura-crimson" aria-hidden="true"></div>
+  <div class="aura aura-violet" aria-hidden="true"></div>
+  <div class="flame-corner flame-corner-start" aria-hidden="true"></div>
+  <div class="flame-corner flame-corner-end" aria-hidden="true"></div>
+  <div class="speed-lines" aria-hidden="true"></div>
 
-  <!-- Interactive Controls Bar -->
-  <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
-    <button
-      (click)="toggleAutoRotate()"
-      [title]="isAutoRotating() ? 'Pause Auto Rotation' : 'Enable Auto Rotation'"
-      class="p-2.5 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-neutral-700 text-neutral-300 hover:text-white hover:border-pink-400 transition-all text-xs font-medium cursor-pointer flex items-center gap-1.5 shadow-md"
-    >
-      <i [class]="isAutoRotating() ? 'pi pi-pause text-pink-400' : 'pi pi-play text-emerald-400'" class="text-xs"></i>
-      <span class="hidden sm:inline font-bold">{{ isAutoRotating() ? 'Pause' : 'Rotate' }}</span>
-    </button>
+  <canvas
+    #threeCanvas
+    class="viewer-canvas"
+    [attr.aria-label]="resolvedModelName() + ' 3D scene'"
+    (webglcontextlost)="onWebglContextLost($event)"
+    (webglcontextrestored)="onWebglContextRestored()"
+  ></canvas>
 
-    <button
-      (click)="resetCamera()"
-      title="Reset Camera View"
-      class="p-2.5 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-neutral-700 text-neutral-300 hover:text-white hover:border-cyan-400 transition-all text-xs font-medium cursor-pointer flex items-center gap-1.5 shadow-md"
-    >
-      <i class="pi pi-refresh text-cyan-400 text-xs"></i>
-      <span class="hidden sm:inline font-bold">Reset</span>
-    </button>
-  </div>
+  <header class="viewer-hud viewer-hud-top">
+    <div class="engine-badge">
+      <span class="engine-badge-dot"></span>
+      <span class="engine-badge-label">INTERACTIVE PRODUCT VIEW</span>
+      <span class="engine-badge-format">{{ detectedFormat() }}</span>
+    </div>
 
-  <!-- Instructions Badge -->
-  <div class="absolute bottom-4 right-4 z-20 px-3.5 py-1.5 rounded-xl bg-neutral-900/90 backdrop-blur-md text-[11px] text-neutral-300 border border-neutral-800 pointer-events-none shadow-md flex items-center gap-2">
-    <i class="pi pi-arrows-alt text-pink-400"></i>
-    <span class="font-semibold">360° Drag to rotate • Scroll to zoom</span>
-  </div>
+    <div class="viewer-actions">
+      <button
+        type="button"
+        class="viewer-action"
+        [attr.aria-label]="rotationActionLabel()"
+        [attr.title]="rotationActionLabel()"
+        (click)="toggleAutoRotate()"
+      >
+        <i class="pi" [class.pi-pause]="isAutoRotating()" [class.pi-play]="!isAutoRotating()"></i>
+      </button>
+      <button
+        type="button"
+        class="viewer-action"
+        aria-label="Zoom in"
+        title="Zoom in"
+        (click)="zoomIn()"
+      >
+        <i class="pi pi-search-plus"></i>
+      </button>
+      <button
+        type="button"
+        class="viewer-action"
+        aria-label="Zoom out"
+        title="Zoom out"
+        (click)="zoomOut()"
+      >
+        <i class="pi pi-search-minus"></i>
+      </button>
+      <button
+        type="button"
+        class="viewer-action"
+        aria-label="Reset camera"
+        title="Reset camera"
+        (click)="resetCamera()"
+      >
+        <i class="pi pi-refresh"></i>
+      </button>
+      <button
+        type="button"
+        class="viewer-action"
+        aria-label="Toggle fullscreen"
+        title="Toggle fullscreen"
+        (click)="toggleFullscreen()"
+      >
+        <i class="pi" [class.pi-window-maximize]="!isFullscreen()" [class.pi-window-minimize]="isFullscreen()"></i>
+      </button>
+    </div>
+  </header>
 
-  <!-- Large 3D Model Viewer Container (660px height) -->
-  <div class="w-full bg-[#050505] rounded-2xl flex items-center justify-center min-h-[520px] md:min-h-[660px] relative">
-    
-    @if (isThreeEngine()) {
-      <canvas
-        #threeCanvas
-        class="w-full h-[520px] md:h-[660px] rounded-2xl block cursor-grab active:cursor-grabbing"
-      ></canvas>
-
-      @if (!isLoaded()) {
-        <div class="absolute inset-0 flex flex-col items-center justify-center p-8 bg-neutral-950/90 backdrop-blur-sm rounded-2xl z-10">
-          <div class="relative w-14 h-14 mb-4">
-            <div class="absolute inset-0 rounded-full border-3 border-neutral-800 border-t-pink-500 animate-spin"></div>
-          </div>
-          <p class="text-xs font-extrabold uppercase tracking-widest text-pink-400 animate-pulse">
-            Loading {{ detectedFormat() }} 3D Geometry...
-          </p>
-        </div>
+  @if (!isLoaded()) {
+    <div class="viewer-overlay">
+      @if (posterImage() || product()?.posterImage || product()?.image) {
+        <img
+          class="viewer-poster"
+          [src]="posterImage() || product()?.posterImage || product()?.image"
+          [alt]="resolvedModelName()"
+        />
       }
-    } @else {
-      <model-viewer
-        #viewer
-        [attr.src]="product().modelUrl"
-        [attr.poster]="product().image"
-        (load)="onModelLoad()"
-        (error)="onModelError()"
-        camera-controls
-        auto-rotate
-        rotation-per-second="25deg"
-        shadow-intensity="1.8"
-        shadow-softness="0.8"
-        exposure="1.2"
-        environment-image="neutral"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        interaction-prompt="auto"
-        touch-action="pan-y"
-        style="width: 100%; height: 660px; border-radius: 1rem; --poster-color: transparent;">
-        
-        <!-- Custom Loading Slot -->
-        <div slot="poster" class="w-full h-full flex flex-col items-center justify-center p-8 bg-neutral-950">
-          <div class="relative w-14 h-14 mb-4">
-            <div class="absolute inset-0 rounded-full border-3 border-neutral-800 border-t-pink-500 animate-spin"></div>
-          </div>
-          <p class="text-xs font-extrabold uppercase tracking-widest text-pink-400 animate-pulse">
-            Loading {{ detectedFormat() }} Engine...
-          </p>
-        </div>
+      <div class="viewer-overlay-shade"></div>
+      <div class="forge-loader" aria-hidden="true">
+        <span class="forge-loader-ring"></span>
+        <i class="pi pi-bolt"></i>
+      </div>
+      <p class="loading-title" role="status">{{ loadingLabel() }}</p>
+      <div class="loading-track">
+        <span class="loading-progress" [style.width.%]="loadProgress()"></span>
+      </div>
+      <p class="loading-format">{{ detectedFormat() }} model</p>
+    </div>
+  }
 
-      </model-viewer>
-    }
+  @if (hasError()) {
+    <div class="viewer-overlay viewer-error" role="alert">
+      <div class="error-icon"><i class="pi pi-exclamation-triangle"></i></div>
+      <h3>Interactive model unavailable</h3>
+      <p>{{ errorMessage() }}</p>
+      <button type="button" class="retry-button" (click)="retryModel()">
+        <i class="pi pi-refresh"></i>
+        Try again
+      </button>
+    </div>
+  }
 
-  </div>
-</div>
+  <footer class="viewer-hud viewer-hud-bottom">
+    <div class="viewer-features">
+      @for (feature of viewerFeatures; track feature.label) {
+        <span class="feature-chip">
+          <i [class]="feature.icon"></i>
+          {{ feature.label }}
+        </span>
+      }
+    </div>
+    <p class="viewer-hint">
+      <i class="pi pi-arrows-alt"></i>
+      Drag to orbit <span>•</span> Scroll to zoom
+    </p>
+  </footer>
+</section>

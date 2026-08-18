@@ -37,6 +37,7 @@ export class AnimeHeroComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly settings = this.adminSettingsService.settings;
 
   readonly allProducts = computed(() => this.productService.allProducts());
+  readonly spotlightProducts = computed(() => this.allProducts().slice(0, 5));
   readonly selectedProductIndex = signal<number>(0);
 
   readonly currentProduct = computed<Product | null>(() => {

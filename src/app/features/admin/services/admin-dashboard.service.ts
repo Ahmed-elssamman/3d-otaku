@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, of, map } from 'rxjs';
 import { ApiResponse } from '@core/models/api-response.model';
-import { AdminDashboardStats } from '../models/admin-dashboard.model';
+import { AdminDashboardApiStats, AdminDashboardStats } from '../models/admin-dashboard.model';
 import { Product } from '@core/models/product.model';
 import { ApiService } from '@core/api/api.service';
 import { API_ENDPOINTS } from '@core/api/api-endpoints';
@@ -32,9 +32,9 @@ export class AdminDashboardService {
         featuredProducts,
         totalCategories,
         averagePrice: Math.round(averagePrice),
-        totalCustomOrders: 12,
-        pendingCustomOrders: 3,
-        whatsappClicks: 45
+        totalCustomOrders: 0,
+        pendingCustomOrders: 0,
+        whatsappClicks: 0
       };
 
       return of({
@@ -44,27 +44,24 @@ export class AdminDashboardService {
       });
     }
 
-    return this.api.get<any>(API_ENDPOINTS.admin.dashboard.stats).pipe(
+    return this.api.get<AdminDashboardApiStats>(API_ENDPOINTS.admin.dashboard.stats).pipe(
       map(res => {
-        if (res.data) {
-          const d = res.data;
-          const mappedStats: AdminDashboardStats = {
+        const d = res.data;
+        const mappedStats: AdminDashboardStats = {
             totalProducts: d.products?.total ?? d.totalProducts ?? 0,
             activeProducts: d.products?.active ?? d.activeProducts ?? 0,
             inactiveProducts: d.products?.inactive ?? d.inactiveProducts ?? 0,
-            featuredProducts: d.featuredProducts ?? d.products?.active ?? 0,
+            featuredProducts: d.featuredProducts ?? 0,
             totalCategories: d.categoriesCount ?? d.totalCategories ?? 0,
             averagePrice: Math.round(d.averagePrice ?? 0),
             totalCustomOrders: d.customOrders?.total ?? d.totalCustomOrders ?? 0,
             pendingCustomOrders: d.customOrders?.byStatus?.pending ?? d.pendingCustomOrders ?? 0,
-            whatsappClicks: d.whatsappClicks ?? d.contactMessages?.unread ?? 0
+            whatsappClicks: d.whatsappClicks ?? 0
           };
-          return {
-            ...res,
-            data: mappedStats
-          };
-        }
-        return res;
+        return {
+          ...res,
+          data: mappedStats
+        };
       })
     );
   }

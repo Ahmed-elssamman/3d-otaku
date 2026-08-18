@@ -15,7 +15,6 @@
       <th>Product</th>
       <th>Category</th>
       <th>Price</th>
-      <th>Rating</th>
       <th>Status</th>
       <th>Featured</th>
       <th>Updated</th>
@@ -36,12 +35,6 @@
       </td>
       <td>{{ product.category }}</td>
       <td>{{ product.price | currency: 'EGP' }}</td>
-      <td>
-        <div class="flex items-center gap-2">
-          <p-rating [ngModel]="product.rating" [readonly]="true" />
-          <span class="text-xs text-neutral-400">{{ product.rating | number: '1.1-1' }}</span>
-        </div>
-      </td>
       <td>
         <p-tag [severity]="product.isActive ? 'success' : 'contrast'" [value]="product.isActive ? 'Active' : 'Hidden'" />
       </td>

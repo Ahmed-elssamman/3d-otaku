@@ -1,24 +1,27 @@
-import { Component } from '@angular/core';
-import { APP_CONSTANTS } from '@core/constants/app.constants';
-import { environment } from '../../../../environments/environment.prod';
+import { Component, computed, inject } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { AdminSettingsService } from '../../../features/admin/services/admin-settings.service';
+import { WhatsAppService } from '@core/services/whatsapp.service';
+import { FOOTER_LINK_GROUPS } from './app-footer.control';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [],
+  imports: [RouterLink],
   templateUrl: './app-footer.component.html',
   styleUrl: './app-footer.component.scss'
 })
 export class AppFooterComponent {
-  readonly brandName = APP_CONSTANTS.BRAND_NAME;
-  readonly slogan = APP_CONSTANTS.BRAND_SLOGAN;
-  readonly safetyDisclaimer = APP_CONSTANTS.SAFETY_DISCLAIMER;
-  readonly currentYear = new Date().getFullYear();
-
-  readonly whatsAppNumber = environment.whatsAppNumber;
-  readonly storePhone = environment.storePhone;
-  readonly email = 'hello@3dotaku.com';
-  readonly address = 'Cairo, Egypt • Cosplay Studio';
-
-  readonly featuredAnimeWallpaper = 'assets/anime/tanjiro-kamado-3840x2160-18718.jpg';
+  private settingsService = inject(AdminSettingsService);
+  private whatsAppService = inject(WhatsAppService);
+  settings = this.settingsService.settings;
+  currentYear = new Date().getFullYear();
+  linkGroups = FOOTER_LINK_GROUPS;
+  whatsappUrl = computed(() => this.whatsAppService.getDirectChatUrl());
+  socialLinks = computed(() => [
+    { id: 'facebook', label: 'Facebook', url: this.settings().facebookUrl, icon: 'pi pi-facebook' },
+    { id: 'instagram', label: 'Instagram', url: this.settings().instagramUrl, icon: 'pi pi-instagram' },
+    { id: 'tiktok', label: 'TikTok', url: this.settings().tiktokUrl, icon: 'pi pi-tiktok' },
+    { id: 'youtube', label: 'YouTube', url: this.settings().youtubeUrl, icon: 'pi pi-youtube' }
+  ].filter(link => Boolean(link.url?.trim())));
 }

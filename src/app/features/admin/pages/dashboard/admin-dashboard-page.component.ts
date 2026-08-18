@@ -5,6 +5,7 @@ import { AdminProductService } from '../../services/admin-product.service';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
 import { AdminStatCardComponent } from '../../components/admin-stat-card.component';
 import { Product } from '@core/models/product.model';
+import { AdminSettingsService } from '../../services/admin-settings.service';
 
 @Component({
   selector: 'app-admin-dashboard-page',
@@ -16,6 +17,7 @@ import { Product } from '@core/models/product.model';
 export class AdminDashboardPageComponent implements OnInit {
   private adminProductService = inject(AdminProductService);
   private adminDashboardService = inject(AdminDashboardService);
+  private settingsService = inject(AdminSettingsService);
 
   readonly totalProducts = signal<string>('0');
   readonly featuredProducts = signal<string>('0');
@@ -25,6 +27,7 @@ export class AdminDashboardPageComponent implements OnInit {
   readonly customOrders = signal<string>('0');
   readonly recentProducts = signal<Product[]>([]);
   readonly isLoading = signal<boolean>(true);
+  readonly hasBusinessStats = signal<boolean>(false);
 
   ngOnInit(): void {
     this.adminDashboardService.getStats().subscribe({
@@ -37,6 +40,7 @@ export class AdminDashboardPageComponent implements OnInit {
           this.averagePrice.set(stats.averagePrice);
           this.ctaCount.set(stats.whatsappClicks.toString());
           this.customOrders.set(stats.totalCustomOrders.toString());
+          this.hasBusinessStats.set(true);
         } else {
           this.fallbackLocalStats();
         }
@@ -65,8 +69,9 @@ export class AdminDashboardPageComponent implements OnInit {
     this.featuredProducts.set(this.adminProductService.featuredProducts().toString());
     this.activeCategories.set(this.adminProductService.categories().length.toString());
     this.averagePrice.set(this.adminProductService.averagePrice());
-    this.ctaCount.set(`${this.adminProductService.totalProducts() * 12}`);
-    this.customOrders.set(`${Math.max(this.adminProductService.featuredProducts() * 3, 8)}`);
+    this.ctaCount.set('0');
+    this.customOrders.set('0');
+    this.hasBusinessStats.set(false);
   }
 
   private fallbackLocalRecent(): void {

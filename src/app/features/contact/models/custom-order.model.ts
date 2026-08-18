@@ -9,11 +9,15 @@ export interface CreateCustomOrderRequest {
   estimatedSize?: string;
   referenceImageUrl?: string;
   notes?: string;
+  designSource?: string;
+  quantity?: number;
+  preferredMaterial?: string;
+  rightsConfirmed?: boolean;
 }
 
 export interface CustomOrder extends CreateCustomOrderRequest {
   id: string;
-  status: 'pending' | 'contacted' | 'in_progress' | 'completed' | 'cancelled';
+  status: string;
   createdAt: string;
   updatedAt?: string;
 }

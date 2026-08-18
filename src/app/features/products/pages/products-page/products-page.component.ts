@@ -1,245 +1,150 @@
-import {
-  Component,
-  inject,
-  signal,
-  OnInit,
-  AfterViewInit,
-  OnDestroy,
-  ElementRef,
-  viewChild,
-  NgZone
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProductService } from '@core/services/product.service';
 import { SeoService } from '@core/services/seo.service';
-import { SORT_OPTIONS, CATEGORY_OPTIONS, SortOption } from '../../products.control';
-import { ProductCategory } from '@core/enums/product-category.enum';
+import { ApiMeta, ApiErrorResponse } from '@core/models/api-response.model';
 import { Product } from '@core/models/product.model';
+import { ProductCategory } from '@core/enums/product-category.enum';
 import { ProductCardComponent } from '@shared/components/product-card/product-card.component';
 import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
 import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
-import * as THREE from 'three';
+import { SORT_OPTIONS, SortOption } from '../../products.control';
+import { ProductSort } from '../../enums/product-sort.enum';
+import { ProductQuery } from '../../models/product-query.model';
+import { AnalyticsService } from '@core/services/analytics.service';
+import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [
-    FormsModule,
-    ProductCardComponent,
-    EmptyStateComponent,
-    OtakuLoaderComponent
-  ],
+  imports: [ProductCardComponent, EmptyStateComponent, OtakuLoaderComponent],
   templateUrl: './products-page.component.html',
   styleUrl: './products-page.component.scss'
 })
-export class ProductsPageComponent implements OnInit, AfterViewInit, OnDestroy {
-  private readonly productService = inject(ProductService);
-  private readonly seoService = inject(SeoService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly ngZone = inject(NgZone);
+export class ProductsPageComponent implements OnInit {
+  private productService = inject(ProductService);
+  private seoService = inject(SeoService);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
+  private analytics = inject(AnalyticsService);
 
-  readonly canvasRef = viewChild<ElementRef<HTMLCanvasElement>>('productsCanvas');
+  sortOptions: SortOption[] = SORT_OPTIONS;
+  categoryOptions = signal<string[]>([ProductCategory.ALL]);
+  searchTerm = signal<string>('');
+  selectedCategory = signal<string>(ProductCategory.ALL);
+  selectedSort = signal<ProductSort>(ProductSort.FEATURED);
+  isLoading = signal<boolean>(true);
+  hasError = signal<boolean>(false);
+  isUnauthorized = signal<boolean>(false);
+  productsList = signal<Product[]>([]);
+  meta = signal<ApiMeta>({
+    page: 1,
+    limit: 12,
+    totalItems: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false
+  });
 
-  readonly sortOptions: SortOption[] = SORT_OPTIONS;
-  readonly categoryOptions: string[] = CATEGORY_OPTIONS;
-
-  readonly searchTerm = signal<string>('');
-  readonly selectedCategory = signal<string>(ProductCategory.ALL);
-  readonly selectedSort = signal<'price-asc' | 'price-desc' | 'rating-desc' | 'name-asc'>('rating-desc');
-  readonly maxPriceFilter = signal<number>(1500);
-  readonly isLoading = signal<boolean>(true);
-  readonly productsList = signal<Product[]>([]);
-
-  private scene?: THREE.Scene;
-  private camera?: THREE.PerspectiveCamera;
-  private renderer?: THREE.WebGLRenderer;
-  private particleSystem?: THREE.Points;
-  private animationFrameId?: number;
+  hasActiveFilters = computed(() => Boolean(this.searchTerm().trim()) || this.selectedCategory() !== ProductCategory.ALL);
+  isGenuinelyEmpty = computed(() => !this.hasActiveFilters() && this.meta().totalItems === 0);
+  hasNoFilterResults = computed(() => this.hasActiveFilters() && this.productsList().length === 0);
 
   ngOnInit(): void {
-    this.seoService.setTitle('3D Anime Products & Cosplay Props Catalog - 3D Otaku');
-    this.seoService.setMetaDescription('Browse 3D Otaku full catalog of 3D printed anime katanas, daggers, cosplay props, and desk models.');
+    this.seoService.setTitle('Browse models and prices');
+    this.seoService.setMetaDescription('Browse available 3D printed models, compare product details, and review prices before ordering.');
+    this.analytics.track(AnalyticsEventName.VIEW_PRODUCT_LIST);
+    this.loadCategories();
 
-    this.route.queryParams.subscribe(params => {
-      if (params['category']) {
-        this.selectedCategory.set(params['category']);
-      }
-      this.loadProducts();
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const category = typeof params['category'] === 'string' ? params['category'] : ProductCategory.ALL;
+        this.selectedCategory.set(category);
+        this.loadProducts(1);
+      });
   }
 
-  ngAfterViewInit(): void {
-    setTimeout(() => this.initProducts3dScene(), 50);
-  }
-
-  ngOnDestroy(): void {
-    this.cleanProducts3dScene();
-  }
-
-  loadProducts(): void {
+  loadProducts(page: number = this.meta().page): void {
     this.isLoading.set(true);
+    this.hasError.set(false);
+    this.isUnauthorized.set(false);
 
-    const sortMap: Record<string, 'newest' | 'price_low' | 'price_high' | 'rating'> = {
-      'price-asc': 'price_low',
-      'price-desc': 'price_high',
-      'rating-desc': 'rating',
-      'name-asc': 'newest'
+    const query: ProductQuery = {
+      page,
+      limit: this.meta().limit,
+      sort: this.selectedSort()
     };
+    if (this.searchTerm().trim()) {
+      query.search = this.searchTerm().trim();
+    }
+    if (this.selectedCategory() !== ProductCategory.ALL) {
+      query.category = this.selectedCategory();
+    }
 
-    this.productService.getProducts({
-      search: this.searchTerm(),
-      category: this.selectedCategory() !== ProductCategory.ALL ? this.selectedCategory() : undefined,
-      sort: sortMap[this.selectedSort()] || 'rating'
-    }).subscribe({
-      next: (res) => {
-        let items = res.data || [];
-        if (this.maxPriceFilter()) {
-          items = items.filter(p => p.price <= this.maxPriceFilter());
-        }
-        this.productsList.set(items);
+    this.productService.getProducts(query).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => {
+        this.productsList.set(response.data ?? []);
+        this.meta.set(response.meta);
         this.isLoading.set(false);
       },
-      error: () => {
-        let list = this.productService.allProducts();
-        const query = this.searchTerm().trim().toLowerCase();
-        const cat = this.selectedCategory();
-
-        if (query) {
-          list = list.filter(p => p.name.toLowerCase().includes(query) || (p.description || '').toLowerCase().includes(query));
-        }
-
-        if (cat && cat !== ProductCategory.ALL) {
-          list = list.filter(p => p.category === cat);
-        }
-
-        this.productsList.set(list);
+      error: (error: ApiErrorResponse) => {
+        this.productsList.set([]);
+        this.isUnauthorized.set(error.statusCode === 401 || error.statusCode === 403);
+        this.hasError.set(true);
         this.isLoading.set(false);
       }
     });
-  }
-
-  get filteredProducts(): Product[] {
-    return this.productsList();
   }
 
   onSearchChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.searchTerm.set(input.value);
-    this.loadProducts();
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+    this.analytics.track(AnalyticsEventName.SEARCH_PRODUCTS, { has_query: Boolean(this.searchTerm().trim()) });
+    this.loadProducts(1);
   }
 
   onCategorySelect(category: string): void {
     this.selectedCategory.set(category);
-    this.loadProducts();
+    this.analytics.track(AnalyticsEventName.FILTER_PRODUCTS, { category });
+    this.loadProducts(1);
   }
 
   onSortSelect(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    this.selectedSort.set(select.value as 'price-asc' | 'price-desc' | 'rating-desc' | 'name-asc');
-    this.loadProducts();
+    this.selectedSort.set((event.target as HTMLSelectElement).value as ProductSort);
+    this.loadProducts(1);
   }
 
-  onPriceChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.maxPriceFilter.set(Number(input.value));
-    this.loadProducts();
+  goToPreviousPage(): void {
+    if (this.meta().hasPreviousPage) {
+      this.loadProducts(this.meta().page - 1);
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.meta().hasNextPage) {
+      this.loadProducts(this.meta().page + 1);
+    }
   }
 
   resetFilters(): void {
     this.searchTerm.set('');
     this.selectedCategory.set(ProductCategory.ALL);
-    this.selectedSort.set('rating-desc');
-    this.maxPriceFilter.set(1500);
-    this.loadProducts();
+    this.selectedSort.set(ProductSort.FEATURED);
+    this.loadProducts(1);
   }
 
-  private initProducts3dScene(): void {
-    const canvas = this.canvasRef()?.nativeElement;
-    if (!canvas) return;
-
-    this.cleanProducts3dScene();
-
-    const parent = canvas.parentElement;
-    const width = parent?.clientWidth || window.innerWidth;
-    const height = parent?.clientHeight || 450;
-
-    this.scene = new THREE.Scene();
-
-    this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    this.camera.position.z = 10;
-
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // Floating Cyber Grid Particles
-    const particleCount = 260;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    const colorChoices = [
-      new THREE.Color(0xec4899),
-      new THREE.Color(0x38bdf8),
-      new THREE.Color(0xa855f7)
-    ];
-
-    for (let i = 0; i < particleCount; i++) {
-      const idx = i * 3;
-      positions[idx] = (Math.random() - 0.5) * 18;
-      positions[idx + 1] = (Math.random() - 0.5) * 18;
-      positions[idx + 2] = (Math.random() - 0.5) * 18;
-
-      const c = colorChoices[Math.floor(Math.random() * colorChoices.length)];
-      colors[idx] = c.r;
-      colors[idx + 1] = c.g;
-      colors[idx + 2] = c.b;
-    }
-
-    particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const particleMat = new THREE.PointsMaterial({
-      size: 0.08,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.7
-    });
-
-    this.particleSystem = new THREE.Points(particleGeo, particleMat);
-    this.scene.add(this.particleSystem);
-
-    this.ngZone.runOutsideAngular(() => {
-      let clock = new THREE.Clock();
-      const animate = () => {
-        if (!this.renderer || !this.scene || !this.camera) return;
-        this.animationFrameId = requestAnimationFrame(animate);
-
-        const elapsedTime = clock.getElapsedTime();
-
-        if (this.particleSystem) {
-          this.particleSystem.rotation.y = elapsedTime * 0.04;
-          this.particleSystem.rotation.x = Math.sin(elapsedTime * 0.02) * 0.1;
-        }
-
-        this.renderer.render(this.scene, this.camera);
-      };
-      animate();
-    });
-  }
-
-  private cleanProducts3dScene(): void {
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = undefined;
-    }
-    if (this.renderer) {
-      this.renderer.dispose();
-      this.renderer = undefined;
-    }
-    this.scene = undefined;
-    this.camera = undefined;
-    this.particleSystem = undefined;
+  private loadCategories(): void {
+    this.productService.getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: response => {
+          const activeCategories = (response.data ?? [])
+            .filter(category => category.productsCount > 0)
+            .map(category => category.name);
+          this.categoryOptions.set([ProductCategory.ALL, ...activeCategories]);
+        },
+        error: () => this.categoryOptions.set([ProductCategory.ALL])
+      });
   }
 }

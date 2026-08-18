@@ -1,11 +1,11 @@
 export const APP_CONSTANTS = {
   BRAND_NAME: '3D Otaku',
-  BRAND_SLOGAN: 'Anime Worlds, Printed in 3D',
-  ALT_SLOGAN: 'Bring Your Favorite Anime Props to Life',
-  WHATSAPP_NUMBER: '201001234567',
-  SAFETY_DISCLAIMER: 'This is a decorative 3D printed cosplay prop. It is non-sharp and not intended for harmful use.',
-  DEFAULT_MATERIAL: 'Premium PLA / PLA+',
-  DEFAULT_FINISH: 'One color matte finish',
+  BRAND_SLOGAN: 'Anime-inspired 3D printed products',
+  ALT_SLOGAN: 'Browse products or request a custom design review',
+  WHATSAPP_NUMBER: '',
+  SAFETY_DISCLAIMER: '',
+  DEFAULT_MATERIAL: '',
+  DEFAULT_FINISH: '',
   STORAGE_KEYS: {
     PRODUCTS: '3d-otaku-products',
     SETTINGS: '3d-otaku-settings',

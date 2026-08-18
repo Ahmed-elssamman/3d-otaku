@@ -11,43 +11,43 @@ export class ApiService {
   private http = inject(HttpClient);
   private baseUrl = environment.apiBaseUrl;
 
-  private createParams(params?: Record<string, unknown>): HttpParams {
+  private createParams<TParams extends object>(params: TParams | null = null): HttpParams {
     let httpParams = new HttpParams();
     if (!params) {
       return httpParams;
     }
 
-    Object.keys(params).forEach(key => {
+    (Object.keys(params) as Array<keyof TParams>).forEach(key => {
       const value = params[key];
-      if (value !== undefined && value !== null && value !== '') {
-        httpParams = httpParams.set(key, String(value));
+      if (value !== null && value !== '') {
+        httpParams = httpParams.set(String(key), String(value));
       }
     });
 
     return httpParams;
   }
 
-  get<T>(endpoint: string, params?: Record<string, unknown>): Observable<ApiResponse<T>> {
+  get<T, TParams extends object = object>(endpoint: string, params: TParams | null = null): Observable<ApiResponse<T>> {
     return this.http.get<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, {
       params: this.createParams(params)
     });
   }
 
-  getPaginated<T>(endpoint: string, params?: Record<string, unknown>): Observable<PaginatedResponse<T>> {
+  getPaginated<T, TParams extends object = object>(endpoint: string, params: TParams | null = null): Observable<PaginatedResponse<T>> {
     return this.http.get<PaginatedResponse<T>>(`${this.baseUrl}${endpoint}`, {
       params: this.createParams(params)
     });
   }
 
-  post<T>(endpoint: string, body?: unknown): Observable<ApiResponse<T>> {
+  post<T, TBody extends object = object>(endpoint: string, body: TBody | null = null): Observable<ApiResponse<T>> {
     return this.http.post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, body);
   }
 
-  put<T>(endpoint: string, body?: unknown): Observable<ApiResponse<T>> {
+  put<T, TBody extends object = object>(endpoint: string, body: TBody | null = null): Observable<ApiResponse<T>> {
     return this.http.put<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, body);
   }
 
-  patch<T>(endpoint: string, body?: unknown): Observable<ApiResponse<T>> {
+  patch<T, TBody extends object = object>(endpoint: string, body: TBody | null = null): Observable<ApiResponse<T>> {
     return this.http.patch<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, body);
   }
 

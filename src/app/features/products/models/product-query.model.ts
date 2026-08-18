@@ -1,3 +1,5 @@
+import { ProductSort } from '../enums/product-sort.enum';
+
 export interface ProductQuery {
   page?: number;
   limit?: number;
@@ -5,7 +7,7 @@ export interface ProductQuery {
   category?: string;
   minPrice?: number;
   maxPrice?: number;
-  sort?: 'newest' | 'oldest' | 'price_low' | 'price_high' | 'rating' | 'featured';
+  sort?: ProductSort;
   featured?: boolean;
 }
 

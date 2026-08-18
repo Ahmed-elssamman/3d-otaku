@@ -27,6 +27,7 @@ export class AdminSettingsService {
     }
 
     return this.api.get<AdminSettings>(API_ENDPOINTS.settings.public).pipe(
+      map(res => this.normalizeResponse(res)),
       tap(res => {
         if (res.success && res.data) {
           this.settingsSignal.set(res.data);
@@ -35,8 +36,8 @@ export class AdminSettingsService {
       }),
       catchError(() =>
         of({
-          success: true,
-          message: 'Fallback settings loaded.',
+          success: false,
+          message: 'Store settings are temporarily unavailable. Cached configuration is being used.',
           data: this.settingsSignal()
         })
       )
@@ -53,6 +54,7 @@ export class AdminSettingsService {
     }
 
     return this.api.get<AdminSettings>(API_ENDPOINTS.admin.settings.get).pipe(
+      map(res => this.normalizeResponse(res)),
       tap(res => {
         if (res.success && res.data) {
           this.settingsSignal.set(res.data);
@@ -63,17 +65,20 @@ export class AdminSettingsService {
   }
 
   updateSettings(settingsPayload: AdminSettings): Observable<ApiResponse<AdminSettings>> {
+    const normalizedPayload = this.normalizeSettings(settingsPayload);
+
     if (environment.useMockApi) {
-      this.settingsSignal.set(settingsPayload);
+      this.settingsSignal.set(normalizedPayload);
       this.saveToStorage();
       return of({
         success: true,
         message: 'Settings updated successfully.',
-        data: settingsPayload
+        data: normalizedPayload
       });
     }
 
-    return this.api.put<AdminSettings>(API_ENDPOINTS.admin.settings.update, settingsPayload).pipe(
+    return this.api.put<AdminSettings>(API_ENDPOINTS.admin.settings.update, normalizedPayload).pipe(
+      map(res => this.normalizeResponse(res)),
       tap(res => {
         if (res.success && res.data) {
           this.settingsSignal.set(res.data);
@@ -95,6 +100,7 @@ export class AdminSettingsService {
     }
 
     return this.api.post<AdminSettings>(API_ENDPOINTS.admin.settings.reset).pipe(
+      map(res => this.normalizeResponse(res)),
       tap(res => {
         if (res.success && res.data) {
           this.settingsSignal.set(res.data);
@@ -116,13 +122,28 @@ export class AdminSettingsService {
   loadFromStorage(): AdminSettings {
     const raw = localStorage.getItem(APP_CONSTANTS.STORAGE_KEYS.SETTINGS);
     if (!raw) {
-      return { ...DEFAULT_ADMIN_SETTINGS };
+      return this.normalizeSettings(DEFAULT_ADMIN_SETTINGS);
     }
 
     try {
-      return { ...DEFAULT_ADMIN_SETTINGS, ...JSON.parse(raw) };
+      return this.normalizeSettings({ ...DEFAULT_ADMIN_SETTINGS, ...JSON.parse(raw) });
     } catch {
-      return { ...DEFAULT_ADMIN_SETTINGS };
+      return this.normalizeSettings(DEFAULT_ADMIN_SETTINGS);
     }
+  }
+
+  private normalizeResponse(response: ApiResponse<AdminSettings>): ApiResponse<AdminSettings> {
+    return {
+      ...response,
+      data: this.normalizeSettings(response.data)
+    };
+  }
+
+  private normalizeSettings(settings: AdminSettings): AdminSettings {
+    return {
+      ...DEFAULT_ADMIN_SETTINGS,
+      ...settings,
+      defaultCurrency: environment.defaultCurrency
+    };
   }
 }

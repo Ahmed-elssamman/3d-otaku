@@ -1,9 +1,10 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '@core/services/auth.service';
 import { SeoService } from '@core/services/seo.service';
 import { REGISTER_DEFAULT_VALUES } from '../register.control';
+import { getSafeReturnUrl } from '@core/utils/auth-navigation.util';
 
 @Component({
   selector: 'app-register-page',
@@ -17,6 +18,7 @@ export class RegisterPageComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly seoService = inject(SeoService);
   private readonly router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly registerForm: FormGroup = this.fb.group({
     fullName: [REGISTER_DEFAULT_VALUES.fullName, [Validators.required, Validators.minLength(3)]],
@@ -28,8 +30,18 @@ export class RegisterPageComponent implements OnInit {
 
   readonly isSubmitting = signal<boolean>(false);
   readonly errorMessage = signal<string>('');
+  returnUrl = signal<string>('');
+  returnUrlQueryParams = computed<Record<string, string>>(() => {
+    const returnUrl = this.returnUrl();
+    const queryParams: Record<string, string> = {};
+    if (returnUrl) {
+      queryParams['returnUrl'] = returnUrl;
+    }
+    return queryParams;
+  });
 
   ngOnInit(): void {
+    this.returnUrl.set(getSafeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl')));
     this.seoService.setTitle('Register - Join 3D Otaku Guild');
     this.seoService.setMetaDescription('Create a free 3D Otaku account to order custom 3D anime props, save favorites, and track printing builds.');
   }
@@ -57,7 +69,9 @@ export class RegisterPageComponent implements OnInit {
     this.authService.register({ fullName, email, password, confirmPassword }).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        this.router.navigate(['/products']);
+        const requestedUrl = this.returnUrl();
+        const destinationUrl = requestedUrl && !requestedUrl.startsWith('/admin') ? requestedUrl : '/products';
+        void this.router.navigateByUrl(destinationUrl);
       },
       error: (err) => {
         this.isSubmitting.set(false);

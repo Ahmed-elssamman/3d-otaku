@@ -4,9 +4,9 @@
     <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
       <div class="max-w-3xl space-y-3">
         <span class="vt-badge vt-badge-cyan">Command Center</span>
-        <h2 class="text-3xl font-black text-white lg:text-5xl">Anime commerce control room built for fast content drops.</h2>
+        <h2 class="text-3xl font-black text-white lg:text-5xl">Store catalog and configuration</h2>
         <p class="max-w-2xl text-sm text-neutral-300 lg:text-base">
-          Products, hero content, and storefront contact settings stay synced through local signals and persistent storage.
+          Manage customer-facing product data, media, production information, and storefront settings.
         </p>
       </div>
       <div class="flex flex-wrap gap-3">
@@ -21,9 +21,11 @@
     <app-admin-stat-card title="Total Products" [value]="totalProducts()" subtitle="Published and draft inventory" icon="pi pi-box" />
     <app-admin-stat-card title="Featured Products" [value]="featuredProducts()" subtitle="Homepage spotlight lineup" icon="pi pi-star-fill" accentClass="from-cyan-400/20 via-blue-500/10 to-fuchsia-500/25" />
     <app-admin-stat-card title="Active Categories" [value]="activeCategories()" subtitle="Distinct catalog zones" icon="pi pi-th-large" accentClass="from-violet-500/20 via-fuchsia-500/15 to-amber-400/20" />
-    <app-admin-stat-card title="Average Price" [value]="(averagePrice() | currency: 'EGP') ?? '0 EGP'" subtitle="Current catalog average" icon="pi pi-dollar" />
-    <app-admin-stat-card title="WhatsApp Orders CTA" [value]="ctaCount()" subtitle="Placeholder engagement count" icon="pi pi-whatsapp" accentClass="from-emerald-400/20 via-teal-500/10 to-cyan-500/20" />
-    <app-admin-stat-card title="Custom Orders" [value]="customOrders()" subtitle="Placeholder incoming requests" icon="pi pi-sparkles" accentClass="from-fuchsia-500/25 via-pink-500/10 to-orange-400/20" />
+    <app-admin-stat-card title="Average Price" [value]="(averagePrice() | currency: 'EGP') ?? '0'" subtitle="Current catalog average" icon="pi pi-dollar" />
+    @if (hasBusinessStats()) {
+      <app-admin-stat-card title="WhatsApp CTA Clicks" [value]="ctaCount()" subtitle="Reported by the dashboard API" icon="pi pi-whatsapp" accentClass="from-emerald-400/20 via-teal-500/10 to-cyan-500/20" />
+      <app-admin-stat-card title="Custom Orders" [value]="customOrders()" subtitle="Reported by the dashboard API" icon="pi pi-sparkles" accentClass="from-fuchsia-500/25 via-pink-500/10 to-orange-400/20" />
+    }
   </div>
 
   <div class="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
@@ -40,7 +42,7 @@
         @for (product of recentProducts(); track product.id) {
           <div class="rounded-3xl border border-white/10 bg-white/5 p-3">
             <div class="flex items-center gap-3">
-              <img [src]="product.image" [alt]="product.name" class="h-16 w-16 rounded-2xl object-cover" />
+              @if (product.image) { <img [src]="product.image" [alt]="product.name" class="h-16 w-16 rounded-2xl object-cover" /> } @else { <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-900"><i class="pi pi-image text-neutral-600"></i></span> }
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <h4 class="truncate text-base font-bold text-white">{{ product.name }}</h4>

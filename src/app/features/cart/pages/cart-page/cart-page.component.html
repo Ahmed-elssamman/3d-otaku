@@ -1,0 +1,39 @@
+<main class="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
+  <header><a routerLink="/products" class="text-sm text-pink-300">← Continue shopping</a><h1 class="mt-3 text-3xl font-black text-white">Your cart</h1><p class="mt-2 text-sm text-neutral-400">The backend confirms product availability, final pricing, and the payable total when the order is created.</p></header>
+
+  @if (items().length === 0) {
+    <section class="rounded-3xl border border-neutral-800 bg-neutral-950 p-12 text-center"><i class="pi pi-shopping-bag text-4xl text-neutral-600"></i><h2 class="mt-4 text-xl font-bold text-white">Your cart is empty</h2><a routerLink="/products" class="mt-6 inline-flex rounded-xl bg-pink-600 px-5 py-3 font-bold text-white">Browse products</a></section>
+  } @else {
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      <div class="space-y-5 lg:col-span-7">
+        <div class="flex items-center justify-between"><p class="text-sm text-neutral-400">{{ itemCount() }} items</p><button type="button" (click)="clearCart()" class="text-sm font-bold text-red-300">Clear cart</button></div>
+        @for (view of itemViews(); track view.id) {
+          <article class="flex flex-col gap-5 rounded-3xl border border-neutral-800 bg-neutral-950 p-5 sm:flex-row">
+            <div class="h-32 w-full shrink-0 overflow-hidden rounded-2xl bg-neutral-900 sm:w-32">@if (view.item.product.image) { <img [src]="view.item.product.image" [alt]="view.item.product.name" width="128" height="128" class="h-full w-full object-cover" /> } @else { <span class="flex h-full items-center justify-center"><i class="pi pi-image text-3xl text-neutral-600"></i></span> }</div>
+            <div class="flex flex-1 flex-col justify-between gap-5"><div><h2 class="font-bold text-white">{{ view.item.product.name }}</h2><p class="mt-1 text-sm text-neutral-400">{{ view.item.product.material }} @if (view.item.product.size) { · {{ view.item.product.size }} }</p><p class="mt-2 font-bold text-white">{{ view.unitPrice | currency: 'EGP' }}</p></div><div class="flex items-center justify-between gap-4"><div class="flex items-center gap-2"><button type="button" (click)="decrementQuantity(view.id, view.item.quantity)" aria-label="Decrease quantity" class="h-10 w-10 rounded-xl border border-neutral-800 text-white">−</button><output class="min-w-8 text-center text-white">{{ view.item.quantity }}</output><button type="button" (click)="incrementQuantity(view.id, view.item.quantity)" aria-label="Increase quantity" class="h-10 w-10 rounded-xl border border-neutral-800 text-white">+</button></div><button type="button" (click)="removeItem(view.id)" class="text-sm font-bold text-red-300">Remove</button></div></div>
+          </article>
+        }
+
+        <form [formGroup]="deliveryForm" class="space-y-5 rounded-3xl border border-neutral-800 bg-neutral-950 p-6" aria-labelledby="delivery-form-title">
+          <div><h2 id="delivery-form-title" class="text-xl font-black text-white">Contact and delivery details</h2><p class="mt-1 text-sm text-neutral-400">These details are sent securely to the order API and are not added to the WhatsApp link.</p></div>
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Full name *</span><input formControlName="fullName" autocomplete="name" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.fullName.invalid && deliveryForm.controls.fullName.touched) { <span class="block text-xs text-red-300" role="alert">Enter at least 3 characters.</span> }</label>
+            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">WhatsApp number *</span><input formControlName="whatsappNumber" type="tel" autocomplete="tel" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.whatsappNumber.invalid && deliveryForm.controls.whatsappNumber.touched) { <span class="block text-xs text-red-300" role="alert">Enter a valid phone number.</span> }</label>
+            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Email (optional)</span><input formControlName="email" type="email" autocomplete="email" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.email.invalid && deliveryForm.controls.email.touched) { <span class="block text-xs text-red-300" role="alert">Enter a valid email or leave it blank.</span> }</label>
+            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">City / area *</span><input formControlName="city" autocomplete="address-level2" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label>
+          </div>
+          <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Delivery address *</span><textarea formControlName="address" rows="3" autocomplete="street-address" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"></textarea></label>
+          <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Order notes (optional)</span><textarea formControlName="notes" rows="3" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"></textarea></label>
+        </form>
+      </div>
+
+      <aside class="h-fit rounded-3xl border border-purple-500/30 bg-neutral-950 p-6 lg:sticky lg:top-24 lg:col-span-5">
+        <h2 class="text-xl font-black text-white">Order summary</h2>
+        <dl class="mt-6 space-y-4 text-sm"><div class="flex justify-between"><dt class="text-neutral-400">Product subtotal</dt><dd class="text-white">{{ subtotal() | currency: 'EGP' }}</dd></div><div class="flex justify-between"><dt class="text-neutral-400">Delivery fee</dt><dd class="text-white">@if (deliveryFee() !== null) { {{ deliveryFee() | currency: 'EGP' }} } @else { Confirmed after review }</dd></div><div class="flex justify-between border-t border-neutral-800 pt-4 text-base font-black"><dt class="text-white">Current estimate</dt><dd class="text-white">{{ totalEstimate() | currency: 'EGP' }}</dd></div></dl>
+        <p class="mt-5 rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs leading-relaxed text-amber-100">Creating the order does not mean payment is complete. The server confirms the order total and the store confirms the next step.</p>
+        @if (submitError()) { <p class="mt-4 text-sm text-red-300" role="alert">{{ submitError() }}</p> }
+        <button type="button" (click)="submitOrderToWhatsApp()" [disabled]="isSubmittingOrder()" class="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 font-black text-white disabled:opacity-50">@if (isSubmittingOrder()) { Creating order… } @else { Create order and continue }</button>
+      </aside>
+    </div>
+  }
+</main>

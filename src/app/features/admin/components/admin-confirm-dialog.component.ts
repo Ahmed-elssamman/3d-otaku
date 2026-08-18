@@ -5,6 +5,7 @@ import { ConfirmDialog } from 'primeng/confirmdialog';
   selector: 'app-admin-confirm-dialog',
   standalone: true,
   imports: [ConfirmDialog],
-  template: '<p-confirmdialog styleClass="admin-confirm-dialog" />'
+  templateUrl: './admin-confirm-dialog.component.html',
+  styleUrl: './admin-confirm-dialog.component.scss'
 })
 export class AdminConfirmDialogComponent {}

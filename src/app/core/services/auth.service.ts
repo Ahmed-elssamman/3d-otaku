@@ -17,9 +17,9 @@ export class AuthService {
 
   private currentUserSignal = signal<User | null>(this.tokenStorage.getUser());
 
-  currentUser = computed(() => this.currentUserSignal());
-  isAuthenticated = computed(() => this.currentUserSignal() !== null);
-  isAdmin = computed(() => this.currentUserSignal()?.role === UserRole.ADMIN);
+  currentUser = computed(() => this.tokenStorage.accessToken() ? this.currentUserSignal() : null);
+  isAuthenticated = computed(() => this.currentUser() !== null);
+  isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
 
   register(payload: RegisterRequest): Observable<AuthResponseData> {
     if (environment.useMockApi) {

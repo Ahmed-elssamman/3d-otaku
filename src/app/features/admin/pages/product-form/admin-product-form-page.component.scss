@@ -1,3 +1,192 @@
 :host {
   display: block;
 }
+
+/* ── Unified Upload Zone ── */
+
+.media-upload-zone {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-block-size: 5.5rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed rgba(99, 102, 241, 0.42);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 8% 50%, rgba(99, 102, 241, 0.1), transparent 30%),
+    rgba(10, 5, 12, 0.7);
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.media-upload-zone:hover {
+  border-color: rgba(99, 102, 241, 0.85);
+  background-color: rgba(15, 10, 25, 0.82);
+  transform: translateY(-1px);
+}
+
+.media-upload-zone-busy {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+/* ── Model-specific accent (orange/red) ── */
+
+.media-upload-zone--model {
+  border-color: rgba(251, 146, 60, 0.42);
+  background:
+    radial-gradient(circle at 8% 50%, rgba(239, 68, 68, 0.13), transparent 30%),
+    rgba(10, 5, 8, 0.7);
+}
+
+.media-upload-zone--model:hover {
+  border-color: rgba(251, 146, 60, 0.85);
+  background-color: rgba(29, 10, 10, 0.82);
+}
+
+/* ── Compact variant for poster / social ── */
+
+.media-upload-zone--compact {
+  min-block-size: 4rem;
+  padding: 0.6rem 0.75rem;
+  gap: 0.6rem;
+}
+
+/* ── Icon ── */
+
+.media-upload-icon {
+  display: grid;
+  flex: 0 0 auto;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  place-items: center;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 0.9rem;
+  color: #818cf8;
+  background: linear-gradient(145deg, rgba(99, 102, 241, 0.18), rgba(124, 58, 237, 0.12));
+  box-shadow: 0 0 24px rgba(99, 102, 241, 0.12);
+  font-size: 1.1rem;
+}
+
+.media-upload-icon--model {
+  border-color: rgba(251, 146, 60, 0.3);
+  color: #fb923c;
+  background: linear-gradient(145deg, rgba(239, 68, 68, 0.2), rgba(124, 58, 237, 0.12));
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.14);
+}
+
+.media-upload-icon--sm {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: 0.65rem;
+  font-size: 0.9rem;
+}
+
+/* ── Thumbnail preview ── */
+
+.media-upload-thumb {
+  flex: 0 0 auto;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  border-radius: 0.9rem;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.media-upload-thumb--sm {
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: 0.65rem;
+}
+
+/* ── Browse button ── */
+
+.media-upload-action {
+  flex: 0 0 auto;
+  padding: 0.55rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.7rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+/* ── Gallery thumbnail grid ── */
+
+.gallery-thumbs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.65rem;
+}
+
+.gallery-thumb-item {
+  position: relative;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  aspect-ratio: 1;
+}
+
+.gallery-thumb-img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-thumb-remove {
+  position: absolute;
+  inset-block-start: 0.3rem;
+  inset-inline-end: 0.3rem;
+  display: grid;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(239, 68, 68, 0.85);
+  color: #fff;
+  font-size: 0.6rem;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease, transform 150ms ease;
+  backdrop-filter: blur(4px);
+}
+
+.gallery-thumb-item:hover .gallery-thumb-remove {
+  opacity: 1;
+}
+
+.gallery-thumb-remove:hover {
+  background: rgba(239, 68, 68, 1);
+  transform: scale(1.15);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 520px) {
+  .media-upload-action {
+    display: none;
+  }
+}
+
+/* ── Highlight Invalid Fields ── */
+
+:host ::ng-deep {
+  .ng-invalid.ng-touched {
+    input.p-inputtext,
+    textarea.p-textarea,
+    .p-inputnumber-input,
+    .p-select {
+      border-color: #f87171 !important;
+      background-color: rgba(239, 68, 68, 0.04) !important;
+
+      &:focus {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+      }
+    }
+  }
+}
+

@@ -44,7 +44,7 @@ export class ContactService {
       });
     }
 
-    return this.api.getPaginated<ContactMessageItem>(API_ENDPOINTS.contactMessages.adminList, query as Record<string, unknown>);
+    return this.api.getPaginated<ContactMessageItem, { page?: number; limit?: number; status?: string; search?: string }>(API_ENDPOINTS.contactMessages.adminList, query ?? null);
   }
 
   markMessageRead(id: string): Observable<ApiResponse<ContactMessageItem>> {
@@ -52,7 +52,16 @@ export class ContactService {
       return of({
         success: true,
         message: 'Message marked as read.',
-        data: null as unknown as ContactMessageItem
+        data: {
+          id,
+          fullName: 'Mock contact',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          status: 'read',
+          createdAt: new Date().toISOString()
+        }
       });
     }
 

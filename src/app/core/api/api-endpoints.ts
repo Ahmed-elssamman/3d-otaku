@@ -12,6 +12,21 @@ export const API_ENDPOINTS = {
     categories: '/products/categories',
     details: (slug: string) => `/products/${slug}`,
   },
+  cart: {
+    get: '/cart',
+    add: '/cart/items',
+    update: (itemId: string) => `/cart/items/${itemId}`,
+    remove: (itemId: string) => `/cart/items/${itemId}`,
+    clear: '/cart/clear',
+  },
+  orders: {
+    create: '/orders',
+    list: '/orders',
+    details: (id: string) => `/orders/${id}`,
+    track: (orderNumber: string) => `/orders/track/${orderNumber}`,
+    adminList: '/admin/orders',
+    adminUpdateStatus: (id: string) => `/admin/orders/${id}/status`,
+  },
   admin: {
     products: {
       list: '/admin/products',

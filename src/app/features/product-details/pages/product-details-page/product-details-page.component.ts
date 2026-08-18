@@ -1,153 +1,188 @@
-import { Component, inject, signal, computed, OnInit, input } from '@angular/core';
-import { RouterLink, Router, ActivatedRoute } from '@angular/router';
-import { ProductService } from '@core/services/product.service';
-import { WhatsAppService } from '@core/services/whatsapp.service';
-import { SeoService } from '@core/services/seo.service';
+import { CurrencyPipe } from '@angular/common';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductBadge } from '@core/enums/product-badge.enum';
 import { Product } from '@core/models/product.model';
-import { PRODUCT_SPECS_CONFIG, ProductSpecItem } from '../../product-details.control';
+import { CartService } from '@core/services/cart.service';
+import { ProductService } from '@core/services/product.service';
+import { SeoService } from '@core/services/seo.service';
+import { WhatsAppService } from '@core/services/whatsapp.service';
 import { Product3dViewerComponent } from '@shared/components/product-3d-viewer/product-3d-viewer.component';
-import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
 import { ProductCardComponent } from '@shared/components/product-card/product-card.component';
-
-export type DisplayStageMode = '3d' | 'image';
+import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
+import { AdminSettingsService } from '../../../admin/services/admin-settings.service';
+import { ProductDisplayMode, ProductDisplaySpec } from '../../product-details.control';
+import { formatProductionEstimate, getSalePrice, hasValidDiscount } from '@core/utils/product-display.util';
+import { AnalyticsService } from '@core/services/analytics.service';
+import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
 @Component({
   selector: 'app-product-details-page',
   standalone: true,
-  imports: [
-    RouterLink,
-    Product3dViewerComponent,
-    OtakuLoaderComponent,
-    ProductCardComponent
-  ],
+  imports: [RouterLink, CurrencyPipe, Product3dViewerComponent, ProductCardComponent, OtakuLoaderComponent],
   templateUrl: './product-details-page.component.html',
   styleUrl: './product-details-page.component.scss'
 })
 export class ProductDetailsPageComponent implements OnInit {
-  private readonly productService = inject(ProductService);
-  private readonly whatsAppService = inject(WhatsAppService);
-  private readonly seoService = inject(SeoService);
-  private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
+  private productService = inject(ProductService);
+  private whatsAppService = inject(WhatsAppService);
+  private cartService = inject(CartService);
+  private seoService = inject(SeoService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private settingsService = inject(AdminSettingsService);
+  private destroyRef = inject(DestroyRef);
+  private analytics = inject(AnalyticsService);
 
-  readonly slug = input<string>();
-  readonly productBadgeNone = ProductBadge.NONE;
-
-  readonly product = signal<Product | null>(null);
-  readonly isLoading = signal<boolean>(true);
-  readonly activeStageMode = signal<DisplayStageMode>('3d');
-  readonly selectedImageUrl = signal<string>('');
-
-  readonly specsConfig: ProductSpecItem[] = PRODUCT_SPECS_CONFIG;
-  readonly safetyNote = computed(() => this.product()?.safetyNote ?? '');
-
-  readonly whatsAppUrl = computed(() => {
-    const prod = this.product();
-    return prod ? this.whatsAppService.getProductOrderUrl(prod) : '#';
-  });
-
-  readonly formattedPrice = computed(() => {
-    const prod = this.product();
-    return prod ? `${(prod.price || 0).toLocaleString()} EGP` : '0 EGP';
-  });
-
-  readonly has3dModel = computed(() => {
-    const prod = this.product();
-    return !!(prod?.modelUrl && typeof prod.modelUrl === 'string' && prod.modelUrl.trim().length > 0);
-  });
-
-  readonly hasMainImage = computed(() => {
-    const prod = this.product();
-    return !!(prod?.image && typeof prod.image === 'string' && prod.image.trim().length > 0 && !prod.image.includes('placeholder'));
-  });
-
-  readonly galleryImages = computed(() => {
-    const prod = this.product();
-    if (!prod) return [];
-    const list: string[] = [];
-    if (this.hasMainImage()) {
-      list.push(prod.image);
+  productBadgeNone = ProductBadge.NONE;
+  product = signal<Product | null>(null);
+  isLoading = signal<boolean>(true);
+  hasError = signal<boolean>(false);
+  activeStageMode = signal<ProductDisplayMode>(ProductDisplayMode.IMAGE);
+  selectedImageUrl = signal<string>('');
+  failedImages = signal<string[]>([]);
+  quantity = signal<number>(1);
+  settings = this.settingsService.settings;
+  whatsAppUrl = computed(() => this.product() ? this.whatsAppService.getProductOrderUrl(this.product() as Product) : '#');
+  has3dModel = computed(() => Boolean(this.product()?.modelUrl?.trim()));
+  galleryImages = computed(() => {
+    const product = this.product();
+    if (!product) {
+      return [];
     }
-    if (prod.gallery && Array.isArray(prod.gallery)) {
-      prod.gallery.forEach(img => {
-        if (img && typeof img === 'string' && img.trim().length > 0 && !list.includes(img)) {
-          list.push(img);
-        }
-      });
-    }
-    return list;
+    const images = [product.image, ...(product.gallery ?? [])].filter(image => Boolean(image?.trim()) && !this.failedImages().includes(image));
+    return [...new Set(images)];
   });
-
-  readonly relatedProducts = computed(() => {
-    const prod = this.product();
-    if (!prod) return [];
-    return this.productService.allProducts()
-      .filter(p => p.id !== prod.id && p._id !== prod.id && p.category === prod.category)
-      .slice(0, 3);
+  hasValidDiscount = computed(() => {
+    const product = this.product();
+    return Boolean(product && hasValidDiscount(product.price, product.discountPrice ?? null));
+  });
+  salePrice = computed(() => {
+    const product = this.product();
+    return product ? getSalePrice(product.price, product.discountPrice ?? null) : 0;
+  });
+  productionEstimate = computed(() => {
+    const product = this.product();
+    if (!product) {
+      return '';
+    }
+    return formatProductionEstimate(product.isMadeToOrder ?? false, product.productionTimeMin ?? null, product.productionTimeMax ?? null, product.productionTimeUnit ?? null);
+  });
+  customerSpecs = computed<ProductDisplaySpec[]>(() => {
+    const product = this.product();
+    if (!product) {
+      return [];
+    }
+    return [
+      { id: 'material', label: 'Material', value: product.material },
+      { id: 'finish', label: 'Finish', value: product.finish },
+      { id: 'color', label: 'Color', value: product.color },
+      { id: 'size', label: 'Size / dimensions', value: product.size },
+      { id: 'weight', label: 'Weight', value: product.weight }
+    ].filter(spec => Boolean(spec.value?.trim()));
+  });
+  technicalSpecs = computed<ProductDisplaySpec[]>(() => {
+    const product = this.product();
+    if (!product) {
+      return [];
+    }
+    return [
+      { id: 'print-time', label: 'Estimated print time', value: product.printTime },
+      { id: 'layer-height', label: 'Layer height', value: product.layerHeight ?? '' },
+      { id: 'infill', label: 'Infill', value: product.infill ?? '' }
+    ].filter(spec => Boolean(spec.value?.trim()));
+  });
+  relatedProducts = computed(() => {
+    const product = this.product();
+    if (!product) {
+      return [];
+    }
+    return this.productService.allProducts().filter(item => item.id !== product.id && item.category === product.category).slice(0, 3);
   });
 
   ngOnInit(): void {
-    this.route.params.subscribe(params => {
-      const idOrSlug = params['slug'] || params['id'] || this.slug();
-      if (idOrSlug) {
-        this.fetchProductDetails(idOrSlug);
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      const slug = typeof params['slug'] === 'string' ? params['slug'] : '';
+      if (slug) {
+        this.fetchProductDetails(slug);
       }
     });
   }
 
-  private fetchProductDetails(idOrSlug: string): void {
-    this.isLoading.set(true);
-    this.productService.getProductByIdOrSlug(idOrSlug).subscribe({
-      next: (res) => {
-        if (res.data) {
-          this.product.set(res.data);
-          this.seoService.setTitle(`${res.data.name} - 3D Anime Model`);
-          this.seoService.setMetaDescription(`${res.data.name} (${res.data.category}). ${res.data.description}`);
-
-          if (this.has3dModel()) {
-            this.activeStageMode.set('3d');
-          } else if (this.hasMainImage()) {
-            this.activeStageMode.set('image');
-            this.selectedImageUrl.set(res.data.image);
-          }
-        } else {
-          this.fallbackSearch(idOrSlug);
-        }
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.fallbackSearch(idOrSlug);
-        this.isLoading.set(false);
-      }
-    });
-  }
-
-  private fallbackSearch(idOrSlug: string): void {
-    const found = this.productService.getProductById(idOrSlug) ||
-      this.productService.allProducts().find(p => p.slug === idOrSlug || p.id === idOrSlug || p._id === idOrSlug);
-
-    if (found) {
-      this.product.set(found);
-      this.seoService.setTitle(`${found.name} - 3D Anime Model`);
-      this.seoService.setMetaDescription(`${found.name} (${found.category}). ${found.description}`);
-      if (this.has3dModel()) {
-        this.activeStageMode.set('3d');
-      } else if (this.hasMainImage()) {
-        this.activeStageMode.set('image');
-        this.selectedImageUrl.set(found.image);
-      }
-    } else {
-      this.router.navigate(['/not-found']);
+  addToCartAndCheckout(): void {
+    const product = this.product();
+    if (product) {
+      this.cartService.addItem(product, this.quantity());
+      void this.router.navigate(['/cart']);
     }
   }
 
+  incrementQuantity(): void {
+    this.quantity.update(value => Math.min(value + 1, 99));
+  }
+
+  decrementQuantity(): void {
+    this.quantity.update(value => Math.max(value - 1, 1));
+  }
+
   switchTo3d(): void {
-    this.activeStageMode.set('3d');
+    if (this.has3dModel()) {
+      this.analytics.track(AnalyticsEventName.OPEN_3D_VIEWER, { product_id: this.product()?.id ?? '' });
+      this.activeStageMode.set(ProductDisplayMode.MODEL);
+    }
   }
 
   switchToImage(imageUrl: string): void {
     this.selectedImageUrl.set(imageUrl);
-    this.activeStageMode.set('image');
+    this.activeStageMode.set(ProductDisplayMode.IMAGE);
+  }
+
+  onSelectedImageError(): void {
+    const failedImage = this.selectedImageUrl();
+    if (failedImage) {
+      this.failedImages.update(images => [...images, failedImage]);
+    }
+    this.selectedImageUrl.set(this.galleryImages()[0] ?? '');
+  }
+
+  onGalleryImageError(imageUrl: string): void {
+    this.failedImages.update(images => images.includes(imageUrl) ? images : [...images, imageUrl]);
+    if (this.selectedImageUrl() === imageUrl) {
+      this.selectedImageUrl.set(this.galleryImages()[0] ?? '');
+    }
+  }
+
+  retry(): void {
+    const slug = this.route.snapshot.paramMap.get('slug');
+    if (slug) {
+      this.fetchProductDetails(slug);
+    }
+  }
+
+  private fetchProductDetails(slug: string): void {
+    this.isLoading.set(true);
+    this.hasError.set(false);
+    this.productService.getProductBySlug(slug).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => {
+        if (!response.data || response.data.isActive === false || response.data.deletedAt) {
+          void this.router.navigate(['/not-found']);
+          return;
+        }
+        this.product.set(response.data);
+        this.failedImages.set([]);
+        const firstImage = [response.data.image, ...(response.data.gallery ?? []), response.data.posterImage ?? ''].find(image => Boolean(image?.trim())) ?? '';
+        this.selectedImageUrl.set(firstImage);
+        this.activeStageMode.set(ProductDisplayMode.IMAGE);
+        const currency = this.settings().defaultCurrency.trim();
+        this.seoService.setProductMetadata(response.data, currency);
+        this.analytics.track(AnalyticsEventName.VIEW_PRODUCT, { product_id: response.data.id, category: response.data.category });
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.hasError.set(true);
+        this.isLoading.set(false);
+      }
+    });
   }
 }
