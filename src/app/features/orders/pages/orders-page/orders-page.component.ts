@@ -1,87 +1,108 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ApiErrorResponse, ApiMeta } from '@core/models/api-response.model';
+import { Order } from '@core/models/order.model';
 import { OrderService } from '@core/services/order.service';
-import { WhatsAppService } from '@core/services/whatsapp.service';
 import { SeoService } from '@core/services/seo.service';
-import { Order, OrderStatus } from '@core/models/order.model';
+import { WhatsAppService } from '@core/services/whatsapp.service';
+import { ORDER_LOADING_SKELETONS, ORDER_STATUS_PRESENTATIONS, OrderStatusPresentation, UNRECOGNIZED_ORDER_STATUS } from '../../orders.control';
+import { AnalyticsService } from '@core/services/analytics.service';
+import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
+
+export interface OrderListViewItem {
+  order: Order;
+  status: OrderStatusPresentation;
+  supportUrl: string;
+  itemCount: number;
+}
 
 @Component({
   selector: 'app-orders-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    FormsModule
-  ],
+  imports: [CommonModule, RouterLink],
   templateUrl: './orders-page.component.html',
   styleUrl: './orders-page.component.scss'
 })
 export class OrdersPageComponent implements OnInit {
-  readonly orderService = inject(OrderService);
-  readonly whatsAppService = inject(WhatsAppService);
-  private readonly seoService = inject(SeoService);
+  private orderService = inject(OrderService);
+  private whatsAppService = inject(WhatsAppService);
+  private seoService = inject(SeoService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
+  private analytics = inject(AnalyticsService);
 
-  readonly orders = this.orderService.orders;
-  readonly isLoading = signal<boolean>(true);
-  readonly searchQuery = signal<string>('');
-
-  readonly filteredOrders = computed(() => {
-    const q = this.searchQuery().trim().toLowerCase();
-    const list = this.orders();
-    if (!q) return list;
-    return list.filter(o =>
-      o.orderNumber.toLowerCase().includes(q) ||
-      o.customer.fullName.toLowerCase().includes(q) ||
-      o.customer.phone.includes(q) ||
-      o.status.toLowerCase().includes(q)
-    );
+  orders = signal<Order[]>([]);
+  isLoading = signal<boolean>(true);
+  hasError = signal<boolean>(false);
+  isUnauthorized = signal<boolean>(false);
+  selectedOrderId = signal<string>('');
+  meta = signal<ApiMeta>({ page: 1, limit: 10, totalItems: 0, totalPages: 1, hasNextPage: false, hasPreviousPage: false });
+  isArabic = document.documentElement.lang.toLowerCase().startsWith('ar');
+  loadingSkeletons = ORDER_LOADING_SKELETONS;
+  orderViews = computed<OrderListViewItem[]>(() => this.orders().map(order => ({
+    order,
+    status: ORDER_STATUS_PRESENTATIONS[order.status] ?? UNRECOGNIZED_ORDER_STATUS,
+    supportUrl: this.whatsAppService.getOrderSupportUrl(order),
+    itemCount: order.items.reduce((total, item) => total + item.quantity, 0)
+  })));
+  selectedOrder = computed(() => this.orders().find(order => order.id === this.selectedOrderId()) ?? null);
+  selectedStatus = computed(() => {
+    const order = this.selectedOrder();
+    return order ? ORDER_STATUS_PRESENTATIONS[order.status] ?? UNRECOGNIZED_ORDER_STATUS : null;
   });
 
   ngOnInit(): void {
-    this.seoService.setTitle('My Orders & Tracking - 3D OTAKU');
-    this.seoService.setMetaDescription('Track your 3D anime model print orders, shipping status, and order history.');
+    this.seoService.setTitle('My orders');
+    this.seoService.setMetaDescription('Review your orders, current status, totals, and available next actions.');
+    this.analytics.track(AnalyticsEventName.VIEW_ORDERS);
+    const pageParam = Number(this.route.snapshot.queryParamMap.get('page'));
+    this.loadOrders(Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1);
+  }
 
-    this.orderService.getOrders().subscribe({
-      next: () => this.isLoading.set(false),
-      error: () => this.isLoading.set(false)
+  loadOrders(page: number = this.meta().page): void {
+    this.isLoading.set(true);
+    this.hasError.set(false);
+    this.isUnauthorized.set(false);
+    this.orderService.getOrders(page, this.meta().limit).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: response => {
+        this.orders.set(response.data ?? []);
+        this.meta.set(response.meta);
+        this.isLoading.set(false);
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { page }, replaceUrl: true });
+      },
+      error: (error: ApiErrorResponse) => {
+        this.isUnauthorized.set(error.statusCode === 401 || error.statusCode === 403);
+        this.hasError.set(true);
+        this.isLoading.set(false);
+      }
     });
   }
 
-  getStatusBadgeClass(status: OrderStatus): string {
-    switch (status) {
-      case 'pending':
-        return 'bg-amber-500/20 border-amber-500/40 text-amber-300';
-      case 'processing':
-        return 'bg-blue-500/20 border-blue-500/40 text-blue-300';
-      case 'printed':
-        return 'bg-purple-500/20 border-purple-500/40 text-purple-300';
-      case 'shipped':
-        return 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300';
-      case 'delivered':
-        return 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300';
-      case 'cancelled':
-        return 'bg-red-500/20 border-red-500/40 text-red-300';
-      default:
-        return 'bg-neutral-800 border-neutral-700 text-neutral-300';
+  showOrderDetails(orderId: string): void {
+    this.selectedOrderId.set(orderId);
+    this.analytics.track(AnalyticsEventName.VIEW_ORDER_DETAILS);
+  }
+
+  closeOrderDetails(): void {
+    this.selectedOrderId.set('');
+  }
+
+  hideBrokenImage(event: Event): void {
+    (event.target as HTMLImageElement).hidden = true;
+  }
+
+  previousPage(): void {
+    if (this.meta().hasPreviousPage) {
+      this.loadOrders(this.meta().page - 1);
     }
   }
 
-  getStatusLabel(status: OrderStatus): string {
-    switch (status) {
-      case 'pending': return 'Pending Confirmation';
-      case 'processing': return 'Processing & Printing';
-      case 'printed': return '3D Print Completed';
-      case 'shipped': return 'Shipped / Out for Delivery';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      default: return status;
+  nextPage(): void {
+    if (this.meta().hasNextPage) {
+      this.loadOrders(this.meta().page + 1);
     }
-  }
-
-  getWhatsAppLink(order: Order): string {
-    const text = `Hello 3D Otaku, I am following up on Order ID #${order.orderNumber}.\nStatus: ${order.status.toUpperCase()}`;
-    return `https://wa.me/201112961724?text=${encodeURIComponent(text)}`;
   }
 }

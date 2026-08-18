@@ -8,6 +8,7 @@ import { ApiService } from '../api/api.service';
 import { API_ENDPOINTS } from '../api/api-endpoints';
 import { environment } from '../../../environments/environment';
 import { APP_CONSTANTS } from '../constants/app.constants';
+import { hasValidDiscount } from '../utils/product-display.util';
 
 @Injectable({
   providedIn: 'root'
@@ -17,24 +18,30 @@ export class ProductService {
   private productsSignal = signal<Product[]>(this.loadFromStorage());
 
   allProducts = computed(() =>
-    this.productsSignal().filter(p => p.isActive !== false && this.hasImageOrModel(p))
+    this.productsSignal().filter(product => product.isActive !== false && !product.deletedAt)
   );
 
   featuredProducts = computed(() =>
-    this.productsSignal().filter(p => p.isFeatured && this.hasImageOrModel(p))
+    this.productsSignal().filter(product => product.isFeatured && product.isActive !== false && !product.deletedAt)
   );
 
   adminProducts = computed(() => this.productsSignal());
 
-  private hasImageOrModel(p: Product): boolean {
-    const hasImg = !!(p.image && typeof p.image === 'string' && p.image.trim().length > 0 && !p.image.includes('placeholder'));
-    const hasModel = !!(p.modelUrl && typeof p.modelUrl === 'string' && p.modelUrl.trim().length > 0);
-    return hasImg || hasModel;
+  private normalizeProduct(product: Product): Product {
+    return {
+      ...product,
+      id: product.id || product._id || '',
+      image: product.image?.trim() ?? '',
+      gallery: Array.isArray(product.gallery) ? product.gallery.filter(image => Boolean(image?.trim())) : [],
+      modelUrl: product.modelUrl?.trim() || null,
+      posterImage: product.posterImage?.trim() || null,
+      discountPrice: hasValidDiscount(product.price, product.discountPrice ?? null) ? product.discountPrice : null
+    };
   }
 
   getProducts(query?: ProductQuery): Observable<PaginatedResponse<Product>> {
     if (environment.useMockApi) {
-      let items = this.productsSignal().filter(p => this.hasImageOrModel(p));
+      let items = this.productsSignal().filter(product => product.isActive !== false && !product.deletedAt);
 
       if (query?.search) {
         const searchLower = query.search.toLowerCase();
@@ -73,15 +80,12 @@ export class ProductService {
       });
     }
 
-    return this.api.getPaginated<Product>(API_ENDPOINTS.products.list, query as Record<string, unknown>).pipe(
+    return this.api.getPaginated<Product, ProductQuery>(API_ENDPOINTS.products.list, query ?? null).pipe(
       map(res => {
         if (res.data) {
           const normalized = res.data
-            .map(p => ({
-              ...p,
-              id: p.id || p._id || ''
-            }))
-            .filter(p => this.hasImageOrModel(p));
+            .map(product => this.normalizeProduct(product))
+            .filter(product => product.isActive !== false && !product.deletedAt);
           return { ...res, data: normalized };
         }
         return res;
@@ -98,7 +102,7 @@ export class ProductService {
   getFeaturedProducts(limit: number = 6): Observable<ApiResponse<Product[]>> {
     if (environment.useMockApi) {
       const featured = this.productsSignal()
-        .filter(p => p.isFeatured && this.hasImageOrModel(p))
+        .filter(product => product.isFeatured && product.isActive !== false && !product.deletedAt)
         .slice(0, limit);
 
       return of({
@@ -112,11 +116,8 @@ export class ProductService {
       map(res => {
         if (res.data) {
           const normalized = res.data
-            .map(p => ({
-              ...p,
-              id: p.id || p._id || ''
-            }))
-            .filter(p => this.hasImageOrModel(p));
+            .map(product => this.normalizeProduct(product))
+            .filter(product => product.isActive !== false && !product.deletedAt);
           return { ...res, data: normalized };
         }
         return res;
@@ -143,7 +144,7 @@ export class ProductService {
     return this.api.get<Product>(API_ENDPOINTS.products.details(idOrSlug)).pipe(
       map(res => {
         if (res.data) {
-          return { ...res, data: { ...res.data, id: res.data.id || res.data._id || idOrSlug } };
+          return { ...res, data: this.normalizeProduct({ ...res.data, id: res.data.id || res.data._id || idOrSlug }) };
         }
         return res;
       })
@@ -158,7 +159,7 @@ export class ProductService {
     if (environment.useMockApi) {
       const categoriesMap = new Map<string, number>();
       this.productsSignal().forEach(p => {
-        if (this.hasImageOrModel(p)) {
+        if (p.isActive !== false && !p.deletedAt) {
           categoriesMap.set(p.category, (categoriesMap.get(p.category) || 0) + 1);
         }
       });

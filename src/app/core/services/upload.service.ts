@@ -34,7 +34,7 @@ export class UploadService {
     return this.api.upload<UploadResult>(API_ENDPOINTS.uploads.image, formData);
   }
 
-  uploadModel(file: File, productId?: string): Observable<ApiResponse<UploadResult>> {
+  uploadModel(file: File, productId: string | null = null): Observable<ApiResponse<UploadResult>> {
     if (environment.useMockApi) {
       const mockResult: UploadResult = {
         url: URL.createObjectURL(file),

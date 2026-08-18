@@ -10,8 +10,11 @@ export interface CartItem {
 export interface CustomerDeliveryInfo {
   fullName: string;
   phone: string;
+  whatsappNumber?: string;
+  email?: string;
   secondaryPhone?: string;
-  governorate: string;
+  governorate?: string;
+  city?: string;
   address: string;
   notes?: string;
 }

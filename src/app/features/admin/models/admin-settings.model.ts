@@ -17,7 +17,7 @@ export interface AdminSettings {
   deliveryNote: string;
   safetyNote: string;
   maintenanceMode: boolean;
-  deliveryFee: number;
-  deliveryDays: string;
-  deliveryInfoNote: string;
+  deliveryFee?: number | null;
+  deliveryDays?: string;
+  deliveryInfoNote?: string;
 }

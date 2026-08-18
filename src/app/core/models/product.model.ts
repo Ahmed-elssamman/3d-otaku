@@ -2,6 +2,7 @@ import { ProductCategory } from '../enums/product-category.enum';
 import { ProductBadge } from '../enums/product-badge.enum';
 import { ProductMaterial } from '../enums/product-material.enum';
 import { ProductModelType } from '../enums/product-model-type.enum';
+import { ProductionTimeUnit } from '../enums/production-time-unit.enum';
 
 export interface Product {
   id: string;
@@ -13,12 +14,16 @@ export interface Product {
   description: string;
   price: number;
   discountPrice?: number | null;
-  rating: number;
+  rating?: number | null;
+  reviewCount?: number | null;
+  currency?: string | null;
   image: string;
   gallery: string[];
-  modelUrl: string;
-  modelType: ProductModelType | string;
+  modelUrl?: string | null;
+  modelType?: ProductModelType | string | null;
   posterImage?: string | null;
+  imageAlt?: string | null;
+  socialImage?: string | null;
   tags: string[];
   material: ProductMaterial;
   finish: string;
@@ -26,6 +31,10 @@ export interface Product {
   size: string;
   weight: string;
   printTime: string;
+  isMadeToOrder?: boolean;
+  productionTimeMin?: number | null;
+  productionTimeMax?: number | null;
+  productionTimeUnit?: ProductionTimeUnit | null;
   layerHeight?: string | null;
   infill?: string | null;
   isFeatured: boolean;
@@ -37,4 +46,5 @@ export interface Product {
   keywords?: string[] | null;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null;
 }

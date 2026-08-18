@@ -47,7 +47,7 @@ export class CustomOrderService {
       });
     }
 
-    return this.api.getPaginated<CustomOrder>(API_ENDPOINTS.customOrders.adminList, query as Record<string, unknown>);
+    return this.api.getPaginated<CustomOrder, { page?: number; limit?: number; status?: string; search?: string }>(API_ENDPOINTS.customOrders.adminList, query ?? null);
   }
 
   updateCustomOrderStatus(id: string, status: string): Observable<ApiResponse<CustomOrder>> {
@@ -57,7 +57,7 @@ export class CustomOrderService {
         message: 'Custom order status updated successfully.',
         data: {
           id,
-          status: status as unknown as CustomOrder['status'],
+          status,
           fullName: 'Mock User',
           phone: '',
           whatsappNumber: '',

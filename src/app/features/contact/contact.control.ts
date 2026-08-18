@@ -1,41 +1,41 @@
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
 export interface FaqItem {
+  id: string;
   question: string;
   answer: string;
 }
 
-export const PRODUCT_TYPE_OPTIONS: string[] = [
-  'Custom Katana / Anime Sword',
-  'Demon Dagger / Tanto',
-  'Wearable Mask / Helm',
-  'Articulated Desk Dragon / Figure',
-  'Collectible Emblem / Wall Mount',
-  'Other Custom 3D STL Print'
+export const DESIGN_SOURCE_OPTIONS: SelectOption[] = [
+  { label: 'MakerWorld URL', value: 'makerworld-url' },
+  { label: 'Other model URL', value: 'other-model-url' },
+  { label: 'Reference image link', value: 'reference-image' },
+  { label: 'Written idea', value: 'written-idea' }
 ];
 
-export const COLOR_FINISH_OPTIONS: string[] = [
-  'Matte Black PLA+',
-  'Pure White PLA+',
-  'Dark Purple PLA+',
-  'Crimson Red PLA+',
-  'Silk Gold / Silver PLA',
-  'Unpainted Raw Print'
+export const PRODUCT_TYPE_OPTIONS: SelectOption[] = [
+  { label: 'Display model or figure', value: 'display-model' },
+  { label: 'Desk or gaming setup piece', value: 'desk-model' },
+  { label: 'Cosplay prop', value: 'cosplay-prop' },
+  { label: 'Gift or collectible', value: 'collectible' },
+  { label: 'Other use', value: 'other' }
+];
+
+export const MATERIAL_OPTIONS: SelectOption[] = [
+  { label: 'Not sure — please advise', value: '' },
+  { label: 'PLA', value: 'PLA' },
+  { label: 'PLA+', value: 'PLA+' },
+  { label: 'PETG', value: 'PETG' },
+  { label: 'Resin', value: 'Resin' },
+  { label: 'Other', value: 'Other' }
 ];
 
 export const CUSTOM_FAQ_ITEMS: FaqItem[] = [
-  {
-    question: 'How long does a custom 3D prop order take?',
-    answer: 'Most custom orders take 2 to 5 business days for CAD modeling/slicing and high-density 3D printing.'
-  },
-  {
-    question: 'Can I provide my own STL file for printing?',
-    answer: 'Yes! If you already have an STL or OBJ file from Thingiverse or Cults3D, paste the link or send it over WhatsApp.'
-  },
-  {
-    question: 'Are the swords and blades safe for conventions?',
-    answer: 'Absolutely. All our props are 100% non-sharp plastic 3D prints made from eco PLA plastic designed for cosplay and display.'
-  },
-  {
-    question: 'How do I pay for a custom 3D request?',
-    answer: 'Once we review your dimensions and reference image on WhatsApp, we send a direct invoice link for approval.'
-  }
+  { id: 'commitment', question: 'Does sending a request commit me to purchase?', answer: 'No. The request must first be reviewed for feasibility, rights, price, and production requirements.' },
+  { id: 'makerworld', question: 'Can I send a MakerWorld model?', answer: 'You can send the model page as a discovery reference. Each model has its own license, and some licenses do not allow commercial printing.' },
+  { id: 'files', question: 'Can I upload an STL here?', answer: 'This storefront does not currently expose a secure private-file upload endpoint for custom requests. Use a permitted model URL or continue with the store after review.' },
+  { id: 'timing', question: 'When will I receive price and production time?', answer: 'Those details are provided after the store reviews the design and confirms it can be manufactured.' }
 ];

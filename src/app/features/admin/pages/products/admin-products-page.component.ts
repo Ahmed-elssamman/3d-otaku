@@ -19,6 +19,7 @@ import { AdminFeaturedFilter } from '../../enums/admin-featured-filter.enum';
 import { AdminProductSort } from '../../enums/admin-product-sort.enum';
 import { AdminFilePreviewComponent } from '../../components/admin-file-preview.component';
 import { AdminProductTableComponent } from '../../components/admin-product-table.component';
+import { AdminProductQuery } from '../../../products/models/product-query.model';
 
 @Component({
   selector: 'app-admin-products-page',
@@ -66,10 +67,11 @@ export class AdminProductsPageComponent implements OnInit {
 
   loadProducts(): void {
     this.isLoading.set(true);
-    this.adminProductService.getProducts({
-      search: this.searchTerm(),
-      category: this.selectedCategory() !== 'all' ? this.selectedCategory() : undefined
-    }).subscribe({
+    const query: AdminProductQuery = { search: this.searchTerm() };
+    if (this.selectedCategory() !== 'all') {
+      query.category = this.selectedCategory();
+    }
+    this.adminProductService.getProducts(query).subscribe({
       next: (res) => {
         if (res.data) {
           this.productsList.set(res.data);
@@ -112,8 +114,8 @@ export class AdminProductsPageComponent implements OnInit {
       list.sort((first, second) => first.price - second.price);
     } else if (this.selectedSort() === AdminProductSort.PRICE_DESC) {
       list.sort((first, second) => second.price - first.price);
-    } else if (this.selectedSort() === AdminProductSort.RATING_DESC) {
-      list.sort((first, second) => second.rating - first.rating);
+    } else if (this.selectedSort() === AdminProductSort.FEATURED_DESC) {
+      list.sort((first, second) => Number(second.isFeatured) - Number(first.isFeatured));
     } else {
       list.sort((first, second) => second.createdAt.localeCompare(first.createdAt));
     }

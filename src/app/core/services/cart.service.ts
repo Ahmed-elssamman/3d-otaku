@@ -17,7 +17,11 @@ export class CartService {
   );
 
   readonly subtotal = computed(() =>
-    this.itemsSignal().reduce((total, item) => total + ((item.product.price || 0) * item.quantity), 0)
+    this.itemsSignal().reduce((total, item) => {
+      const discount = item.product.discountPrice;
+      const unitPrice = typeof discount === 'number' && discount >= 0 && discount < item.product.price ? discount : item.product.price;
+      return total + (unitPrice * item.quantity);
+    }, 0)
   );
 
   addItem(product: Product, quantity: number = 1): void {

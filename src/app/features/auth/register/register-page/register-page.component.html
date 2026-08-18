@@ -1,128 +1,121 @@
-<div class="min-h-[85vh] flex items-center justify-center px-4 py-16 vercel-grid-pattern relative overflow-hidden">
-  
-  <div class="w-full max-w-lg vt-card rounded-3xl p-8 sm:p-10 border border-neutral-800 shadow-2xl relative z-10">
-    
-    <!-- Header -->
-    <div class="text-center space-y-2 mb-6">
-      <div class="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 mx-auto flex items-center justify-center text-white">
-        <i class="pi pi-user-plus text-purple-400 text-base"></i>
-      </div>
-      <h1 class="text-2xl font-black text-white tracking-tight">
-        Join 3D Otaku Studio
-      </h1>
-      <p class="text-xs text-neutral-400">Create an account for custom prop quotes & order tracking.</p>
-    </div>
+<main class="auth-scene auth-scene-register">
+  <div class="auth-atmosphere" aria-hidden="true">
+    <span class="auth-orb auth-orb-one"></span>
+    <span class="auth-orb auth-orb-two"></span>
+    <span class="auth-slash"></span>
+  </div>
+  <div class="auth-particles" aria-hidden="true"></div>
+  <div class="auth-speed-lines" aria-hidden="true"></div>
 
-    <!-- Form -->
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="space-y-4">
-      
-      <!-- Full Name -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-          Full Name
-        </label>
-        <div class="relative">
-          <i class="pi pi-user absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-          <input
-            type="text"
-            formControlName="fullName"
-            placeholder="Tanjiro Kamado"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-          />
-        </div>
-        @if (registerForm.get('fullName')?.touched && registerForm.get('fullName')?.hasError('required')) {
-          <span class="text-[11px] text-red-400 mt-1 block">Full name is required</span>
-        }
+  <div class="auth-layout auth-layout-register">
+    <section class="auth-story" aria-labelledby="register-story-title">
+      <p class="auth-kicker"><span class="auth-kicker-dot"></span>Begin your origin story</p>
+      <h1 id="register-story-title">Forge your <span>Otaku identity.</span></h1>
+      <p class="auth-story-copy">Create a secure account to collect designs, request custom builds, and follow every stage of your 3D order.</p>
+
+      <div class="auth-emblem" aria-hidden="true">
+        <div class="auth-emblem-core"><span>創</span></div>
       </div>
 
-      <!-- Email Field -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-          Email Address
-        </label>
-        <div class="relative">
-          <i class="pi pi-envelope absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-          <input
-            type="email"
-            formControlName="email"
-            placeholder="otaku@anime.com"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-          />
-        </div>
-        @if (registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')) {
-          <span class="text-[11px] text-red-400 mt-1 block">Email is required</span>
-        }
+      <div class="auth-promise-grid" aria-label="Account benefits">
+        <article class="auth-promise"><i class="pi pi-heart"></i><strong>Your collection</strong><span>Keep favorites close</span></article>
+        <article class="auth-promise"><i class="pi pi-compass"></i><strong>Order journey</strong><span>Follow every stage</span></article>
+        <article class="auth-promise"><i class="pi pi-star"></i><strong>Custom ideas</strong><span>Request unique builds</span></article>
       </div>
+    </section>
 
-      <!-- Passwords Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-            Password
-          </label>
-          <div class="relative">
-            <i class="pi pi-lock absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-            <input
-              type="password"
-              formControlName="password"
-              placeholder="••••••••"
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-            />
-          </div>
-        </div>
+    <section class="auth-panel" aria-labelledby="register-title">
+      <div class="auth-panel-rune" aria-hidden="true">創</div>
+      <header class="auth-panel-header auth-reveal auth-delay-1">
+        <div class="auth-panel-icon"><i class="pi pi-user-plus"></i></div>
+        <p class="auth-panel-eyebrow">New member protocol</p>
+        <h2 id="register-title">Create your identity</h2>
+        <p class="auth-panel-subtitle">One account for orders, collections, and custom 3D requests.</p>
+      </header>
 
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-            Confirm Password
-          </label>
-          <div class="relative">
-            <i class="pi pi-lock absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-            <input
-              type="password"
-              formControlName="confirmPassword"
-              placeholder="••••••••"
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-            />
-          </div>
-        </div>
-      </div>
-
-      @if (registerForm.touched && registerForm.hasError('passwordMismatch')) {
-        <span class="text-[11px] text-red-400 block text-center">Passwords do not match</span>
+      @if (errorMessage()) {
+        <div class="auth-alert" role="alert"><i class="pi pi-exclamation-triangle"></i><span>{{ errorMessage() }}</span></div>
       }
 
-      <!-- Accept Terms -->
-      <div class="pt-1">
-        <label class="flex items-start gap-2 text-xs text-neutral-400 cursor-pointer">
-          <input
-            type="checkbox"
-            formControlName="acceptTerms"
-            class="mt-0.5 rounded border-neutral-800 bg-neutral-950 text-white focus:ring-purple-500 cursor-pointer"
-          />
-          <span>I agree to the <a routerLink="/about" class="text-white font-semibold underline">Terms of Service</a> & <a routerLink="/about" class="text-white font-semibold underline">Prop Safety Disclaimer</a></span>
-        </label>
-      </div>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="auth-field auth-reveal auth-delay-2">
+          <label for="register-name">Full name</label>
+          <div class="auth-input-wrap">
+            <i class="pi pi-user" aria-hidden="true"></i>
+            <input id="register-name" type="text" formControlName="fullName" autocomplete="name" placeholder="Your hero name" class="auth-input" />
+          </div>
+          @if (registerForm.controls['fullName'].touched && registerForm.controls['fullName'].errors?.['required']) {
+            <span class="auth-validation">Full name is required</span>
+          } @else if (registerForm.controls['fullName'].touched && registerForm.controls['fullName'].errors?.['minlength']) {
+            <span class="auth-validation">Use at least 3 characters</span>
+          }
+        </div>
 
-      <!-- Submit Button -->
-      <button
-        type="submit"
-        [disabled]="isSubmitting()"
-        class="w-full py-3 rounded-xl bg-white text-black font-bold text-xs shadow-sm hover:bg-neutral-200 transition-all cursor-pointer disabled:opacity-50 mt-2"
-      >
-        @if (isSubmitting()) {
-          <span>Creating Guild Account...</span>
-        } @else {
-          <span>Create Free Account</span>
+        <div class="auth-field auth-reveal auth-delay-2">
+          <label for="register-email">Email address</label>
+          <div class="auth-input-wrap">
+            <i class="pi pi-envelope" aria-hidden="true"></i>
+            <input id="register-email" type="email" formControlName="email" autocomplete="email" placeholder="otaku@anime.com" class="auth-input" />
+          </div>
+          @if (registerForm.controls['email'].touched && registerForm.controls['email'].errors?.['required']) {
+            <span class="auth-validation">Email is required</span>
+          } @else if (registerForm.controls['email'].touched && registerForm.controls['email'].errors?.['email']) {
+            <span class="auth-validation">Enter a valid email address</span>
+          }
+        </div>
+
+        <div class="auth-field-grid auth-reveal auth-delay-3">
+          <div class="auth-field">
+            <label for="register-password">Password</label>
+            <div class="auth-input-wrap">
+              <i class="pi pi-lock" aria-hidden="true"></i>
+              <input id="register-password" type="password" formControlName="password" autocomplete="new-password" placeholder="••••••••" class="auth-input" />
+            </div>
+            @if (registerForm.controls['password'].touched && registerForm.controls['password'].errors?.['required']) {
+              <span class="auth-validation">Password is required</span>
+            } @else if (registerForm.controls['password'].touched && registerForm.controls['password'].errors?.['minlength']) {
+              <span class="auth-validation">Use at least 6 characters</span>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label for="register-confirm-password">Confirm password</label>
+            <div class="auth-input-wrap">
+              <i class="pi pi-lock" aria-hidden="true"></i>
+              <input id="register-confirm-password" type="password" formControlName="confirmPassword" autocomplete="new-password" placeholder="••••••••" class="auth-input" />
+            </div>
+            @if (registerForm.controls['confirmPassword'].touched && registerForm.controls['confirmPassword'].errors?.['required']) {
+              <span class="auth-validation">Please confirm your password</span>
+            }
+          </div>
+        </div>
+
+        @if (registerForm.touched && registerForm.errors?.['passwordMismatch']) {
+          <span class="auth-validation auth-reveal auth-delay-3">Passwords do not match</span>
         }
-      </button>
 
-    </form>
+        <div class="auth-form-options auth-reveal auth-delay-4">
+          <label class="auth-check">
+            <input type="checkbox" formControlName="acceptTerms" />
+            <span>I accept the <a routerLink="/about">Terms of Service</a> and <a routerLink="/about">Safety Disclaimer</a>.</span>
+          </label>
+        </div>
+        @if (registerForm.controls['acceptTerms'].touched && registerForm.controls['acceptTerms'].errors?.['required']) {
+          <span class="auth-validation">Please accept the terms to continue</span>
+        }
 
-    <!-- Footer Link -->
-    <div class="mt-6 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-400">
-      <span>Already have an account? </span>
-      <a routerLink="/login" class="text-white font-bold hover:underline">Sign In</a>
-    </div>
+        <button type="submit" [disabled]="isSubmitting()" class="auth-submit auth-reveal auth-delay-5">
+          @if (isSubmitting()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i><span>Forging your identity…</span>
+          } @else {
+            <i class="pi pi-sparkles" aria-hidden="true"></i><span>Begin your journey</span>
+          }
+        </button>
+      </form>
 
+      <footer class="auth-footer auth-reveal auth-delay-5">
+        <span>Already part of the realm? </span><a routerLink="/login" [queryParams]="returnUrlQueryParams()">Sign in</a>
+      </footer>
+    </section>
   </div>
-</div>
+</main>

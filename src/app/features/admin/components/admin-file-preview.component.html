@@ -20,14 +20,13 @@
     </div>
     @if (modelUrl()) {
       @defer (on viewport) {
-        <model-viewer
-          [attr.src]="modelUrl()"
-          [attr.poster]="posterImage() || imageUrl()"
-          camera-controls
-          auto-rotate
-          shadow-intensity="1"
-          style="width: 100%; height: 288px;"
-        ></model-viewer>
+        <app-product-3d-viewer
+          [modelUrl]="modelUrl() || ''"
+          [modelType]="modelType()"
+          [modelName]="productName()"
+          [posterImage]="posterImage() || imageUrl() || ''"
+          [compact]="true"
+        />
       } @placeholder {
         <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
           Loading 3D preview...

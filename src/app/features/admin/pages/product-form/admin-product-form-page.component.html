@@ -5,8 +5,8 @@
       <p class="text-sm text-neutral-400">Create rich catalog entries with 3D preview, SEO metadata, and production specifications.</p>
     </div>
     <div class="flex flex-wrap gap-3">
-      <p-button label="Save Product" (onClick)="saveProduct(false)" />
-      <p-button label="Save and Continue Editing" severity="secondary" variant="outlined" (onClick)="saveProduct(true)" />
+      <p-button label="Save Product" [loading]="isSubmitting()" [disabled]="isSubmitting()" (onClick)="saveProduct(false)" />
+      <p-button label="Save and Continue Editing" [loading]="isSubmitting()" [disabled]="isSubmitting()" severity="secondary" variant="outlined" (onClick)="saveProduct(true)" />
       <p-button label="Preview Product" severity="contrast" variant="outlined" (onClick)="previewProduct()" />
       <p-button label="Cancel" severity="danger" variant="text" (onClick)="cancel()" />
     </div>
@@ -18,53 +18,75 @@
         <h3 class="admin-section-title">Basic Info</h3>
         <div class="admin-form-grid mt-4">
           <div class="admin-field">
-            <label class="admin-label">Product Name</label>
-            <input pInputText formControlName="name" class="w-full" />
+            <label class="admin-label">Product Name <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="name" class="w-full" placeholder="e.g. Roronoa Zoro Enma Katana" />
+            @if (productForm.controls.name.invalid && productForm.controls.name.touched) {
+              <small class="text-xs text-rose-400">Product name is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Slug</label>
-            <input pInputText formControlName="slug" class="w-full" (input)="onSlugChange()" />
+            <label class="admin-label">Slug <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="slug" class="w-full" (input)="onSlugChange()" placeholder="e.g. zoro-enma-katana" />
+            @if (productForm.controls.slug.invalid && productForm.controls.slug.touched) {
+              <small class="text-xs text-rose-400">Valid slug is required (lowercase letters, numbers, and hyphens).</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Category</label>
+            <label class="admin-label">Category <span class="font-bold text-rose-400">*</span></label>
             <p-select [options]="categoryOptions" optionLabel="label" optionValue="value" formControlName="category" appendTo="body" class="w-full" />
+            @if (productForm.controls.category.invalid && productForm.controls.category.touched) {
+              <small class="text-xs text-rose-400">Category is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Badge</label>
+            <label class="admin-label">Badge <span class="font-bold text-rose-400">*</span></label>
             <p-select [options]="badgeOptions" optionLabel="label" optionValue="value" formControlName="badge" appendTo="body" class="w-full" />
           </div>
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Short Description</label>
-            <textarea pTextarea formControlName="shortDescription" rows="3" class="w-full"></textarea>
+            <label class="admin-label">Short Description <span class="font-bold text-rose-400">*</span></label>
+            <textarea pTextarea formControlName="shortDescription" rows="2" class="w-full" placeholder="Brief summary of the product for cards and previews"></textarea>
+            @if (productForm.controls.shortDescription.invalid && productForm.controls.shortDescription.touched) {
+              <small class="text-xs text-rose-400">Short description is required.</small>
+            }
           </div>
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Full Description</label>
-            <textarea pTextarea formControlName="description" rows="6" class="w-full"></textarea>
+            <label class="admin-label">Full Description <span class="font-bold text-rose-400">*</span></label>
+            <textarea pTextarea formControlName="description" rows="5" class="w-full" placeholder="Detailed product specifications, anime lore, and print details"></textarea>
+            @if (productForm.controls.description.invalid && productForm.controls.description.touched) {
+              <small class="text-xs text-rose-400">Full description is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Price</label>
-            <p-inputnumber formControlName="price" mode="currency" currency="USD" locale="en-US" class="w-full" />
+            <label class="admin-label">Regular Price (EGP) <span class="font-bold text-rose-400">*</span></label>
+            <p-inputnumber formControlName="price" [min]="0" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" placeholder="0.00" />
+            <small class="text-neutral-500">Storefront preview: {{ productForm.controls.price.value | currency: 'EGP' }}</small>
+            @if (productForm.controls.price.invalid && productForm.controls.price.touched) {
+              <small class="block text-xs text-rose-400">Price must be greater than 0.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Discount Price</label>
-            <p-inputnumber formControlName="discountPrice" mode="currency" currency="USD" locale="en-US" class="w-full" />
+            <label class="admin-label">Discount Price (EGP) <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <p-inputnumber formControlName="discountPrice" [min]="0" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" placeholder="Leave empty if no discount" />
+            @if (productForm.hasError('invalidDiscount')) {
+              <small class="block text-xs text-rose-400">Discount must be lower than regular price ({{ productForm.controls.price.value }} EGP).</small>
+            }
           </div>
-          <div class="admin-field">
-            <label class="admin-label">Rating</label>
-            <p-rating formControlName="rating" />
+          <div class="admin-field xl:col-span-2">
+            <label class="admin-label">Tags <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <input pInputText formControlName="tags" class="w-full" placeholder="katana, one-piece, zoro, cosplay (separate with commas)" />
           </div>
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-4 md:grid-cols-2 xl:col-span-2">
             <div class="admin-card flex items-center justify-between p-4">
               <div>
-                <label class="admin-label">Featured</label>
-                <p class="text-sm text-neutral-500">Highlight on storefront sections.</p>
+                <label class="admin-label">Featured Product</label>
+                <p class="text-sm text-neutral-500">Highlight on storefront homepage sections.</p>
               </div>
               <p-toggleswitch formControlName="isFeatured" />
             </div>
             <div class="admin-card flex items-center justify-between p-4">
               <div>
-                <label class="admin-label">Active</label>
-                <p class="text-sm text-neutral-500">Show product on the public website.</p>
+                <label class="admin-label">Active / Published</label>
+                <p class="text-sm text-neutral-500">Show product on the public website catalog.</p>
               </div>
               <p-toggleswitch formControlName="isActive" />
             </div>
@@ -75,26 +97,172 @@
       <div class="admin-card p-5">
         <h3 class="admin-section-title">Product Media</h3>
         <div class="admin-form-grid mt-4">
+
+          <!-- Main Image Upload -->
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Main Image URL</label>
-            <input pInputText formControlName="mainImage" class="w-full" />
+            <label class="admin-label">Main Product Image <span class="text-xs font-normal text-neutral-500">(Upload or enter URL)</span></label>
+            <label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingImage()">
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="isUploadingImage()"
+                (change)="onMainImageFileSelected($event)"
+              />
+              @if (previewImage()) {
+                <img [src]="previewImage()" alt="Main image" class="media-upload-thumb" />
+              } @else {
+                <span class="media-upload-icon">
+                  <i class="pi" [class.pi-image]="!isUploadingImage()" [class.pi-spin]="isUploadingImage()" [class.pi-spinner]="isUploadingImage()"></i>
+                </span>
+              }
+              <span class="min-w-0 flex-1">
+                <strong class="block truncate text-sm text-white">
+                  {{ isUploadingImage() ? 'Uploading image...' : (previewImage() ? 'Change main image' : 'Upload main product image') }}
+                </strong>
+                <small class="mt-1 block text-xs text-neutral-500">JPEG, PNG, WebP • Max 10 MB</small>
+              </span>
+              <span class="media-upload-action">Browse</span>
+            </label>
+            <div class="mt-2 flex items-center gap-2">
+              <span class="text-xs text-neutral-600">or enter URL:</span>
+              <input pInputText formControlName="mainImage" class="w-full text-xs" placeholder="https://..." />
+            </div>
           </div>
+
+          <!-- Gallery Images Upload -->
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Gallery Image URLs</label>
-            <input pInputText formControlName="galleryImages" class="w-full" placeholder="Separate multiple URLs with commas" />
+            <label class="admin-label">Gallery Images <span class="text-xs font-normal text-neutral-500">(Optional, multiple upload supported)</span></label>
+            <label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingGallery()">
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                [disabled]="isUploadingGallery()"
+                (change)="onGalleryImagesSelected($event)"
+              />
+              <span class="media-upload-icon">
+                <i class="pi" [class.pi-images]="!isUploadingGallery()" [class.pi-spin]="isUploadingGallery()" [class.pi-spinner]="isUploadingGallery()"></i>
+              </span>
+              <span class="min-w-0 flex-1">
+                <strong class="block truncate text-sm text-white">
+                  {{ isUploadingGallery() ? ('Uploading ' + galleryUploadProgress() + '...') : 'Add gallery images' }}
+                </strong>
+                <small class="mt-1 block text-xs text-neutral-500">Select multiple images • JPEG, PNG, WebP • Max 10 MB each</small>
+              </span>
+              <span class="media-upload-action">Browse</span>
+            </label>
+            @if (galleryPreviewUrls().length) {
+              <div class="gallery-thumbs-grid mt-3">
+                @for (url of galleryPreviewUrls(); track url; let i = $index) {
+                  <div class="gallery-thumb-item">
+                    <img [src]="url" alt="Gallery image" class="gallery-thumb-img" />
+                    <button type="button" class="gallery-thumb-remove" (click)="removeGalleryImage(i)" title="Remove image">
+                      <i class="pi pi-times"></i>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+            <div class="mt-2 flex items-center gap-2">
+              <span class="text-xs text-neutral-600">or enter URLs:</span>
+              <input pInputText formControlName="galleryImages" class="w-full text-xs" placeholder="Separate multiple URLs with commas" />
+            </div>
           </div>
+
+          <!-- 3D Model Upload -->
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">3D Model URL</label>
-            <input pInputText formControlName="modelUrl" class="w-full" />
+            <label class="admin-label">3D Model File <span class="text-xs font-normal text-neutral-500">(Optional, .glb or .gltf)</span></label>
+            <label class="media-upload-zone media-upload-zone--model" [class.media-upload-zone-busy]="isUploadingModel()">
+              <input
+                type="file"
+                class="sr-only"
+                [accept]="modelFileAccept"
+                [disabled]="isUploadingModel()"
+                (change)="onModelFileSelected($event)"
+              />
+              <span class="media-upload-icon media-upload-icon--model">
+                <i class="pi" [class.pi-cloud-upload]="!isUploadingModel()" [class.pi-spin]="isUploadingModel()" [class.pi-spinner]="isUploadingModel()"></i>
+              </span>
+              <span class="min-w-0 flex-1">
+                <strong class="block truncate text-sm text-white">
+                  {{ selectedModelFileName() || (isUploadingModel() ? 'Uploading model...' : 'Drop or choose your 3D file') }}
+                </strong>
+                <small class="mt-1 block text-xs text-neutral-500">{{ modelUploadHelpText }}</small>
+              </span>
+              <span class="media-upload-action">Browse</span>
+            </label>
+            <div class="mt-2 flex items-center gap-2">
+              <span class="text-xs text-neutral-600">or enter URL:</span>
+              <input pInputText formControlName="modelUrl" class="w-full text-xs" placeholder="https://..." />
+            </div>
           </div>
+
           <div class="admin-field">
-            <label class="admin-label">Model Type</label>
+            <label class="admin-label">Model Type <span class="font-bold text-rose-400">*</span></label>
             <p-select [options]="modelTypeOptions" optionLabel="label" optionValue="value" formControlName="modelType" appendTo="body" class="w-full" />
           </div>
+
+          <!-- Poster Image Upload -->
           <div class="admin-field">
-            <label class="admin-label">Poster Image URL</label>
-            <input pInputText formControlName="posterImage" class="w-full" />
+            <label class="admin-label">Poster Image <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <label class="media-upload-zone media-upload-zone--compact" [class.media-upload-zone-busy]="isUploadingPoster()">
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="isUploadingPoster()"
+                (change)="onPosterImageSelected($event)"
+              />
+              @if (productForm.controls.posterImage.value) {
+                <img [src]="productForm.controls.posterImage.value" alt="Poster" class="media-upload-thumb media-upload-thumb--sm" />
+              } @else {
+                <span class="media-upload-icon media-upload-icon--sm">
+                  <i class="pi" [class.pi-image]="!isUploadingPoster()" [class.pi-spin]="isUploadingPoster()" [class.pi-spinner]="isUploadingPoster()"></i>
+                </span>
+              }
+              <span class="min-w-0 flex-1">
+                <strong class="block truncate text-xs text-white">
+                  {{ isUploadingPoster() ? 'Uploading...' : (productForm.controls.posterImage.value ? 'Change' : 'Upload poster') }}
+                </strong>
+              </span>
+            </label>
+            <input pInputText formControlName="posterImage" class="mt-1 w-full text-xs" placeholder="or enter URL" />
           </div>
+
+          <div class="admin-field">
+            <label class="admin-label">Main Image Alt Text <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <input pInputText formControlName="imageAlt" class="w-full" placeholder="Accessible description of main image" />
+          </div>
+
+          <!-- Social Sharing Image Upload -->
+          <div class="admin-field">
+            <label class="admin-label">Social Sharing Image <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <label class="media-upload-zone media-upload-zone--compact" [class.media-upload-zone-busy]="isUploadingSocial()">
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/jpeg,image/png,image/webp"
+                [disabled]="isUploadingSocial()"
+                (change)="onSocialImageSelected($event)"
+              />
+              @if (productForm.controls.socialImage.value) {
+                <img [src]="productForm.controls.socialImage.value" alt="Social" class="media-upload-thumb media-upload-thumb--sm" />
+              } @else {
+                <span class="media-upload-icon media-upload-icon--sm">
+                  <i class="pi" [class.pi-image]="!isUploadingSocial()" [class.pi-spin]="isUploadingSocial()" [class.pi-spinner]="isUploadingSocial()"></i>
+                </span>
+              }
+              <span class="min-w-0 flex-1">
+                <strong class="block truncate text-xs text-white">
+                  {{ isUploadingSocial() ? 'Uploading...' : (productForm.controls.socialImage.value ? 'Change' : 'Upload social image') }}
+                </strong>
+              </span>
+            </label>
+            <input pInputText formControlName="socialImage" class="mt-1 w-full text-xs" placeholder="or enter URL" />
+          </div>
+
         </div>
       </div>
 
@@ -102,37 +270,82 @@
         <h3 class="admin-section-title">Specifications</h3>
         <div class="admin-form-grid mt-4">
           <div class="admin-field">
-            <label class="admin-label">Material</label>
+            <label class="admin-label">Material <span class="font-bold text-rose-400">*</span></label>
             <p-select [options]="materialOptions" optionLabel="label" optionValue="value" formControlName="material" appendTo="body" class="w-full" />
+            @if (productForm.controls.material.invalid && productForm.controls.material.touched) {
+              <small class="text-xs text-rose-400">Material is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Finish</label>
-            <input pInputText formControlName="finish" class="w-full" />
+            <label class="admin-label">Finish <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="finish" class="w-full" placeholder="e.g. Matte, Glossy, Hand-painted" />
+            @if (productForm.controls.finish.invalid && productForm.controls.finish.touched) {
+              <small class="text-xs text-rose-400">Finish is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Color</label>
-            <input pInputText formControlName="color" class="w-full" />
+            <label class="admin-label">Color <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="color" class="w-full" placeholder="e.g. Black / Gold / Purple" />
+            @if (productForm.controls.color.invalid && productForm.controls.color.touched) {
+              <small class="text-xs text-rose-400">Color is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Size</label>
-            <input pInputText formControlName="size" class="w-full" />
+            <label class="admin-label">Size / Dimensions <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="size" class="w-full" placeholder="e.g. 104 cm (Life Size) or 25 x 10 x 5 cm" />
+            @if (productForm.controls.size.invalid && productForm.controls.size.touched) {
+              <small class="text-xs text-rose-400">Size / dimensions is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Weight</label>
-            <input pInputText formControlName="weight" class="w-full" />
+            <label class="admin-label">Weight <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="weight" class="w-full" placeholder="e.g. 450 g or 1.2 kg" />
+            @if (productForm.controls.weight.invalid && productForm.controls.weight.touched) {
+              <small class="text-xs text-rose-400">Weight is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Print Time</label>
-            <input pInputText formControlName="printTime" class="w-full" />
+            <label class="admin-label">Print Time <span class="font-bold text-rose-400">*</span></label>
+            <input pInputText formControlName="printTime" class="w-full" placeholder="e.g. 18 hours or 2 days" />
+            <small class="text-neutral-500">Internal print estimate; not a delivery promise.</small>
+            @if (productForm.controls.printTime.invalid && productForm.controls.printTime.touched) {
+              <small class="block text-xs text-rose-400">Print time is required.</small>
+            }
           </div>
           <div class="admin-field">
-            <label class="admin-label">Layer Height</label>
-            <input pInputText formControlName="layerHeight" class="w-full" />
+            <label class="admin-label">Layer Height <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <input pInputText formControlName="layerHeight" class="w-full" placeholder="e.g. 0.16 mm (Fine)" />
           </div>
           <div class="admin-field">
-            <label class="admin-label">Infill</label>
-            <input pInputText formControlName="infill" class="w-full" />
+            <label class="admin-label">Infill <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <input pInputText formControlName="infill" class="w-full" placeholder="e.g. 20% Gyroid" />
           </div>
+          <div class="admin-card flex items-center justify-between p-4 xl:col-span-2">
+            <div>
+              <label class="admin-label">Made to Order</label>
+              <p class="text-sm text-neutral-500">Show that production starts after customer order confirmation.</p>
+            </div>
+            <p-toggleswitch formControlName="isMadeToOrder" />
+          </div>
+          @if (productForm.controls.isMadeToOrder.value) {
+            <div class="admin-field">
+              <label class="admin-label">Production Time Minimum <span class="font-bold text-rose-400">*</span></label>
+              <p-inputnumber formControlName="productionTimeMin" [min]="1" class="w-full" placeholder="e.g. 2" />
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Production Time Maximum <span class="font-bold text-rose-400">*</span></label>
+              <p-inputnumber formControlName="productionTimeMax" [min]="1" class="w-full" placeholder="e.g. 5" />
+            </div>
+            <div class="admin-field">
+              <label class="admin-label">Production Time Unit <span class="font-bold text-rose-400">*</span></label>
+              <p-select [options]="productionTimeUnitOptions" optionLabel="label" optionValue="value" formControlName="productionTimeUnit" appendTo="body" class="w-full" />
+            </div>
+            @if (productForm.hasError('invalidProductionRange')) {
+              <div class="xl:col-span-2">
+                <p-message severity="error" text="Enter a valid production range and unit. Maximum must be greater than or equal to minimum." />
+              </div>
+            }
+          }
         </div>
       </div>
 
@@ -140,54 +353,78 @@
         <h3 class="admin-section-title">SEO and Safety</h3>
         <div class="admin-form-grid mt-4">
           <div class="admin-field">
-            <label class="admin-label">Meta Title</label>
-            <input pInputText formControlName="metaTitle" class="w-full" />
+            <label class="admin-label">Meta Title <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <input pInputText formControlName="metaTitle" class="w-full" placeholder="Custom SEO title" />
           </div>
           <div class="admin-field">
-            <label class="admin-label">Keywords</label>
+            <label class="admin-label">Keywords <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
             <input pInputText formControlName="keywords" class="w-full" placeholder="katana, anime prop, cosplay" />
           </div>
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Meta Description</label>
-            <textarea pTextarea formControlName="metaDescription" rows="4" class="w-full"></textarea>
+            <label class="admin-label">Meta Description <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <textarea pTextarea formControlName="metaDescription" rows="3" class="w-full" placeholder="Search engine description preview"></textarea>
           </div>
           <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Safety Note</label>
-            <textarea pTextarea formControlName="safetyNote" rows="4" class="w-full"></textarea>
+            <label class="admin-label">Safety Note <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
+            <textarea pTextarea formControlName="safetyNote" rows="3" class="w-full" placeholder="e.g. Cosplay prop only, blunt edge, keep away from high heat."></textarea>
           </div>
         </div>
       </div>
     </div>
 
     <div class="space-y-6">
-      <app-admin-file-preview [imageUrl]="previewImage()" [modelUrl]="previewModel()" [posterImage]="previewPoster()" [productName]="previewProductName()" />
+      <app-admin-file-preview
+        [imageUrl]="previewImage()"
+        [modelUrl]="previewModel()"
+        [modelType]="previewModelType()"
+        [posterImage]="previewPoster()"
+        [productName]="previewProductName()"
+      />
 
       @if (productForm.invalid && productForm.touched) {
-        <div class="admin-card p-4">
-          <h3 class="mb-3 text-base font-bold text-white">Validation</h3>
+        <div class="admin-card space-y-2 p-4">
+          <h3 class="mb-3 text-base font-bold text-white">Validation Errors</h3>
           @if (productForm.controls.name.invalid) {
             <p-message severity="error" text="Product name is required." />
           }
           @if (productForm.controls.slug.invalid) {
-            <p-message severity="error" text="Slug is required." />
+            <p-message severity="error" text="Valid slug is required (lowercase alphanumeric and hyphens)." />
           }
           @if (productForm.controls.category.invalid) {
             <p-message severity="error" text="Category is required." />
           }
-          @if (productForm.controls.price.invalid) {
-            <p-message severity="error" text="Price must be greater than 0." />
-          }
-          @if (productForm.controls.mainImage.invalid) {
-            <p-message severity="error" text="Main image is required." />
-          }
-          @if (productForm.controls.modelUrl.invalid) {
-            <p-message severity="error" text="Model URL is required." />
+          @if (productForm.controls.shortDescription.invalid) {
+            <p-message severity="error" text="Short description is required." />
           }
           @if (productForm.controls.description.invalid) {
             <p-message severity="error" text="Description is required." />
           }
-          @if (productForm.controls.rating.invalid) {
-            <p-message severity="error" text="Rating must be between 0 and 5." />
+          @if (productForm.controls.price.invalid) {
+            <p-message severity="error" text="Price must be greater than 0." />
+          }
+          @if (productForm.controls.material.invalid) {
+            <p-message severity="error" text="Material is required." />
+          }
+          @if (productForm.controls.finish.invalid) {
+            <p-message severity="error" text="Finish is required." />
+          }
+          @if (productForm.controls.color.invalid) {
+            <p-message severity="error" text="Color is required." />
+          }
+          @if (productForm.controls.size.invalid) {
+            <p-message severity="error" text="Dimensions / Size is required." />
+          }
+          @if (productForm.controls.weight.invalid) {
+            <p-message severity="error" text="Weight is required." />
+          }
+          @if (productForm.controls.printTime.invalid) {
+            <p-message severity="error" text="Print time is required." />
+          }
+          @if (productForm.hasError('invalidDiscount')) {
+            <p-message severity="error" text="Discount price must be less than regular price." />
+          }
+          @if (productForm.hasError('invalidProductionRange')) {
+            <p-message severity="error" text="Enter a valid made-to-order production range." />
           }
         </div>
       }

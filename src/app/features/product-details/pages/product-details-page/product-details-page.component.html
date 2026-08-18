@@ -1,223 +1,56 @@
 @if (isLoading()) {
-  <div class="max-w-7xl mx-auto px-4 py-20">
-    <app-otaku-loader text="Loading Product Details & 3D Engine..." />
-  </div>
-} @else if (product(); as prod) {
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12 select-none">
+  <div class="mx-auto max-w-7xl px-4 py-20"><app-otaku-loader text="Loading product details…" /></div>
+} @else if (hasError()) {
+  <div class="mx-auto max-w-2xl px-4 py-20 text-center" role="alert"><h1 class="text-2xl font-black text-white">Product details could not be loaded</h1><p class="mt-3 text-neutral-400">Check your connection and try again.</p><button type="button" (click)="retry()" class="mt-6 rounded-xl bg-purple-600 px-5 py-3 font-bold text-white">Try again</button></div>
+} @else if (product(); as product) {
+  <main class="mx-auto max-w-7xl space-y-14 px-4 py-10 sm:px-6 lg:px-8">
+    <nav aria-label="Breadcrumb" class="text-sm text-neutral-400"><a routerLink="/products" class="hover:text-pink-300">Products</a><span class="mx-2" aria-hidden="true">/</span><span aria-current="page" class="text-white">{{ product.name }}</span></nav>
 
-    <!-- Top Breadcrumb Navigation Bar -->
-    <div class="flex items-center justify-between text-xs border-b border-neutral-800/80 pb-4">
-      <a
-        routerLink="/products"
-        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 transition-all cursor-pointer shadow-md"
-      >
-        <i class="pi pi-arrow-left text-xs text-pink-400"></i>
-        <span class="font-bold">Back to Catalog</span>
-      </a>
-
-      <div class="flex items-center gap-2">
-        <span class="vt-badge vt-badge-pink">
-          {{ prod.category }}
-        </span>
-        <span class="vt-badge">
-          ID: {{ prod.id || prod._id || 'PROD' }}
-        </span>
-      </div>
-    </div>
-
-    <!-- Main Stage Grid: Left = 3D / Image Stage + Thumbnails, Right = Specs & CTA -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-      
-      <!-- Left Column: Main Viewport Stage + Thumbnails Bar -->
-      <div class="lg:col-span-7 space-y-4">
-        
-        <!-- Main Stage Container (Displays 3D Model OR Active Image) -->
-        <div class="relative w-full rounded-3xl overflow-hidden vt-card border border-purple-500/40 bg-neutral-950 p-2 shadow-[0_0_60px_rgba(139,92,246,0.25)] min-h-[500px] md:min-h-[660px] flex items-center justify-center">
-          
-          @if (activeStageMode() === '3d' && has3dModel()) {
-            <app-product-3d-viewer [product]="prod" class="w-full h-full" />
+    <div class="grid grid-cols-1 gap-10 lg:grid-cols-12">
+      <section aria-label="Product media" class="space-y-4 lg:col-span-7">
+        <div class="relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-3xl border border-purple-500/30 bg-neutral-950 md:min-h-[620px]">
+          @if (activeStageMode() === 'model' && has3dModel()) {
+            <app-product-3d-viewer [product]="product" [posterImage]="selectedImageUrl()" class="h-full w-full" />
+          } @else if (selectedImageUrl()) {
+            <img [src]="selectedImageUrl()" [alt]="product.imageAlt || product.name" width="960" height="960" (error)="onSelectedImageError()" class="h-full max-h-[720px] w-full object-contain" />
           } @else {
-            <div class="relative w-full h-[500px] md:h-[660px] rounded-2xl overflow-hidden bg-neutral-950 flex items-center justify-center group">
-              <img
-                [src]="selectedImageUrl() || prod.image"
-                [alt]="prod.name"
-                class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none"></div>
-              
-              <div class="absolute bottom-4 left-4 right-4 p-3 rounded-xl bg-neutral-950/80 backdrop-blur-md border border-white/10 text-xs text-neutral-300 pointer-events-none">
-                <span class="font-bold text-white block">{{ prod.name }}</span>
-                <span class="text-[11px] text-pink-400 font-semibold">High-Definition Photo Preview</span>
-              </div>
-            </div>
+            <div class="text-center text-neutral-500" role="img" [attr.aria-label]="product.name + ' image unavailable'"><i class="pi pi-image mb-3 block text-5xl"></i><p>Product media is not available yet.</p></div>
           }
-
         </div>
-
-        <!-- Interactive Thumbnail Switcher Bar (3D Model Button + Image Thumbnails) -->
-        <div class="p-3 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-2">
-          <p class="text-[11px] font-bold uppercase tracking-widest text-neutral-400 px-1">
-            ⚡ Select Display Mode & Angles:
-          </p>
-
-          <div class="flex flex-wrap items-center gap-3">
-            
-            <!-- 1. 3D Model Engine Thumbnail Button -->
-            @if (has3dModel()) {
-              <button
-                (click)="switchTo3d()"
-                [class]="activeStageMode() === '3d' ? 'border-pink-500 bg-pink-500/20 text-white shadow-[0_0_20px_rgba(236,72,153,0.5)] scale-105' : 'border-neutral-800 bg-neutral-900/90 text-neutral-300 hover:border-neutral-700 hover:text-white'"
-                class="h-20 px-4 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all duration-300 cursor-pointer shadow-md"
-              >
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white shadow-inner">
-                  <i class="pi pi-box text-sm animate-pulse"></i>
-                </div>
-                <span class="text-[11px] font-extrabold uppercase tracking-wider">Interactive 3D</span>
-              </button>
-            }
-
-            <!-- 2. Gallery Image Thumbnail Cards -->
-            @for (imgUrl of galleryImages(); track imgUrl; let i = $index) {
-              <button
-                (click)="switchToImage(imgUrl)"
-                [class]="activeStageMode() === 'image' && selectedImageUrl() === imgUrl ? 'border-purple-500 ring-2 ring-purple-500 scale-105 opacity-100 shadow-[0_0_20px_rgba(168,85,247,0.5)]' : 'border-neutral-800 opacity-60 hover:opacity-100'"
-                class="relative h-20 w-20 rounded-xl overflow-hidden border bg-neutral-900 transition-all duration-300 cursor-pointer"
-              >
-                <img [src]="imgUrl" [alt]="prod.name + ' image ' + i" class="w-full h-full object-cover object-center" />
-                <div class="absolute inset-0 bg-black/20 hover:bg-transparent transition-colors"></div>
-              </button>
-            }
-
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Right Column: Product Specs & Direct WhatsApp Order -->
-      <div class="lg:col-span-5 space-y-6">
-        
-        <!-- Header & Title -->
-        <div>
-          @if (prod.badge && prod.badge !== productBadgeNone) {
-            <span class="vt-badge vt-badge-pink mb-2">
-              {{ prod.badge }}
-            </span>
+        <div class="flex flex-wrap gap-3" aria-label="Choose product media">
+          @for (image of galleryImages(); track image; let index = $index) {
+            <button type="button" (click)="switchToImage(image)" [attr.aria-label]="'Show image ' + (index + 1)" class="h-20 w-20 overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950"><img [src]="image" [alt]="product.name + ' thumbnail ' + (index + 1)" width="80" height="80" loading="lazy" (error)="onGalleryImageError(image)" class="h-full w-full object-cover" /></button>
           }
-          <h1 class="text-3xl sm:text-4xl font-black text-white leading-tight mb-2">
-            {{ prod.name }}
-          </h1>
+          @if (has3dModel()) { <button type="button" (click)="switchTo3d()" class="h-20 rounded-xl border border-purple-500/40 bg-purple-950/30 px-4 text-xs font-bold text-white"><i class="pi pi-box me-2"></i>Inspect in 3D</button> }
+        </div>
+      </section>
 
-          <div class="flex items-center gap-3 text-xs">
-            <div class="flex items-center gap-1 text-amber-400 font-bold">
-              <i class="pi pi-star-fill text-[11px]"></i>
-              <span>{{ prod.rating || 5.0 }} / 5.0</span>
-            </div>
-            <span class="text-neutral-600">•</span>
-            <span class="text-emerald-400 font-semibold flex items-center gap-1">
-              <i class="pi pi-check text-[10px]"></i>
-              In Stock & Ready to Print
-            </span>
-          </div>
+      <section class="space-y-6 lg:col-span-5">
+        <div>@if (product.badge && product.badge !== productBadgeNone) { <span class="vt-badge vt-badge-pink">{{ product.badge }}</span> }<p class="mt-3 text-sm font-bold text-purple-300">{{ product.category }}</p><h1 class="mt-2 text-3xl font-black text-white sm:text-4xl">{{ product.name }}</h1></div>
+        <div class="rounded-2xl border border-purple-500/30 bg-neutral-950 p-5">
+          <p class="text-xs uppercase tracking-wider text-neutral-500">Price</p>
+          <div class="mt-1 flex items-baseline gap-3"><span class="text-3xl font-black text-white">{{ salePrice() | currency: 'EGP' }}</span>@if (hasValidDiscount()) { <span class="text-sm text-neutral-500 line-through">{{ product.price | currency: 'EGP' }}</span> }</div>
         </div>
 
-        <!-- Price Display Card -->
-        <div class="p-5 rounded-2xl bg-neutral-950 border border-purple-500/30 flex items-center justify-between shadow-lg">
-          <div>
-            <span class="text-[10px] uppercase font-bold text-neutral-400 block">Total Price</span>
-            <span class="text-3xl font-black text-white">
-              {{ formattedPrice() }}
-            </span>
-          </div>
-          <span class="vt-badge vt-badge-accent text-xs">
-            High Density PLA+
-          </span>
-        </div>
-
-        <!-- Description -->
-        <p class="text-neutral-300 text-sm leading-relaxed font-normal">
-          {{ prod.description }}
-        </p>
-
-        <!-- Specifications Table -->
-        <div class="space-y-2 pt-2">
-          <h3 class="text-xs font-bold uppercase tracking-wider text-neutral-400">Specifications & Build Specs</h3>
-          <div class="grid grid-cols-2 gap-2.5">
-            <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-              <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Material</span>
-              <span class="text-xs font-bold text-white">{{ prod.material || 'PLA+ Filament' }}</span>
-            </div>
-            <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-              <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Dimensions</span>
-              <span class="text-xs font-bold text-white">{{ prod.size || '1:1 Scale' }}</span>
-            </div>
-            <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-              <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Weight</span>
-              <span class="text-xs font-bold text-white">{{ prod.weight || '450g' }}</span>
-            </div>
-            <div class="p-3 rounded-xl bg-neutral-950 border border-neutral-800">
-              <span class="text-[10px] uppercase text-neutral-500 block font-semibold">Print Time</span>
-              <span class="text-xs font-bold text-white">{{ prod.printTime || '18 hrs' }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Safety Notice -->
-        <div class="p-4 rounded-xl bg-neutral-950 border border-pink-500/30 text-xs text-neutral-300 flex items-start gap-3">
-          <i class="pi pi-shield text-pink-400 text-base shrink-0 mt-0.5"></i>
-          <div>
-            <strong class="block text-white mb-0.5">Safety & Decorative Notice:</strong>
-            <p class="leading-relaxed text-neutral-400 text-[11px]">{{ safetyNote() }}</p>
-          </div>
-        </div>
-
-        <!-- Action CTA Buttons -->
-        <div class="space-y-3 pt-2">
-          <button
-            (click)="addToCartAndCheckout()"
-            class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm text-center flex items-center justify-center gap-2 shadow-lg transition-all cursor-pointer"
-          >
-            <i class="pi pi-shopping-bag text-lg"></i>
-            <span>Add to Cart & Order via WhatsApp</span>
-          </button>
-
-          <a
-            routerLink="/contact"
-            class="w-full py-3.5 px-6 rounded-2xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-white font-bold text-xs text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            <i class="pi pi-sparkles text-purple-400"></i>
-            <span>Request Custom 3D Forge Version</span>
-          </a>
-        </div>
-
-        <!-- Tags -->
-        @if (prod.tags && prod.tags.length > 0) {
-          <div class="pt-3 border-t border-neutral-800 flex flex-wrap items-center gap-2">
-            <span class="text-xs font-semibold text-neutral-500">Tags:</span>
-            @for (tag of prod.tags; track tag) {
-              <span class="px-2.5 py-1 rounded-md bg-neutral-950 border border-neutral-800 text-[11px] font-medium text-neutral-300">
-                #{{ tag }}
-              </span>
-            }
-          </div>
+        @if (product.isMadeToOrder) {
+          <div class="rounded-2xl border border-pink-500/30 bg-pink-950/20 p-5"><h2 class="font-bold text-white">Made specifically for your order</h2><p class="mt-2 text-sm text-neutral-300">Production starts after order confirmation.</p>@if (productionEstimate()) { <p class="mt-2 text-sm font-bold text-pink-200">Estimated production: {{ productionEstimate() }}</p> }</div>
         }
 
-      </div>
+        <p class="text-sm leading-relaxed text-neutral-300">{{ product.description }}</p>
+        <dl class="grid grid-cols-2 gap-3">@for (spec of customerSpecs(); track spec.id) { <div class="rounded-xl border border-neutral-800 bg-neutral-950 p-3"><dt class="text-[10px] uppercase text-neutral-500">{{ spec.label }}</dt><dd class="mt-1 text-sm font-bold text-white">{{ spec.value }}</dd></div> }</dl>
 
+        @if (product.safetyNote) { <div class="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm text-neutral-300"><strong class="text-white">Safety note:</strong> {{ product.safetyNote }}</div> }
+
+        <div class="rounded-xl border border-neutral-800 bg-neutral-950 p-4"><h2 class="font-bold text-white">Delivery</h2>@if (settings().deliveryNote) { <p class="mt-2 text-sm text-neutral-300">{{ settings().deliveryNote }}</p> } @else { <p class="mt-2 text-sm text-neutral-400">Delivery options, timing, and fees are confirmed for the destination after order review.</p> }</div>
+
+        <div class="flex items-center gap-3"><span class="text-sm text-neutral-400">Quantity</span><button type="button" (click)="decrementQuantity()" aria-label="Decrease quantity" class="h-11 w-11 rounded-xl border border-neutral-800 text-white">−</button><output class="min-w-8 text-center font-bold text-white">{{ quantity() }}</output><button type="button" (click)="incrementQuantity()" aria-label="Increase quantity" class="h-11 w-11 rounded-xl border border-neutral-800 text-white">+</button></div>
+        <button type="button" (click)="addToCartAndCheckout()" class="w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 font-black text-white"><i class="pi pi-shopping-bag me-2"></i>Add to cart</button>
+        @if (whatsAppUrl() !== '#') { <a [href]="whatsAppUrl()" target="_blank" rel="noopener noreferrer" class="flex w-full items-center justify-center rounded-2xl border border-emerald-500/40 px-6 py-3 text-sm font-bold text-emerald-300"><i class="pi pi-whatsapp me-2"></i>Ask about this product</a> }
+
+        @if (technicalSpecs().length > 0) { <details class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5"><summary class="cursor-pointer font-bold text-white">Technical print details</summary><dl class="mt-4 space-y-3">@for (spec of technicalSpecs(); track spec.id) { <div class="flex justify-between gap-4 text-sm"><dt class="text-neutral-500">{{ spec.label }}</dt><dd class="text-white">{{ spec.value }}</dd></div> }</dl></details> }
+      </section>
     </div>
 
-    <!-- Related Anime Props -->
-    @if (relatedProducts().length > 0) {
-      <div class="pt-12 border-t border-neutral-800 space-y-6">
-        <h2 class="text-2xl font-black text-white tracking-tight">
-          Related Anime Props
-        </h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          @for (rel of relatedProducts(); track rel.id) {
-            <app-product-card [product]="rel" />
-          }
-        </div>
-      </div>
-    }
-
-  </div>
+    @if (relatedProducts().length > 0) { <section class="border-t border-neutral-800 pt-12"><h2 class="mb-6 text-2xl font-black text-white">Related products</h2><div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">@for (related of relatedProducts(); track related.id) { <app-product-card [product]="related" /> }</div></section> }
+  </main>
 }

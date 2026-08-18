@@ -62,7 +62,7 @@
           <h3 class="text-xl font-bold text-white">{{ product.name }}</h3>
           <p class="text-sm text-neutral-400">{{ product.shortDescription }}</p>
         </div>
-        <app-admin-file-preview [imageUrl]="product.image" [modelUrl]="product.modelUrl" [posterImage]="product.posterImage ?? null" [productName]="product.name" />
+        <app-admin-file-preview [imageUrl]="product.image" [modelUrl]="product.modelUrl ?? null" [posterImage]="product.posterImage ?? null" [productName]="product.name" />
       </div>
     }
   </p-dialog>

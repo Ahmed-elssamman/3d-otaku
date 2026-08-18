@@ -39,27 +39,27 @@ export class AdminSettingsPageComponent implements OnInit {
   isSubmitting = signal<boolean>(false);
   isLoading = signal<boolean>(true);
 
-  settingsForm = this.formBuilder.nonNullable.group({
+  settingsForm = this.formBuilder.group({
     brandName: ['', [Validators.required]],
     slogan: ['', [Validators.required]],
-    whatsappNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10,15}$/)]],
+    whatsappNumber: ['', [Validators.pattern(/^\+?[0-9\s-]{8,20}$/)]],
     whatsappDefaultMessage: ['', [Validators.required]],
-    email: ['', [Validators.required, Validators.email]],
-    phone: ['', [Validators.required]],
-    address: ['', [Validators.required]],
-    facebookUrl: ['', [Validators.required]],
-    instagramUrl: ['', [Validators.required]],
-    tiktokUrl: ['', [Validators.required]],
+    email: ['', [Validators.email]],
+    phone: [''],
+    address: [''],
+    facebookUrl: [''],
+    instagramUrl: [''],
+    tiktokUrl: [''],
     youtubeUrl: [''],
     heroTitle: ['', [Validators.required]],
     heroSubtitle: ['', [Validators.required]],
-    heroImageUrl: ['', [Validators.required]],
-    defaultCurrency: ['EGP', [Validators.required]],
-    deliveryNote: ['', [Validators.required]],
-    safetyNote: ['', [Validators.required]],
+    heroImageUrl: [''],
+    defaultCurrency: ['', [Validators.required, Validators.pattern(/^[A-Z]{3}$/)]],
+    deliveryNote: [''],
+    safetyNote: [''],
     maintenanceMode: [false],
-    deliveryFee: [60, [Validators.required, Validators.min(0)]],
-    deliveryDays: ['3 - 5 Business Days', [Validators.required]],
+    deliveryFee: [null as number | null, [Validators.min(0)]],
+    deliveryDays: [''],
     deliveryInfoNote: ['']
   });
 

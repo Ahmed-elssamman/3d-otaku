@@ -1,93 +1,54 @@
 import { Injectable, inject } from '@angular/core';
 import { Product } from '../models/product.model';
 import { CustomOrderRequest } from '../models/custom-order-request.model';
-import { CartItem, CustomerDeliveryInfo } from '../models/cart-item.model';
+import { Order } from '../models/order.model';
 import { AdminSettingsService } from '../../features/admin/services/admin-settings.service';
+import { environment } from '../../../environments/environment';
+import { buildCustomRequestMessage, buildOrderSupportMessage } from '../utils/whatsapp-message.util';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class WhatsAppService {
   private adminSettingsService = inject(AdminSettingsService);
 
-  private getFormattedNumber(): string {
-    const settings = this.adminSettingsService.getSettings();
-    const rawNumber = settings.whatsappNumber || '+201112961724';
-    return rawNumber.replace(/[^0-9]/g, '');
-  }
-
   getProductOrderUrl(product: Product): string {
     const settings = this.adminSettingsService.getSettings();
-    const targetNumber = this.getFormattedNumber();
-    const productId = product.id || product._id || product.slug || 'N/A';
-    const text = `${settings.whatsappDefaultMessage || 'Hello 3D Otaku, I want to order this product:'}\n` +
-      `Product ID: ${productId}\n` +
-      `Product Name: ${product.name}\n` +
-      `Category: ${product.category}\n` +
-      `Price: ${product.price} EGP\n` +
-      `Slug: ${product.slug}`;
-    return `https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`;
+    const price = product.discountPrice !== null && typeof product.discountPrice === 'number' && product.discountPrice < product.price
+      ? product.discountPrice
+      : product.price;
+    const currency = settings.defaultCurrency.trim();
+    const priceText = currency ? `${price} ${currency}` : `${price}`;
+    return this.buildUrl([
+      settings.whatsappDefaultMessage || 'Hello 3D Otaku, I would like to ask about this product.',
+      `Product: ${product.name}`,
+      `Price shown: ${priceText}`,
+      `Product page: ${window.location.origin}/products/${encodeURIComponent(product.slug)}`
+    ].join('\n'));
   }
 
-  getCustomOrderUrl(request: CustomOrderRequest): string {
+  getCustomOrderUrl(request: CustomOrderRequest, requestNumber: string = ''): string {
+    return this.buildUrl(buildCustomRequestMessage(request, requestNumber));
+  }
+
+  getOrderSupportUrl(order: Order): string {
+    return this.buildUrl(buildOrderSupportMessage(order));
+  }
+
+  getCheckoutContinuationUrl(orderNumber: string): string {
+    return this.buildUrl(`Hello, I created order ${orderNumber}. I would like to confirm the next steps.`);
+  }
+
+  getDirectChatUrl(): string {
+    return this.buildUrl('Hello 3D Otaku, I would like to ask a question.');
+  }
+
+  private buildUrl(message: string): string {
+    const number = this.getFormattedNumber();
+    return number ? `https://wa.me/${number}?text=${encodeURIComponent(message)}` : '';
+  }
+
+  private getFormattedNumber(): string {
     const settings = this.adminSettingsService.getSettings();
-    const targetNumber = this.getFormattedNumber();
-    const text = `${settings.whatsappDefaultMessage || 'Hello 3D Otaku, custom order request:'}\n` +
-      `Name: ${request.fullName}\n` +
-      `Email: ${request.email}\n` +
-      `Product Type: ${request.productType}\n` +
-      `Dimensions: ${request.dimensions}\n` +
-      `Color/Finish: ${request.colorFinish}\n` +
-      `Details: ${request.details}\n` +
-      (request.referenceUrl ? `Reference: ${request.referenceUrl}\n` : '');
-    return `https://wa.me/${targetNumber}?text=${encodeURIComponent(text)}`;
-  }
-
-  getCartCheckoutUrl(
-    items: CartItem[],
-    customer: CustomerDeliveryInfo,
-    subtotal: number,
-    deliveryFee: number,
-    total: number,
-    deliveryDays: string,
-    existingOrderId?: string
-  ): string {
-    const targetNumber = this.getFormattedNumber();
-    const orderId = existingOrderId || ('ORD-' + Math.floor(100000 + Math.random() * 900000));
-
-    let itemsListText = '';
-    items.forEach((item, index) => {
-      const price = item.product.price || 0;
-      const lineTotal = price * item.quantity;
-      const productId = item.product.id || item.product._id || item.product.slug || 'N/A';
-      itemsListText += `${index + 1}. *${item.product.name}*\n` +
-        `   • Product ID: ${productId}\n` +
-        `   • Quantity: ${item.quantity}\n` +
-        `   • Unit Price: ${price.toLocaleString()} EGP\n` +
-        `   • Line Total: ${lineTotal.toLocaleString()} EGP\n\n`;
-    });
-
-    const message = `Hello 3D OTAKU 👋\n` +
-      `I would like to place the following order 🛒:\n\n` +
-      `🆔 *Order ID:* #${orderId}\n` +
-      `📅 *Date:* ${new Date().toLocaleDateString('en-US')}\n\n` +
-      `📦 *Order Items Summary:*\n` +
-      `${itemsListText}` +
-      `--------------------------------\n` +
-      `💵 *Subtotal:* ${subtotal.toLocaleString()} EGP\n` +
-      `🚚 *Delivery Fee:* ${deliveryFee.toLocaleString()} EGP\n` +
-      `⏱️ *Estimated Delivery Time:* ${deliveryDays || '3 - 5 Business Days'}\n` +
-      `💰 *Grand Total:* ${total.toLocaleString()} EGP\n` +
-      `--------------------------------\n\n` +
-      `👤 *Customer & Delivery Details:*\n` +
-      `• *Full Name:* ${customer.fullName}\n` +
-      `• *Primary Phone:* ${customer.phone}\n` +
-      (customer.secondaryPhone ? `• *Alternative Phone:* ${customer.secondaryPhone}\n` : '') +
-      `• *Governorate / City:* ${customer.governorate}\n` +
-      `• *Detailed Address:* ${customer.address}\n` +
-      (customer.notes ? `• *Order Notes:* ${customer.notes}\n` : '') +
-      `\nPlease confirm order #${orderId} and start processing. Thank you! 🔥`;
-
-    return `https://wa.me/${targetNumber}?text=${encodeURIComponent(message)}`;
+    const configuredNumber = settings.whatsappNumber?.trim() || environment.whatsAppNumber?.trim() || '';
+    return configuredNumber.replace(/[^0-9]/g, '');
   }
 }

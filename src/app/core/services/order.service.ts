@@ -1,140 +1,100 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { Observable, of, tap, catchError } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, map, of, tap } from 'rxjs';
 import { ApiService } from '@core/api/api.service';
 import { API_ENDPOINTS } from '@core/api/api-endpoints';
-import { ApiResponse } from '@core/models/api-response.model';
-import { Order, CreateOrderPayload } from '../models/order.model';
+import { ApiResponse, PaginatedResponse } from '@core/models/api-response.model';
+import { CreateOrderPayload, Order, OrderApiRecord } from '../models/order.model';
+import { OrderStatus } from '../enums/order-status.enum';
 import { environment } from '../../../environments/environment';
 
-const ORDERS_STORAGE_KEY = '3d_otaku_user_orders';
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class OrderService {
-  private readonly api = inject(ApiService);
-  private readonly ordersSignal = signal<Order[]>(this.loadFromStorage());
+  private api = inject(ApiService);
+  private ordersSignal = signal<Order[]>([]);
 
-  readonly orders = computed(() => this.ordersSignal());
+  orders = computed(() => this.ordersSignal());
 
   createOrder(payload: CreateOrderPayload): Observable<ApiResponse<Order>> {
-    const generatedOrderNumber = 'ORD-' + Math.floor(100000 + Math.random() * 900000);
-    const mockOrder: Order = {
-      id: 'ord_' + Math.random().toString(36).substr(2, 9),
-      orderNumber: generatedOrderNumber,
-      items: payload.items,
-      customer: payload.customer,
-      subtotal: payload.subtotal,
-      deliveryFee: payload.deliveryFee,
-      totalAmount: payload.totalAmount,
-      status: 'pending',
-      estimatedDeliveryDays: payload.deliveryDays,
-      createdAt: new Date().toISOString(),
-      whatsappMessageSent: true
+    const normalizedPayload: CreateOrderPayload = {
+      ...payload,
+      currency: environment.defaultCurrency
     };
 
     if (environment.useMockApi) {
-      this.saveLocalOrder(mockOrder);
-      return of({
-        success: true,
-        message: 'Order created successfully.',
-        data: mockOrder
-      });
+      const now = new Date().toISOString();
+      const mockOrder: Order = {
+        id: `mock-${Date.now()}`,
+        orderNumber: `MOCK-${Date.now()}`,
+        items: [],
+        customer: normalizedPayload.customer,
+        subtotal: normalizedPayload.subtotal ?? 0,
+        deliveryFee: normalizedPayload.deliveryFee ?? 0,
+        discount: 0,
+        total: normalizedPayload.totalAmount ?? normalizedPayload.subtotal ?? 0,
+        currency: environment.defaultCurrency,
+        status: OrderStatus.PENDING,
+        paymentMethod: 'mock',
+        estimatedDeliveryDays: normalizedPayload.deliveryDays,
+        createdAt: now,
+        updatedAt: now
+      };
+      return of({ success: true, message: 'Mock order created.', data: mockOrder });
     }
 
-    return this.api.post<Order>(API_ENDPOINTS.orders.create, payload).pipe(
-      tap(res => {
-        if (res.success && res.data) {
-          this.saveLocalOrder(res.data);
-        } else {
-          this.saveLocalOrder(mockOrder);
-        }
-      }),
-      catchError(() => {
-        // Fallback to local storage on API error
-        this.saveLocalOrder(mockOrder);
-        return of({
-          success: true,
-          message: 'Order created locally.',
-          data: mockOrder
-        });
-      })
+    return this.api.post<OrderApiRecord>(API_ENDPOINTS.orders.create, normalizedPayload).pipe(
+      map(response => ({ ...response, data: this.normalizeOrder(response.data) })),
+      tap(response => this.ordersSignal.update(orders => [response.data, ...orders.filter(order => order.id !== response.data.id)]))
     );
   }
 
-  getOrders(): Observable<ApiResponse<Order[]>> {
+  getOrders(page: number = 1, limit: number = 10): Observable<PaginatedResponse<Order>> {
     if (environment.useMockApi) {
       return of({
         success: true,
-        message: 'Orders loaded.',
-        data: this.ordersSignal()
+        message: 'Mock orders loaded.',
+        data: this.ordersSignal(),
+        meta: { page, limit, totalItems: this.ordersSignal().length, totalPages: 1, hasNextPage: false, hasPreviousPage: false }
       });
     }
 
-    return this.api.get<Order[]>(API_ENDPOINTS.orders.list).pipe(
-      tap(res => {
-        if (res.success && res.data) {
-          this.ordersSignal.set(res.data);
-          this.saveToStorage();
-        }
-      }),
-      catchError(() =>
-        of({
-          success: true,
-          message: 'Local orders loaded.',
-          data: this.ordersSignal()
-        })
-      )
+    return this.api.getPaginated<OrderApiRecord>(API_ENDPOINTS.orders.list, { page, limit }).pipe(
+      map(response => ({ ...response, data: response.data.map(order => this.normalizeOrder(order)) })),
+      tap(response => this.ordersSignal.set(response.data))
     );
   }
 
-  trackOrder(orderNumber: string): Observable<ApiResponse<Order | null>> {
-    const found = this.ordersSignal().find(
-      o => o.orderNumber.toUpperCase() === orderNumber.trim().toUpperCase() ||
-           o.id === orderNumber || o._id === orderNumber
-    );
-
-    if (environment.useMockApi) {
-      return of({
-        success: !!found,
-        message: found ? 'Order details retrieved.' : 'Order not found.',
-        data: found || null
-      });
-    }
-
-    return this.api.get<Order>(API_ENDPOINTS.orders.track(orderNumber)).pipe(
-      catchError(() =>
-        of({
-          success: !!found,
-          message: found ? 'Local order found.' : 'Order not found.',
-          data: found || null
-        })
-      )
+  trackOrder(orderNumber: string): Observable<ApiResponse<Order>> {
+    return this.api.get<OrderApiRecord>(API_ENDPOINTS.orders.track(orderNumber)).pipe(
+      map(response => ({ ...response, data: this.normalizeOrder(response.data) }))
     );
   }
 
-  private saveLocalOrder(order: Order): void {
-    const updated = [order, ...this.ordersSignal()];
-    this.ordersSignal.set(updated);
-    this.saveToStorage();
-  }
-
-  private saveToStorage(): void {
-    try {
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(this.ordersSignal()));
-    } catch {
-      // Ignore quota errors
-    }
-  }
-
-  private loadFromStorage(): Order[] {
-    try {
-      const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+  private normalizeOrder(record: OrderApiRecord): Order {
+    return {
+      id: record.id || record._id || record.orderNumber,
+      orderNumber: record.orderNumber,
+      items: (record.items ?? []).map(item => ({
+        productId: item.productId,
+        slug: item.slug,
+        name: item.name || item.productName || 'Product',
+        image: item.image || item.productImage || '',
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discountPrice: item.discountPrice ?? null,
+        lineTotal: item.lineTotal
+      })),
+      customer: record.customer,
+      subtotal: record.subtotal,
+      deliveryFee: record.deliveryFee ?? 0,
+      discount: record.discount ?? 0,
+      total: record.total ?? record.totalAmount ?? 0,
+      currency: environment.defaultCurrency,
+      status: record.status,
+      paymentMethod: record.paymentMethod?.trim() || '',
+      estimatedDeliveryDays: record.estimatedDeliveryDays,
+      statusHistory: record.statusHistory,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt || record.createdAt
+    };
   }
 }

@@ -1,100 +1,86 @@
-<div class="min-h-[80vh] flex items-center justify-center px-4 py-16 vercel-grid-pattern relative overflow-hidden">
-  
-  <div class="w-full max-w-md vt-card rounded-3xl p-8 sm:p-10 border border-neutral-800 shadow-2xl relative z-10">
-    
-    <!-- Header -->
-    <div class="text-center space-y-2 mb-6">
-      <div class="w-10 h-10 rounded-xl bg-neutral-900 border border-neutral-800 mx-auto flex items-center justify-center text-white">
-        <i class="pi pi-user text-purple-400 text-base"></i>
-      </div>
-      <h1 class="text-2xl font-black text-white tracking-tight">
-        Sign in to 3D Otaku
-      </h1>
-      <p class="text-xs text-neutral-400">Manage custom 3D printing orders & saved props.</p>
-      <p class="text-[11px] text-cyan-300">Admin demo: admin@3dotaku.com / Admin@123</p>
-    </div>
-
-    <!-- Error Message -->
-    @if (errorMessage()) {
-      <div class="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-xs text-red-200 mb-6 text-center">
-        {{ errorMessage() }}
-      </div>
-    }
-
-    <!-- Form -->
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-4">
-      
-      <!-- Email Field -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-          Email Address
-        </label>
-        <div class="relative">
-          <i class="pi pi-envelope absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-          <input
-            type="email"
-            formControlName="email"
-            placeholder="otaku@anime.com"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-          />
-        </div>
-        @if (loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')) {
-          <span class="text-[11px] text-red-400 mt-1 block">Email is required</span>
-        }
-      </div>
-
-      <!-- Password Field -->
-      <div>
-        <label class="block text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
-          Password
-        </label>
-        <div class="relative">
-          <i class="pi pi-lock absolute left-3.5 top-3 text-neutral-500 text-xs"></i>
-          <input
-            type="password"
-            formControlName="password"
-            placeholder="••••••••"
-            class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-neutral-950 border border-neutral-800 text-white placeholder-neutral-500 text-xs focus:outline-none focus:border-purple-500 transition-colors"
-          />
-        </div>
-        @if (loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')) {
-          <span class="text-[11px] text-red-400 mt-1 block">Password is required</span>
-        }
-      </div>
-
-      <!-- Remember Me -->
-      <div class="flex items-center justify-between text-xs pt-1">
-        <label class="flex items-center gap-2 text-neutral-400 cursor-pointer">
-          <input
-            type="checkbox"
-            formControlName="rememberMe"
-            class="rounded border-neutral-800 bg-neutral-950 text-white focus:ring-purple-500 cursor-pointer"
-          />
-          <span>Remember Me</span>
-        </label>
-        <a routerLink="/login" class="text-neutral-400 hover:text-white font-medium">Forgot password?</a>
-      </div>
-
-      <!-- Submit Button -->
-      <button
-        type="submit"
-        [disabled]="isSubmitting()"
-        class="w-full py-3 rounded-xl bg-white text-black font-bold text-xs shadow-sm hover:bg-neutral-200 transition-all cursor-pointer disabled:opacity-50 mt-2"
-      >
-        @if (isSubmitting()) {
-          <span>Signing In...</span>
-        } @else {
-          <span>Sign In to Account</span>
-        }
-      </button>
-
-    </form>
-
-    <!-- Footer Link -->
-    <div class="mt-6 pt-6 border-t border-neutral-800 text-center text-xs text-neutral-400">
-      <span>Don't have an account? </span>
-      <a routerLink="/register" class="text-white font-bold hover:underline">Create Account</a>
-    </div>
-
+<main class="auth-scene auth-scene-login">
+  <div class="auth-atmosphere" aria-hidden="true">
+    <span class="auth-orb auth-orb-one"></span>
+    <span class="auth-orb auth-orb-two"></span>
+    <span class="auth-slash"></span>
   </div>
-</div>
+  <div class="auth-particles" aria-hidden="true"></div>
+  <div class="auth-speed-lines" aria-hidden="true"></div>
+
+  <div class="auth-layout">
+    <section class="auth-story" aria-labelledby="login-story-title">
+      <p class="auth-kicker"><span class="auth-kicker-dot"></span>Otaku access gate</p>
+      <h1 id="login-story-title">Return to your <span>anime realm.</span></h1>
+      <p class="auth-story-copy">Sign in to follow your orders, preserve your collection, and continue turning iconic designs into detailed 3D pieces.</p>
+
+      <div class="auth-emblem" aria-hidden="true">
+        <div class="auth-emblem-core"><span>炎</span></div>
+      </div>
+
+      <div class="auth-promise-grid" aria-label="Account benefits">
+        <article class="auth-promise"><i class="pi pi-box"></i><strong>Track builds</strong><span>Live order history</span></article>
+        <article class="auth-promise"><i class="pi pi-shield"></i><strong>Secure access</strong><span>Protected account</span></article>
+        <article class="auth-promise"><i class="pi pi-sparkles"></i><strong>3D universe</strong><span>Interactive models</span></article>
+      </div>
+    </section>
+
+    <section class="auth-panel" aria-labelledby="login-title">
+      <div class="auth-panel-rune" aria-hidden="true">界</div>
+      <header class="auth-panel-header auth-reveal auth-delay-1">
+        <div class="auth-panel-icon"><i class="pi pi-user"></i></div>
+        <p class="auth-panel-eyebrow">Identity verification</p>
+        <h2 id="login-title">Welcome back</h2>
+        <p class="auth-panel-subtitle">Open the gate to your 3D Otaku account.</p>
+      </header>
+
+      @if (errorMessage()) {
+        <div class="auth-alert" role="alert"><i class="pi pi-exclamation-triangle"></i><span>{{ errorMessage() }}</span></div>
+      }
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+        <div class="auth-field auth-reveal auth-delay-2">
+          <label for="login-email">Email address</label>
+          <div class="auth-input-wrap">
+            <i class="pi pi-envelope" aria-hidden="true"></i>
+            <input id="login-email" type="email" formControlName="email" autocomplete="email" placeholder="otaku@anime.com" class="auth-input" />
+          </div>
+          @if (loginForm.controls['email'].touched && loginForm.controls['email'].errors?.['required']) {
+            <span class="auth-validation">Email is required</span>
+          } @else if (loginForm.controls['email'].touched && loginForm.controls['email'].errors?.['email']) {
+            <span class="auth-validation">Enter a valid email address</span>
+          }
+        </div>
+
+        <div class="auth-field auth-reveal auth-delay-3">
+          <label for="login-password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="pi pi-lock" aria-hidden="true"></i>
+            <input id="login-password" type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••" class="auth-input" />
+          </div>
+          @if (loginForm.controls['password'].touched && loginForm.controls['password'].errors?.['required']) {
+            <span class="auth-validation">Password is required</span>
+          } @else if (loginForm.controls['password'].touched && loginForm.controls['password'].errors?.['minlength']) {
+            <span class="auth-validation">Use at least 6 characters</span>
+          }
+        </div>
+
+        <div class="auth-form-options auth-reveal auth-delay-4">
+          <label class="auth-check"><input type="checkbox" formControlName="rememberMe" /><span>Remember me</span></label>
+          <span class="auth-secure-note"><i class="pi pi-shield"></i>Encrypted session</span>
+        </div>
+
+        <button type="submit" [disabled]="isSubmitting()" class="auth-submit auth-reveal auth-delay-5">
+          @if (isSubmitting()) {
+            <i class="pi pi-spinner pi-spin" aria-hidden="true"></i><span>Opening the gate…</span>
+          } @else {
+            <i class="pi pi-bolt" aria-hidden="true"></i><span>Enter your account</span>
+          }
+        </button>
+      </form>
+
+      <footer class="auth-footer auth-reveal auth-delay-5">
+        <span>New to the realm? </span><a routerLink="/register" [queryParams]="returnUrlQueryParams()">Create your account</a>
+      </footer>
+    </section>
+  </div>
+</main>

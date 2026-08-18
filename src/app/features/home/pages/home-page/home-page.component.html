@@ -1,321 +1,93 @@
-<div class="space-y-28 pb-24 select-none overflow-hidden">
-
-  <!-- 1. Epic Hero Section with Three.js matrix & 3D spotlight -->
-  <app-anime-hero />
-
-  <!-- 2. Interactive 4K Legendary Heroes Slider / Carousel -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
-      <div>
-        <span class="vt-badge vt-badge-pink mb-2">🔥 4K Anime Hero Slider</span>
-        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight">
-          Legendary Hero Showcase
-        </h2>
-        <p class="text-neutral-400 text-sm mt-1">
-          Explore iconic anime legends & their 1:1 scale 3D printed weapons.
-        </p>
-      </div>
-
-      <!-- Slider Controls -->
-      <div class="flex items-center gap-3">
-        <button
-          (click)="prevLegend()"
-          class="w-12 h-12 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-neutral-200 hover:text-white hover:border-pink-500 hover:scale-110 transition-all cursor-pointer flex items-center justify-center shadow-lg"
-          title="Previous Legend"
-        >
-          <i class="pi pi-chevron-left text-base"></i>
-        </button>
-
-        <!-- Slide Dots -->
-        <div class="flex items-center gap-2 px-3 py-2 rounded-2xl bg-neutral-900/80 border border-neutral-800">
-          @for (item of animeLegends; track item.id; let i = $index) {
-            <button
-              (click)="setLegend(i)"
-              [class]="currentLegendIndex() === i ? 'w-7 bg-pink-500 shadow-[0_0_12px_rgba(236,72,153,0.8)]' : 'w-2 bg-neutral-700 hover:bg-neutral-500'"
-              class="h-2 rounded-full transition-all duration-300 cursor-pointer"
-            ></button>
-          }
+<div class="pb-24">
+  <section class="relative min-h-[72vh] overflow-hidden border-b border-neutral-800 bg-[#030308]">
+    <img [src]="heroImage()" [attr.srcset]="heroSrcset() || null" sizes="100vw" alt="Anime-inspired 3D printed display piece" width="1920" height="1080" fetchpriority="high" (error)="onHeroImageError()" class="absolute inset-0 h-full w-full object-cover opacity-45" />
+    <div class="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-purple-950/40" aria-hidden="true"></div>
+    <div class="relative mx-auto flex min-h-[72vh] max-w-7xl items-center px-4 py-20 sm:px-6 lg:px-8">
+      <div class="max-w-3xl space-y-6">
+        <span class="vt-badge vt-badge-pink">3D Otaku catalog</span>
+        <h1 class="text-4xl font-black leading-tight text-white sm:text-6xl">{{ heroTitle }}</h1>
+        <p class="max-w-2xl text-base leading-relaxed text-neutral-200 sm:text-lg">{{ heroSubtitle }}</p>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <a routerLink="/products" class="rounded-2xl bg-gradient-to-r from-red-600 to-pink-600 px-6 py-3 text-center text-sm font-black text-white">Browse models & prices</a>
+          <a routerLink="/contact" class="rounded-2xl border border-neutral-700 bg-neutral-950/80 px-6 py-3 text-center text-sm font-bold text-white">Request a custom model</a>
         </div>
-
-        <button
-          (click)="nextLegend()"
-          class="w-12 h-12 rounded-2xl bg-neutral-900/90 border border-neutral-800 text-neutral-200 hover:text-white hover:border-pink-500 hover:scale-110 transition-all cursor-pointer flex items-center justify-center shadow-lg"
-          title="Next Legend"
-        >
-          <i class="pi pi-chevron-right text-base"></i>
-        </button>
       </div>
     </div>
+  </section>
 
-    <!-- Active Legend Main Stage Slider Card -->
-    @if (activeLegend(); as legend) {
-      <div class="relative w-full rounded-3xl overflow-hidden border border-purple-500/40 bg-neutral-950 p-4 md:p-6 shadow-[0_0_80px_rgba(139,92,246,0.3)] transition-all duration-700 animate-flame">
-        
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-          
-          <!-- Image Stage (4K Wallpaper) -->
-          <div class="lg:col-span-7 relative h-[400px] md:h-[480px] rounded-2xl overflow-hidden group shadow-2xl border border-neutral-800">
-            <img
-              [src]="legend.image"
-              [alt]="legend.name"
-              class="w-full h-full object-cover object-top transition-transform duration-1000 group-hover:scale-105"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t {{ legend.glowColor }}"></div>
-
-            <div class="absolute top-4 left-4 z-10">
-              <span class="px-3.5 py-1.5 rounded-full bg-neutral-950/90 backdrop-blur-md border border-white/20 text-pink-300 text-xs font-extrabold uppercase tracking-widest shadow-lg">
-                {{ legend.anime }}
-              </span>
-            </div>
-
-            <div class="absolute bottom-4 left-4 right-4 p-4 rounded-2xl bg-neutral-950/80 backdrop-blur-md border border-white/10">
-              <span class="text-xs font-bold text-cyan-400 uppercase tracking-widest block mb-1">
-                ✦ {{ legend.badge }}
-              </span>
-              <p class="text-xs italic text-neutral-300">
-                "{{ legend.quote }}"
-              </p>
-            </div>
-          </div>
-
-          <!-- Info & Actions Stage -->
-          <div class="lg:col-span-5 space-y-6 text-left p-2">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 text-xs font-bold uppercase tracking-wider">
-              <span>Spotlight Legend #0{{ currentLegendIndex() + 1 }}</span>
-            </div>
-
-            <h3 class="text-3xl md:text-4xl font-black text-white leading-tight">
-              {{ legend.name }}
-            </h3>
-
-            <p class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-cyan-300">
-              {{ legend.title }}
-            </p>
-
-            <p class="text-sm text-neutral-300 leading-relaxed font-normal">
-              Fully rendered in high-density PLA+ 3D print format with convention-safe blunted blade geometry and authentic anime detailing.
-            </p>
-
-            <!-- Thumbnails Switcher Grid -->
-            <div class="pt-2">
-              <p class="text-[11px] font-bold uppercase tracking-widest text-neutral-400 mb-3">
-                Select Anime Hero:
-              </p>
-              <div class="grid grid-cols-4 gap-2.5">
-                @for (item of animeLegends; track item.id; let idx = $index) {
-                  <button
-                    (click)="setLegend(idx)"
-                    [class]="currentLegendIndex() === idx ? 'ring-2 ring-pink-500 scale-105 opacity-100 shadow-[0_0_15px_rgba(236,72,153,0.6)]' : 'opacity-60 hover:opacity-100 border-neutral-800'"
-                    class="relative h-16 rounded-xl overflow-hidden border transition-all duration-300 cursor-pointer"
-                  >
-                    <img [src]="item.image" [alt]="item.name" class="w-full h-full object-cover object-top" />
-                  </button>
-                }
-              </div>
-            </div>
-
-            <!-- Inspect Button -->
-            <div class="pt-2">
-              <a [routerLink]="['/products', legend.slug]" class="w-full sm:w-auto inline-block">
-                <app-glow-button text="Inspect 3D Model Prop" icon="pi pi-box" variant="primary" />
-              </a>
-            </div>
-
-          </div>
-
-        </div>
-
+  <div class="mx-auto max-w-7xl space-y-24 px-4 py-20 sm:px-6 lg:px-8">
+    <section aria-labelledby="featured-title">
+      <div class="mb-8 flex items-end justify-between gap-4">
+        <div><span class="vt-badge vt-badge-pink">From the live catalog</span><h2 id="featured-title" class="mt-3 text-3xl font-black text-white">Featured products</h2></div>
+        <a routerLink="/products" class="text-sm font-bold text-pink-300">View all products <span aria-hidden="true">→</span></a>
       </div>
+      @if (isLoading()) {
+        <app-otaku-loader text="Loading featured products…" />
+      } @else if (featuredProducts().length > 0) {
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">@for (product of featuredProducts(); track product.id) { <app-product-card [product]="product" /> }</div>
+      } @else if (featuredError()) {
+        <div class="rounded-2xl border border-red-500/30 bg-red-950/20 p-6 text-sm text-red-100" role="alert">Featured products are temporarily unavailable. You can still open the full catalog and try again.</div>
+      } @else {
+        <p class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6 text-sm text-neutral-400">No products are currently marked as featured.</p>
+      }
+    </section>
+
+    @if (categories().length > 0) {
+      <section aria-labelledby="categories-title">
+        <h2 id="categories-title" class="mb-8 text-3xl font-black text-white">Shop by category</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (category of categories(); track category.id) {
+            <a routerLink="/products" [queryParams]="{ category: category.name }" class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6 transition-colors hover:border-purple-500">
+              <div class="flex items-start justify-between gap-3"><h3 class="font-bold text-white">{{ category.name }}</h3><span class="rounded-full bg-neutral-900 px-2 py-1 text-xs text-neutral-300">{{ category.productsCount }} products</span></div>
+              @if (category.description) { <p class="mt-2 text-sm text-neutral-400">{{ category.description }}</p> }
+            </a>
+          }
+        </div>
+      </section>
     }
-  </section>
 
-  <!-- 3. Iconic Anime Legends Showcase Banner -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="rounded-3xl p-8 lg:p-12 border border-purple-500/30 bg-gradient-to-r from-neutral-950 via-purple-950/40 to-neutral-950 relative overflow-hidden shadow-2xl">
-      <div class="subtle-glow w-96 h-96 bg-pink-600/20 -top-20 -left-20 blur-[130px] pointer-events-none"></div>
-      
-      <div class="relative z-10 space-y-6 text-center max-w-3xl mx-auto">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 text-xs font-extrabold uppercase tracking-widest shadow-md">
-          <span>🔥 Real-Time 3D Armory Selector</span>
-        </div>
+    <section aria-labelledby="intent-title">
+      <h2 id="intent-title" class="mb-3 text-3xl font-black text-white">Shop by what you need</h2>
+      <p class="mb-8 text-neutral-400">Start with the intended use, then compare the product-specific options.</p>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-5">@for (item of shopIntentItems; track item.id) { <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5"><i [class]="item.icon" class="text-xl text-pink-400"></i><h3 class="mt-4 font-bold text-white">{{ item.title }}</h3><p class="mt-2 text-xs leading-relaxed text-neutral-400">{{ item.description }}</p></article> }</div>
+    </section>
 
-        <h2 class="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-          Iconic Weapons of <span class="vt-anime-gradient">Tanjiro, Rengoku, Naruto & Guts</span>
-        </h2>
+    <section aria-labelledby="made-title" class="rounded-3xl border border-pink-500/30 bg-gradient-to-br from-pink-950/20 to-neutral-950 p-8 lg:p-12">
+      <span class="vt-badge vt-badge-pink">Made to order, when marked</span>
+      <h2 id="made-title" class="mt-4 text-3xl font-black text-white">Made specifically for your order</h2>
+      <p class="mt-3 max-w-3xl text-neutral-300">Production starts after confirmation for products carrying the made-to-order indicator. The product page shows a manufacturing estimate only when one is configured.</p>
+      <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">@for (step of madeToOrderSteps; track step.id) { <article class="rounded-2xl border border-neutral-800 bg-black/30 p-5"><i [class]="step.icon" class="text-pink-400"></i><h3 class="mt-3 font-bold text-white">{{ step.title }}</h3><p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p></article> }</div>
+    </section>
 
-        <p class="text-neutral-300 text-sm sm:text-base leading-relaxed">
-          Crafted with absolute 1:1 precision. Inspect high-density 3D geometry, flame tsuba guards, kunai seals, and cursed blade finishes.
-        </p>
+    <section aria-labelledby="custom-title">
+      <h2 id="custom-title" class="text-3xl font-black text-white">Have a design in mind?</h2>
+      <p class="mt-3 max-w-3xl text-neutral-400">Send it for a feasibility review. Submission does not guarantee acceptance or create a confirmed paid order.</p>
+      <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">@for (step of customOrderSteps; track step.id) { <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><i [class]="step.icon" class="text-purple-400"></i><h3 class="mt-4 font-bold text-white">{{ step.title }}</h3><p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p></article> }</div>
+      <a routerLink="/contact" class="mt-6 inline-flex rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white">Send my design for review</a>
+    </section>
 
-        <!-- Quick Switcher Pills for 3D Experience Section -->
-        <div class="flex flex-wrap items-center justify-center gap-2 pt-2">
-          @for (prod of featuredProducts(); track prod.id; let i = $index) {
-            <button
-              (click)="selectIconicProp(i)"
-              [class]="selectedIconicIndex() === i ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white border-pink-400 shadow-[0_0_25px_rgba(236,72,153,0.6)] scale-105' : 'bg-neutral-900/90 text-neutral-300 border-neutral-800 hover:border-neutral-700 hover:text-white'"
-              class="px-4 py-2 rounded-2xl border text-xs font-extrabold transition-all duration-300 cursor-pointer flex items-center gap-2 backdrop-blur-md"
-            >
-              <i class="pi pi-sparkles text-pink-400 text-xs animate-pulse"></i>
-              <span>{{ prod.name }}</span>
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-  </section>
+    <section aria-labelledby="quality-title">
+      <h2 id="quality-title" class="mb-8 text-3xl font-black text-white">Know what you are ordering</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">@for (point of qualityPoints; track point.id) { <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><i [class]="point.icon" class="text-cyan-400"></i><h3 class="mt-4 font-bold text-white">{{ point.title }}</h3><p class="mt-2 text-sm text-neutral-400">{{ point.description }}</p></article> }</div>
+    </section>
 
-  <!-- 4. Featured Categories Section -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <app-section-title
-      badge="Product Realm"
-      title="Shop by Anime Category"
-      subtitle="Explore specialized 3D print lines ranging from Tanjiro & Zoro swords to Minato daggers and Gojo desk models."
-    />
+    @if (settings().deliveryNote || settings().deliveryInfoNote) {
+      <section aria-labelledby="delivery-title" class="rounded-3xl border border-neutral-800 bg-neutral-950 p-8">
+        <h2 id="delivery-title" class="text-2xl font-black text-white">Delivery and order confirmation</h2>
+        @if (settings().deliveryNote) { <p class="mt-3 text-sm text-neutral-300">{{ settings().deliveryNote }}</p> }
+        @if (settings().deliveryInfoNote) { <p class="mt-2 text-sm text-neutral-400">{{ settings().deliveryInfoNote }}</p> }
+      </section>
+    }
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (category of categories; track category.id) {
-        <app-category-card [category]="category" />
-      }
-    </div>
-  </section>
+    <section aria-labelledby="faq-title">
+      <h2 id="faq-title" class="mb-8 text-3xl font-black text-white">Frequently asked questions</h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">@for (faq of faqItems; track faq.id) { <details class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5"><summary class="cursor-pointer font-bold text-white">{{ faq.question }}</summary><p class="mt-3 text-sm leading-relaxed text-neutral-400">{{ faq.answer }}</p></details> }</div>
+    </section>
 
-  <!-- 5. Featured Products Catalog Section -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
-      <div>
-        <span class="vt-badge vt-badge-pink mb-2">🔥 World-Class Arsenal</span>
-        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight">
-          Featured Anime 3D Models
-        </h2>
-      </div>
-      <a routerLink="/products">
-        <app-glow-button text="Explore Full Catalog" icon="pi pi-arrow-right" variant="secondary" />
-      </a>
-    </div>
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (product of featuredProducts(); track product.id) {
-        <app-product-card [product]="product" />
-      }
-    </div>
-  </section>
-
-  <!-- 6. Large 3D Experience Section with Real-Time Model Viewer (660px Height) -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="vt-card rounded-3xl p-8 lg:p-12 border border-purple-500/40 relative overflow-hidden shadow-[0_0_80px_rgba(139,92,246,0.25)] bg-neutral-950/90 backdrop-blur-xl animate-flame">
-      <div class="subtle-glow w-96 h-96 bg-cyan-500/20 -top-20 -right-20 blur-[120px] pointer-events-none"></div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
-        
-        <!-- Left Info Block -->
-        <div class="lg:col-span-5 space-y-6">
-          <span class="vt-badge vt-badge-cyan">
-            <i class="pi pi-box animate-spin" style="animation-duration: 5s;"></i>
-            <span>Real-Time 3D Engine</span>
-          </span>
-
-          <h2 class="text-3xl sm:text-4xl font-black text-white leading-tight">
-            Inspect Every Blade & Seal in <span class="vt-anime-gradient">Full 3D</span>
-          </h2>
-
-          <p class="text-neutral-300 text-sm leading-relaxed font-normal">
-            Rotate 360°, zoom in on Tanjiro's flame guard, Minato's Raijin seal, Rengoku's fire hilt, and Guts' Dragon Slayer greatsword straight from your browser with zero plugins required.
-          </p>
-
-          <div class="space-y-3 pt-1">
-            <div class="flex items-center gap-3 text-xs text-neutral-200 font-semibold">
-              <i class="pi pi-check-circle text-emerald-400 text-base"></i>
-              <span>Dual 3D Engine: Three.js Canvas + Model-Viewer</span>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-neutral-200 font-semibold">
-              <i class="pi pi-check-circle text-emerald-400 text-base"></i>
-              <span>Supports GLB, GLTF, STL, OBJ & PLY 3D Formats</span>
-            </div>
-            <div class="flex items-center gap-3 text-xs text-neutral-200 font-semibold">
-              <i class="pi pi-check-circle text-emerald-400 text-base"></i>
-              <span>Convention Safe • Blunted Edges • Non-Sharp Decorative Props</span>
-            </div>
-          </div>
-
-          @if (sample3dProduct(); as p) {
-            <div class="pt-2 flex items-center gap-3">
-              <a [routerLink]="['/products', p.slug]">
-                <app-glow-button [text]="'Inspect ' + p.name" icon="pi pi-eye" variant="primary" />
-              </a>
-            </div>
-          }
-        </div>
-
-        <!-- Right Live 3D Model Engine Container -->
-        <div class="lg:col-span-7">
-          @defer (on viewport) {
-            @if (sample3dProduct(); as prod) {
-              <app-product-3d-viewer [product]="prod" />
-            }
-          } @placeholder {
-            <app-otaku-loader text="Loading Anime 3D Geometry..." />
-          }
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- 7. Production Excellence / Value Props -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <app-section-title
-      badge="Production Craftsmanship"
-      title="Why 3D Otaku Leads the Anime Realm"
-      subtitle="Combining high-density additive manufacturing with anime passion to produce unmatched display pieces."
-    />
-
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @for (prop of valueProps; track prop.title) {
-        <div class="vt-card p-6 rounded-2xl border border-neutral-800 space-y-3 hover:border-purple-500/50 transition-all duration-300 shine-sweep">
-          <div class="flex items-center justify-between">
-            <div class="w-11 h-11 rounded-xl bg-neutral-900 border border-neutral-800 flex items-center justify-center text-pink-400 text-lg shadow-inner">
-              <i [class]="prop.icon"></i>
-            </div>
-            <span class="vt-badge text-[10px]">
-              {{ prop.badge }}
-            </span>
-          </div>
-          <h3 class="text-base font-extrabold text-white">
-            {{ prop.title }}
-          </h3>
-          <p class="text-neutral-400 text-xs leading-relaxed font-normal">
-            {{ prop.description }}
-          </p>
-        </div>
-      }
-    </div>
-  </section>
-
-  <!-- 8. Custom 3D Forge Call-to-Action Section -->
-  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="vt-card rounded-3xl p-8 md:p-14 border border-pink-500/40 text-center relative overflow-hidden shadow-[0_0_80px_rgba(236,72,153,0.2)] bg-neutral-950/90 backdrop-blur-xl animate-flame">
-      <div class="subtle-glow w-96 h-96 bg-purple-600/30 top-0 left-1/3 blur-[140px] pointer-events-none"></div>
-
-      <div class="relative z-10 max-w-2xl mx-auto space-y-6">
-        <span class="vt-badge vt-badge-pink text-xs uppercase font-extrabold">
-          ✨ Custom 3D Anime Forge
-        </span>
-
-        <h2 class="text-3xl md:text-5xl font-black text-white tracking-tight leading-tight">
-          Have a Custom <span class="vt-anime-gradient">Anime Weapon Idea?</span>
-        </h2>
-
-        <p class="text-neutral-300 text-sm sm:text-base leading-relaxed font-normal">
-          From custom Katana tsubas to full-scale cosplay props or custom STL files — send us your reference photo or idea and we'll print it with precision.
-        </p>
-
-        <div class="pt-2 flex justify-center">
-          <a routerLink="/contact">
-            <app-glow-button text="Request Custom 3D Forge Order" icon="pi pi-sparkles" variant="primary" />
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
+    <section class="rounded-3xl border border-purple-500/30 bg-gradient-to-r from-purple-950/40 to-pink-950/30 p-8 text-center lg:p-12">
+      <h2 class="text-3xl font-black text-white">Ready to compare your options?</h2>
+      <p class="mx-auto mt-3 max-w-2xl text-neutral-300">Browse product details and prices, or send a custom design for review.</p>
+      <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><a routerLink="/products" class="rounded-xl bg-pink-600 px-6 py-3 text-sm font-bold text-white">Browse models & prices</a><a routerLink="/contact" class="rounded-xl border border-neutral-700 px-6 py-3 text-sm font-bold text-white">Request a custom model</a></div>
+    </section>
+  </div>
 </div>

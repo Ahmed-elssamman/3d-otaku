@@ -1,99 +1,50 @@
-import { CategoryItem } from '@core/models/category.model';
-import { ProductCategory } from '@core/enums/product-category.enum';
-
-export interface ValueProp {
+export interface HomeContentItem {
+  id: string;
   title: string;
   description: string;
   icon: string;
-  badge: string;
 }
 
-export const CATEGORIES_DATA: CategoryItem[] = [
-  {
-    id: 'cat-1',
-    name: ProductCategory.SWORDS,
-    description: '1:1 replica anime swords, katanas, and display blades for true fans.',
-    icon: 'pi pi-compass',
-    itemCount: 14,
-    featuredImageUrl: 'assets/images/categories/swords.webp'
-  },
-  {
-    id: 'cat-2',
-    name: ProductCategory.DAGGERS,
-    description: 'Intricate demon blades, kunai sets, and tactical anime daggers.',
-    icon: 'pi pi-shield',
-    itemCount: 9,
-    featuredImageUrl: 'assets/images/categories/daggers.webp'
-  },
-  {
-    id: 'cat-3',
-    name: ProductCategory.COSPLAY_PROPS,
-    description: 'Wearable masks, emblems, and lightweight convention cosplay accessories.',
-    icon: 'pi pi-user',
-    itemCount: 12,
-    featuredImageUrl: 'assets/images/categories/cosplay.webp'
-  },
-  {
-    id: 'cat-4',
-    name: ProductCategory.DESK_MODELS,
-    description: 'Articulated desk dragons, figurines, and setup centerpiece models.',
-    icon: 'pi pi-desktop',
-    itemCount: 18,
-    featuredImageUrl: 'assets/images/categories/desk.webp'
-  },
-  {
-    id: 'cat-5',
-    name: ProductCategory.COLLECTIBLES,
-    description: 'Wall mount emblems, badges, and anime display stands.',
-    icon: 'pi pi-star',
-    itemCount: 11,
-    featuredImageUrl: 'assets/images/categories/collectibles.webp'
-  },
-  {
-    id: 'cat-6',
-    name: ProductCategory.CUSTOM_ORDERS,
-    description: 'Print your own custom 3D model with customized dimensions and finishes.',
-    icon: 'pi pi-sparkles',
-    itemCount: 99,
-    featuredImageUrl: 'assets/images/categories/custom.webp'
-  }
+export interface HomeFaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export const HOME_HERO_FALLBACK_IMAGE = 'assets/anime/tanjiro-hero-1280.jpg';
+export const HOME_HERO_FALLBACK_SRCSET = 'assets/anime/tanjiro-hero-768.jpg 768w, assets/anime/tanjiro-hero-1280.jpg 1280w, assets/anime/tanjiro-hero-1920.jpg 1920w';
+export const HOME_HERO_TITLE = 'Your favorite character, made for your world.';
+export const HOME_HERO_SUBTITLE = 'Browse ready designs or send us your idea. Each made-to-order piece is produced according to the selected size, material, color, and finish.';
+
+export const SHOP_INTENT_ITEMS: HomeContentItem[] = [
+  { id: 'setup', title: 'Gaming setup and desk models', description: 'Find display pieces sized for desks, shelves, and gaming spaces.', icon: 'pi pi-desktop' },
+  { id: 'gifts', title: 'Gifts for anime fans', description: 'Compare compact collectibles and display-ready designs.', icon: 'pi pi-gift' },
+  { id: 'cosplay', title: 'Cosplay props', description: 'Review dimensions, material, weight, and each product safety note before ordering.', icon: 'pi pi-user' },
+  { id: 'collectibles', title: 'Collectibles', description: 'Browse figures, emblems, accessories, and shelf pieces.', icon: 'pi pi-star' },
+  { id: 'custom', title: 'Custom designs', description: 'Send a model link or idea for printability, rights, price, and production review.', icon: 'pi pi-sparkles' }
 ];
 
-export const VALUE_PROPS: ValueProp[] = [
-  {
-    title: 'Custom Anime Designs',
-    description: 'Original and fan-inspired 3D models created specifically for high-definition display.',
-    icon: 'pi pi-palette',
-    badge: 'Artistry'
-  },
-  {
-    title: 'High-Quality PLA Prints',
-    description: 'Printed using high-density eco-friendly PLA and PLA+ for structural strength and sleek detail.',
-    icon: 'pi pi-box',
-    badge: 'Durability'
-  },
-  {
-    title: 'Cosplay-Ready Props',
-    description: '100% decorative, lightweight, non-sharp display items safe for anime conventions.',
-    icon: 'pi pi-shield',
-    badge: 'Convention Safe'
-  },
-  {
-    title: 'One-Color Matte Finish',
-    description: 'Clean monochrome matte aesthetic ready for display or custom hand-painting.',
-    icon: 'pi pi-sparkles',
-    badge: 'Premium Style'
-  },
-  {
-    title: 'Custom Print Requests',
-    description: 'Upload your reference image or STL file requirements for bespoke 3D production.',
-    icon: 'pi pi-cog',
-    badge: 'On Demand'
-  },
-  {
-    title: 'Fast WhatsApp Support',
-    description: 'Direct communication via WhatsApp for instant status updates and custom quotes.',
-    icon: 'pi pi-whatsapp',
-    badge: 'Direct Chat'
-  }
+export const MADE_TO_ORDER_STEPS: HomeContentItem[] = [
+  { id: 'choose', title: 'Choose the product', description: 'Review the available size, material, color, finish, and media.', icon: 'pi pi-search' },
+  { id: 'confirm', title: 'Confirm the order', description: 'The store verifies availability, final price, and the applicable production estimate.', icon: 'pi pi-check-circle' },
+  { id: 'produce', title: 'Production begins', description: 'Made-to-order products are manufactured after confirmation, then prepared for delivery.', icon: 'pi pi-cog' }
+];
+
+export const CUSTOM_ORDER_STEPS: HomeContentItem[] = [
+  { id: 'send', title: 'Send your idea', description: 'Share a MakerWorld link, another permitted model link, or a written reference.', icon: 'pi pi-send' },
+  { id: 'review', title: 'We review feasibility', description: 'The design, dimensions, material, file rights, and production requirements are checked.', icon: 'pi pi-eye' },
+  { id: 'quote', title: 'Continue with a quote', description: 'If feasible, continue on WhatsApp to confirm price and production time.', icon: 'pi pi-whatsapp' }
+];
+
+export const QUALITY_POINTS: HomeContentItem[] = [
+  { id: 'specs', title: 'Product-specific information', description: 'Materials, dimensions, finishes, and safety notes come from each product record.', icon: 'pi pi-list' },
+  { id: 'inspect', title: 'Inspect before ordering', description: 'Use photos first and activate 3D only when a supported model is available.', icon: 'pi pi-images' },
+  { id: 'review', title: 'Confirmation before production', description: 'Production and delivery are separate stages, with details confirmed for the selected product.', icon: 'pi pi-verified' }
+];
+
+export const HOME_FAQ_ITEMS: HomeFaqItem[] = [
+  { id: 'made-to-order', question: 'When does production start?', answer: 'For products marked made to order, production starts after order confirmation. Check the product page for any configured estimate.' },
+  { id: 'shipping', question: 'Is production time the same as delivery time?', answer: 'No. Production covers manufacturing; delivery begins after the product is ready. Delivery details are confirmed separately.' },
+  { id: 'custom', question: 'Does sending a custom design confirm an order?', answer: 'No. A custom request is reviewed for printability, dimensions, rights, price, and production requirements before it can be accepted.' },
+  { id: 'viewer', question: 'Do I need the 3D viewer to order?', answer: 'No. Product photos and written specifications remain available if WebGL or a model file cannot load.' }
 ];

@@ -1,15 +1,16 @@
 import { ProductCategory } from '@core/enums/product-category.enum';
+import { ProductSort } from './enums/product-sort.enum';
 
 export interface SortOption {
   label: string;
-  value: 'price-asc' | 'price-desc' | 'rating-desc' | 'name-asc';
+  value: ProductSort;
 }
 
 export const SORT_OPTIONS: SortOption[] = [
-  { label: 'Sort by: Featured', value: 'rating-desc' },
-  { label: 'Price: Low to High', value: 'price-asc' },
-  { label: 'Price: High to Low', value: 'price-desc' },
-  { label: 'Name: A to Z', value: 'name-asc' }
+  { label: 'Featured first', value: ProductSort.FEATURED },
+  { label: 'Newest', value: ProductSort.NEWEST },
+  { label: 'Price: Low to High', value: ProductSort.PRICE_LOW },
+  { label: 'Price: High to Low', value: ProductSort.PRICE_HIGH }
 ];
 
 export const CATEGORY_OPTIONS: string[] = [

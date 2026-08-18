@@ -34,7 +34,7 @@ export class AdminProductService {
         items = items.filter(p => (query.status === 'active' ? p.isActive : !p.isActive));
       }
 
-      if (query?.featured && query.featured !== ('all' as unknown as boolean)) {
+      if (typeof query?.featured === 'boolean') {
         items = items.filter(p => p.isFeatured);
       }
 
@@ -71,7 +71,7 @@ export class AdminProductService {
       });
     }
 
-    return this.api.getPaginated<Product>(API_ENDPOINTS.admin.products.list, query as Record<string, unknown>).pipe(
+    return this.api.getPaginated<Product, AdminProductQuery>(API_ENDPOINTS.admin.products.list, query ?? null).pipe(
       map(res => {
         if (res.data) {
           const normalized = res.data.map(p => ({
@@ -115,7 +115,7 @@ export class AdminProductService {
       });
     }
 
-    return this.api.post<Product>(API_ENDPOINTS.admin.products.create, payload);
+    return this.api.post<Product>(API_ENDPOINTS.admin.products.create, this.toApiPayload(payload));
   }
 
   updateProduct(id: string, payload: Product): Observable<ApiResponse<Product>> {
@@ -128,7 +128,7 @@ export class AdminProductService {
       });
     }
 
-    return this.api.put<Product>(API_ENDPOINTS.admin.products.update(id), payload);
+    return this.api.put<Product>(API_ENDPOINTS.admin.products.update(id), this.toApiPayload(payload));
   }
 
   deleteProduct(id: string): Observable<ApiResponse<{ id: string }>> {
@@ -191,5 +191,10 @@ export class AdminProductService {
 
   saveToStorage(): void {
     this.productService.saveToStorage();
+  }
+
+  private toApiPayload(product: Product): Omit<Product, 'id' | '_id' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
+    const { id, _id, createdAt, updatedAt, deletedAt, ...editableFields } = product;
+    return editableFields;
   }
 }
