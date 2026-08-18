@@ -171,20 +171,157 @@
   }
 }
 
+/* ── Validation Top Banner & Error Chips ── */
+
+.validation-top-banner {
+  border: 1px solid rgba(244, 63, 94, 0.45);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 10% 50%, rgba(244, 63, 94, 0.18), transparent 45%),
+    linear-gradient(135deg, rgba(20, 5, 10, 0.95), rgba(15, 3, 7, 0.98));
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 0 25px rgba(244, 63, 94, 0.15);
+  padding: 1.25rem 1.5rem;
+  animation: slide-down 250ms ease-out;
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.validation-top-banner-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.validation-top-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 0.75rem;
+  background: rgba(244, 63, 94, 0.2);
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  color: #fb7185;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.validation-error-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.validation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.1);
+  color: #fecdd3;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+
+  &:hover {
+    background: rgba(244, 63, 94, 0.25);
+    border-color: #fb7185;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+  }
+}
+
+.validation-chip-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fda4af;
+}
+
+.validation-chip-title {
+  color: #fff;
+  font-weight: 700;
+}
+
+.validation-chip-desc {
+  color: #fecdd3;
+  opacity: 0.85;
+}
+
+/* ── Inline Field Error Message ── */
+
+.field-error-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #fb7185;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  animation: fade-in 180ms ease-out;
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ── Highlight Invalid Fields ── */
 
 :host ::ng-deep {
+  .admin-field.has-error {
+    input.p-inputtext,
+    textarea.p-textarea,
+    .p-inputnumber-input,
+    .p-select {
+      border-color: #fb7185 !important;
+      background-color: rgba(244, 63, 94, 0.06) !important;
+      box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.3) !important;
+
+      &:focus {
+        border-color: #f43f5e !important;
+        box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.4) !important;
+      }
+    }
+  }
+
   .ng-invalid.ng-touched {
     input.p-inputtext,
     textarea.p-textarea,
     .p-inputnumber-input,
     .p-select {
-      border-color: #f87171 !important;
-      background-color: rgba(239, 68, 68, 0.04) !important;
+      border-color: #fb7185 !important;
+      background-color: rgba(244, 63, 94, 0.05) !important;
 
       &:focus {
-        border-color: #ef4444 !important;
-        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2) !important;
+        border-color: #f43f5e !important;
+        box-shadow: 0 0 0 2px rgba(244, 63, 94, 0.3) !important;
       }
     }
   }

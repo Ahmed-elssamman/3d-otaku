@@ -20,7 +20,7 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
-import { VIEWER_FEATURES, VIEWER_RENDER_SETTINGS } from './product-3d-viewer.control';
+import { MODEL_COLOR_OPTIONS, VIEWER_FEATURES, VIEWER_RENDER_SETTINGS } from './product-3d-viewer.control';
 import { AnalyticsService } from '@core/services/analytics.service';
 import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
@@ -52,6 +52,9 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   detectedFormat = signal<ProductModelType>(ProductModelType.GLB);
   isFullscreen = signal<boolean>(false);
   viewReady = signal<boolean>(false);
+  selectedColor = signal<string>('#f8fafc');
+
+  readonly colorOptions = MODEL_COLOR_OPTIONS;
 
   resolvedModelUrl = computed(() => this.modelUrl().trim() || this.product()?.modelUrl?.trim() || '');
   resolvedModelName = computed(() => this.product()?.name || this.modelName());
@@ -108,6 +111,66 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.isAutoRotating.update(value => !value);
     if (this.controls) {
       this.controls.autoRotate = this.isAutoRotating();
+    }
+  }
+
+  setModelColor(colorHex: string): void {
+    this.selectedColor.set(colorHex);
+    if (!this.currentObject) {
+      return;
+    }
+
+    const isDark = colorHex === '#18181b';
+    const targetColor = new THREE.Color(colorHex);
+
+    this.currentObject.traverse(child => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh && mesh.material) {
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach(mat => {
+            if ('color' in mat) {
+              (mat as THREE.MeshStandardMaterial).color.copy(targetColor);
+              (mat as THREE.MeshStandardMaterial).metalness = isDark ? 0.25 : 0.08;
+              (mat as THREE.MeshStandardMaterial).roughness = isDark ? 0.45 : 0.42;
+              mat.needsUpdate = true;
+            }
+          });
+        } else if ('color' in mesh.material) {
+          (mesh.material as THREE.MeshStandardMaterial).color.copy(targetColor);
+          (mesh.material as THREE.MeshStandardMaterial).metalness = isDark ? 0.25 : 0.08;
+          (mesh.material as THREE.MeshStandardMaterial).roughness = isDark ? 0.45 : 0.42;
+          mesh.material.needsUpdate = true;
+        }
+      }
+    });
+  }
+
+  rotateModelX(): void {
+    if (!this.currentObject) return;
+    this.currentObject.rotation.x += Math.PI / 2;
+    this.recenterAndRefit();
+  }
+
+  rotateModelY(): void {
+    if (!this.currentObject) return;
+    this.currentObject.rotation.y += Math.PI / 2;
+    this.recenterAndRefit();
+  }
+
+  flipUpright(): void {
+    if (!this.currentObject) return;
+    this.currentObject.rotation.x += Math.PI;
+    this.recenterAndRefit();
+  }
+
+  private recenterAndRefit(): void {
+    if (!this.currentObject) return;
+    this.currentObject.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(this.currentObject);
+    const center = box.getCenter(new THREE.Vector3());
+    this.currentObject.position.sub(center);
+    if (this.controls && this.camera) {
+      this.fitCameraToObject(this.currentObject);
     }
   }
 
@@ -307,6 +370,8 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     if (format === ProductModelType.STL) {
       new STLLoader().load(modelPath, geometry => {
         geometry.computeVertexNormals();
+        geometry.rotateX(-Math.PI / 2);
+        geometry.center();
         complete(new THREE.Mesh(geometry, this.createFallbackMaterial(false)));
       }, event => this.updateLoadProgress(event), fail);
       return;
@@ -337,10 +402,12 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   }
 
   private createFallbackMaterial(vertexColors: boolean): THREE.MeshStandardMaterial {
+    const colorHex = this.selectedColor();
+    const isDark = colorHex === '#18181b';
     return new THREE.MeshStandardMaterial({
-      color: 0xd8d8d8,
-      metalness: 0,
-      roughness: 0.65,
+      color: new THREE.Color(colorHex),
+      metalness: isDark ? 0.25 : 0.08,
+      roughness: isDark ? 0.45 : 0.42,
       vertexColors
     });
   }
