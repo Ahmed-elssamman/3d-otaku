@@ -24,6 +24,7 @@ Tracking uses `GET /api/orders/track/:orderNumber` with `X-Order-Token`. The gue
 - Session storage is a convenience, not a replacement for saving the private link. If no usable receipt survives, reopen the original saved link. Credentials from a failed first read are not separately persisted by this page.
 - A new fragment cancels the previous subscription before handling the new link, including when the new link is invalid. Leaving the page also cancels the request. Abandoned HTTP responses therefore cannot pass through the subscription to publish an old receipt.
 - Tracking leaves the cart, delivery draft and pending checkout identity/payload unchanged. It may update the separate saved receipt after a successful read.
+- The shared keyboard skip link keeps its native `#main-content` anchor and focus behavior without clearing a displayed receipt or cancelling an in-flight tracking read. Opening that anchor directly still requires explicit saved-receipt resume; it does not reveal an order automatically. Other nonempty invalid fragments retain the existing isolation rules.
 
 The copy component uses the Clipboard API only after an explicit button action. If copying fails, it presents a readonly, selectable text area with the private link and privacy guidance. A pending copy for an older receipt cannot mark a replacement receipt as copied. The raw credential is not normally displayed in the page DOM.
 
@@ -37,7 +38,19 @@ The copy component uses the Clipboard API only after an explicit button action. 
 - [Guest request context](../src/app/core/api/guest-order-tracking.context.ts), [token interceptor](../src/app/core/interceptors/auth-token.interceptor.ts), [error interceptor](../src/app/core/interceptors/api-error.interceptor.ts) and [order service](../src/app/core/services/order.service.ts).
 - [Browser routes](../src/app/app.routes.ts) and [server routes](../src/app/app.routes.server.ts).
 
-## Verification checkpoint
+## Current keyboard-navigation verification — 06:41 build
+
+The shared skip link previously used `href="#main-content"`. With the document's root `<base>`, pressing Enter on `/track` navigated to the home page and removed the receipt from view. This was reproduced on the 05:44 build and again in the first 06:34 browser scope; the latter retained nine passing desktop cases, one failing guest case and ten unrun mobile cases in `artifacts/playwright-2026-09-17-storage-money-final/report` (32.6 seconds). This was an application defect, not an assertion adjustment.
+
+The main layout now derives a native anchor URL from Angular `Location`, updates it after completed navigation and preserves the current path/query without including private fragments. Native focus and scrolling still work. The tracking page separately treats `main-content` as a navigation anchor, retaining the current receipt or request; an initial anchor permits only explicit saved-receipt resume. Two layout tests use real `Location` with `MockPlatformLocation`; two page tests cover in-flight reads and explicit resume.
+
+The final Angular suite passed **278/278 across 43 files in 5.70 seconds**, test build **2026-09-17T06:40:52.069Z / 6.010 seconds**. The preceding 277/278 result came from `SpyLocation` storing its base/query differently from real `Location`; replacing that fixture retained the original path/query/base assertions and added private-fragment exclusion. Logs remain at `artifacts/skip-link-{final,corrected}-angular-tests.log`.
+
+Production completed at **2026-09-17T06:41:26.504Z in 9.331 seconds**, `main-XQERADW5.js` / `styles-LJHQOUSH.css`, **488.13 kB raw / 131.14 kB estimated initial transfer**. The four exact identities are in `artifacts/performance/current-0641-build-identity.json`; backend verification is **192/192**.
+
+On this final build, desktop **3/3 passed in 8.7 seconds** (`artifacts/playwright-2026-09-17-skip-link-desktop/report`): guest tracking with real keyboard skip, query-preserving catalog navigation, and all three public SSR routes with JavaScript disabled. Mobile **12/12 passed in 39.5 seconds** (`artifacts/playwright-2026-09-17-storage-skip-mobile/report`), including those same cases and checkout/storage/settings regressions. The guest case specifically passed in **3.7 seconds desktop / 8.8 seconds mobile**, retaining its existing Clipboard, request-header, invalid-token, saved-resume and cart-preservation checks. It adds no tracking-context POST. The actual mobile tracking screenshot and desktop/mobile storage feedback were inspected; this is scoped visual evidence, not a whole-site visual audit.
+
+## Historical verification checkpoint — 05:44 build
 
 The full Angular suite passed **256/256 tests across 42 files in 5.83 seconds**, with the test build completed at **2026-09-17T05:36:54.936Z** in 7.011 seconds. This includes seven page cases covering private-fragment removal, public receipt rendering, unchanged cart/draft/pending state, explicit reload recovery, invalid-link isolation, exact read retry, abandoned-request cancellation and failed history removal. Root-owned utility, interceptor, copy-component and order-service regressions cover the shared contract.
 

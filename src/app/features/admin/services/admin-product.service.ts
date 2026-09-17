@@ -5,16 +5,13 @@ import { AdminProductQuery } from '../../products/models/product-query.model';
 import { ApiResponse, PaginatedResponse } from '@core/models/api-response.model';
 import { ApiService } from '@core/api/api.service';
 import { API_ENDPOINTS } from '@core/api/api-endpoints';
-import { AdminProductRecord } from '../models/admin-product-form.model';
+import {
+  AdminProductPayload,
+  AdminProductRecord,
+  AdminProductRevisionRequest,
+  AdminProductUpdateRequest,
+} from '../models/admin-product-form.model';
 import { AdminProductCategory } from '../models/admin-product-category.model';
-
-interface AdminProductPayload extends Omit<
-  Product,
-  'id' | '_id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'imageVariants'
-> {}
-interface DeletedProductResponse {
-  id: string;
-}
 
 @Injectable({ providedIn: 'root' })
 export class AdminProductService {
@@ -50,14 +47,26 @@ export class AdminProductService {
       .pipe(map((response) => ({ ...response, data: this.normalizeProduct(response.data) })));
   }
 
-  updateProduct(id: string, payload: Product): Observable<ApiResponse<AdminProductRecord>> {
+  updateProduct(
+    id: string,
+    payload: Product,
+    expectedRevision: number,
+  ): Observable<ApiResponse<AdminProductRecord>> {
+    const request: AdminProductUpdateRequest = { ...this.toApiPayload(payload), expectedRevision };
     return this.api
-      .put<AdminProductRecord>(API_ENDPOINTS.admin.products.update(id), this.toApiPayload(payload))
+      .put<AdminProductRecord, AdminProductUpdateRequest>(
+        API_ENDPOINTS.admin.products.update(id),
+        request,
+      )
       .pipe(map((response) => ({ ...response, data: this.normalizeProduct(response.data) })));
   }
 
-  deleteProduct(id: string): Observable<ApiResponse<DeletedProductResponse>> {
-    return this.api.delete<DeletedProductResponse>(API_ENDPOINTS.admin.products.delete(id));
+  deleteProduct(id: string, expectedRevision: number): Observable<ApiResponse<null>> {
+    const request: AdminProductRevisionRequest = { expectedRevision };
+    return this.api.delete<null, AdminProductRevisionRequest>(
+      API_ENDPOINTS.admin.products.delete(id),
+      request,
+    );
   }
 
   duplicateProduct(id: string): Observable<ApiResponse<AdminProductRecord>> {
@@ -65,11 +74,30 @@ export class AdminProductService {
   }
 
   private normalizeProduct(product: AdminProductRecord): AdminProductRecord {
-    return { ...product, id: product.id || product._id || '' };
+    return {
+      ...product,
+      id: product.id || product._id || '',
+      revision:
+        Number.isSafeInteger(product.revision) && product.revision !== null && product.revision >= 0
+          ? product.revision
+          : null,
+    };
   }
 
   private toApiPayload(product: Product): AdminProductPayload {
-    const { id, _id, createdAt, updatedAt, deletedAt, imageVariants, ...editableFields } = product;
+    const {
+      id,
+      _id,
+      createdAt,
+      updatedAt,
+      deletedAt,
+      imageVariants,
+      configurationFingerprint,
+      revision,
+      requiresManufacturingReview,
+      manufacturingReview,
+      ...editableFields
+    } = product as AdminProductRecord;
     return editableFields;
   }
 }

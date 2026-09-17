@@ -21,6 +21,7 @@ An existing product can also enter manufacturing review through an explicit acti
 ## Verification
 
 - `npm test -- --watch=false`: Angular unit/component tests.
+- `npm run test:server`: Node socket/proxy identity tests (native TypeScript loading requires Node 22.18+ or 24).
 - `npm run test:e2e`: real Chrome desktop/mobile tests; requires the local frontend/backend and the built SSR preview on port 4300 for the SSR suite. Use the production-preview configuration below to run every case against port 4300. Set `CHROME_PATH` if Chrome is installed elsewhere.
 - `npm run catalog:verify`: verify licensed catalog downloads and generated preview hashes.
 - `npm run assets:verify`: verify fingerprinted storefront fonts/image, compatibility aliases and live references before building.
@@ -37,6 +38,12 @@ Set both `$env:STORE_E2E_BASE_URL = 'http://127.0.0.1:4300'` and `$env:ADMIN_QA_
 Run `npm run audit:performance` for Lighthouse reports. Results and measurement limits are in [docs/performance-audit.md](docs/performance-audit.md).
 
 The production frontend expects `/api` and `/uploads` on its own origin. Public SSR needs a Node host using the exported `reqHandler` from `dist/3d-otaku/server/server.mjs`; serving only the browser directory loses server rendering. Set `STORE_API_ORIGIN` to the internal backend origin, `STORE_PUBLIC_ORIGIN` to the verified public HTTPS origin, and `NG_ALLOWED_HOSTS` to verified public hostnames. The renderer ignores forwarded host headers; the explicit public origin keeps canonical URLs and transfer-cache keys correct behind a TLS reverse proxy. Configure persistent database and uploads storage, TLS, cache rules and secure backend environment before deployment. Store contact details must come from verified public settings; no guessed fallback number is used.
+
+Client quotas require explicit proxy addresses at both boundaries: `STORE_TRUSTED_PROXY_ADDRESSES` for the renderer's sanitizing edge, and `TRUSTED_PROXY_ADDRESSES` for the backend's actual edge/renderer peers. Both default to trusting no proxy. The renderer accepts one verified client address and passes it only to anonymous public API reads; forwarded chains and malformed claims fall back to the socket. Nonzero legacy `TRUST_PROXY_HOPS` settings now fail startup with migration guidance. See [SSR identity and verification](docs/ssr-client-identity-plan.md) and [backend proxy trust](docs/backend-proxy-trust.md) before configuring the actual deployment path.
+
+The backend uses one absolute `UPLOADS_ROOT` for writing and serving media. Its default is the module-relative `backend-api/src/uploads`; an explicit persistent mount can use `/data/uploads` on Linux. Deployment probes should use `/api/ready`, which checks MongoDB with a bounded ping and returns no-store 200/503 independently of shopper quotas. `/api/health` retains its process-liveness meaning. See [media and readiness verification](docs/backend-deployment-readiness.md).
+
+The [backend container instructions](outako/CONTAINER.md) describe the production-only build context, port 5000 and persistent storage. Private local snapshots, credentials and existing uploads are excluded from image inputs. Static packaging checks have passed; an actual Docker build and deployment remain unverified in this workspace.
 
 ## Reference
 

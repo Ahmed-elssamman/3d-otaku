@@ -40,6 +40,7 @@ export enum CheckoutFocusTarget {
   Receipt = 'receipt-title',
   Review = 'checkout-price-review',
   Feedback = 'checkout-feedback',
+  StorageFeedback = 'checkout-storage-feedback',
 }
 
 export interface PendingCheckoutSummary {
@@ -166,6 +167,13 @@ export const CHECKOUT_ERROR_TEXT = {
   rejected:
     'لم تُقبل بيانات الطلب. صحح الحقول ثم أعد المحاولة؛ سنراجع المواصفات والأسعار قبل إرسال البيانات المصححة كمحاولة جديدة.',
   recoveryUnavailable: 'لا توجد محاولة سابقة متاحة للاستعادة. راجع بيانات السلة قبل تأكيد الطلب.',
+};
+
+export const CHECKOUT_STORAGE_TEXT = {
+  title: 'تخزين محاولة الطلب يحتاج مراجعة',
+  recheck: 'إعادة فحص التخزين',
+  help: 'الفحص لا يرسل طلبًا ولا يمسح بيانات محاولة غير مؤكدة. إذا استمر التنبيه، تواصل مع المتجر قبل بدء محاولة أخرى.',
+  contact: 'التواصل مع المتجر',
 };
 
 export const EGYPT_GOVERNORATES = [

@@ -67,6 +67,7 @@ function measuredReview(): ManufacturingReview {
 function draftProduct(review = pendingReview()): AdminProductRecord {
   return {
     id: 'manufacturing-test-product',
+    revision: 5,
     name: 'Local manufacturing unit fixture',
     slug: 'local-manufacturing',
     category: ProductCategory.DESK_MODELS,
@@ -364,7 +365,7 @@ describe('Manufacturing review panel', () => {
     component.unpublishProduct();
     const request = http.expectOne(productUrl);
     expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ isActive: false });
+    expect(request.request.body).toEqual({ isActive: false, expectedRevision: 5 });
     request.flush({ success: true, message: 'Unpublished', data: draftProduct(measuredReview()) });
     await fixture.whenStable();
     expect(component.successMessage()).toContain('أُلغي نشر المنتج');

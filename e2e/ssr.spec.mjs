@@ -110,6 +110,10 @@ test('public document HTML contains Arabic catalog content, prices, responsive i
         webOrigin + route,
       );
       expect(await page.title()).toMatch(/[\u0600-\u06ff]/);
+      await page.getByRole('link', { name: 'انتقل للمحتوى', exact: true }).focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#main-content')).toBeFocused();
+      await expect(page).toHaveURL(`${webOrigin}${route}#main-content`);
       if (route === productPath) {
         await expect(page.locator('h1')).toHaveText(product.name);
         expect(numericPrice(await page.locator('.price-block strong').textContent())).toBe(

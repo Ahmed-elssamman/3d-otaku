@@ -6,10 +6,12 @@ import { serverRoutes } from './app.routes.server';
 import { API_ORIGIN } from './core/api/api-origin.token';
 import { getServerApiOrigin, getSiteOrigin } from '../server.config';
 import { SITE_ORIGIN } from './core/api/site-origin.token';
+import { provideServerClientIp } from './core/api/server-client-ip.provider';
 
 const serverConfig: ApplicationConfig = {
   providers: [
     provideServerRendering(withRoutes(serverRoutes)),
+    provideServerClientIp(),
     { provide: API_ORIGIN, useFactory: getServerApiOrigin },
     {
       provide: SITE_ORIGIN,

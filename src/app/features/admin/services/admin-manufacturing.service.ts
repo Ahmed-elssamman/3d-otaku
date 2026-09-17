@@ -25,8 +25,11 @@ export class AdminManufacturingService {
     return this.http.post<ApiResponse<AdminProductRecord>>(`${this.reviewUrl(id)}/start`, request);
   }
 
-  unpublishProduct(id: string): Observable<ApiResponse<AdminProductRecord>> {
-    const request: UnpublishManufacturingProductRequest = { isActive: false };
+  unpublishProduct(
+    id: string,
+    expectedRevision: number,
+  ): Observable<ApiResponse<AdminProductRecord>> {
+    const request: UnpublishManufacturingProductRequest = { isActive: false, expectedRevision };
     return this.http.put<ApiResponse<AdminProductRecord>>(this.productUrl(id), request);
   }
 

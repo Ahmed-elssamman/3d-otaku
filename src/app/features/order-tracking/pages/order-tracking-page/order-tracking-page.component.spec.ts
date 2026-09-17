@@ -178,12 +178,14 @@ describe('Guest order tracking page', () => {
     expect(pageText()).toContain('الخصم');
     const element = fixture.nativeElement as HTMLElement;
     const balanceRow =
-      Array.from(element.querySelectorAll('app-order-payment-summary .summary-amounts > div'))
-        .find((row) => row.querySelector('dt')?.textContent?.trim() === 'المتبقي حسب السجل') ?? null;
+      Array.from(element.querySelectorAll('app-order-payment-summary .summary-amounts > div')).find(
+        (row) => row.querySelector('dt')?.textContent?.trim() === 'المتبقي حسب السجل',
+      ) ?? null;
     expect(balanceRow?.querySelector('dd')?.textContent?.trim()).toBe('140 ج.م');
     const shippingRow =
-      Array.from(element.querySelectorAll('.totals > div'))
-        .find((row) => row.querySelector('dt')?.textContent?.trim() === 'رسوم الشحن') ?? null;
+      Array.from(element.querySelectorAll('.totals > div')).find(
+        (row) => row.querySelector('dt')?.textContent?.trim() === 'رسوم الشحن',
+      ) ?? null;
     expect(shippingRow?.querySelector('dd')?.textContent?.trim()).toBe('0 ج.م');
     expect(element.querySelector('.privacy-note')).toBeNull();
     expect(element.querySelector('#private-link-privacy')).not.toBeNull();
@@ -198,6 +200,44 @@ describe('Guest order tracking page', () => {
     expect(localStorage.getItem('3d_otaku_cart_items')).toBe(cartBefore);
     expect(TestBed.inject(OrderService).hasPendingSubmission()).toBe(true);
     http.expectNone((request) => request.method !== 'GET');
+  });
+
+  it('preserves an active read and its receipt when navigating to the shared content anchor', async () => {
+    createPage(fragment);
+    const request = http.expectOne(trackingUrl);
+    window.history.replaceState(null, '', '/track-order#main-content');
+    fragments.next('main-content');
+    expect(request.cancelled).toBe(false);
+    expect(component.state()).toBe(OrderTrackingState.Loading);
+    expect(window.location.hash).toBe('#main-content');
+    request.flush({ success: true, message: '', data: savedOrder });
+    await fixture.whenStable();
+    window.dispatchEvent(new HashChangeEvent('hashchange', { newURL: window.location.href }));
+    await fixture.whenStable();
+    expect(component.state()).toBe(OrderTrackingState.Ready);
+    expect(component.order()?.orderNumber).toBe(savedOrder.orderNumber);
+    expect(window.location.hash).toBe('#main-content');
+    http.expectNone(trackingUrl);
+  });
+
+  it('requires explicit saved-receipt access when opened at the shared content anchor', async () => {
+    sessionStorage.setItem(ORDER_STORAGE_KEYS.receipt, JSON.stringify(savedOrder));
+    createPage('main-content');
+    await fixture.whenStable();
+    expect(component.state()).toBe(OrderTrackingState.Missing);
+    expect(component.canShowSaved()).toBe(true);
+    expect(component.order()).toBeNull();
+    expect(pageText()).not.toContain(savedOrder.customer.address);
+    expect(window.location.hash).toBe('#main-content');
+    http.expectNone(trackingUrl);
+    component.showSavedOrder();
+    const request = http.expectOne(trackingUrl);
+    window.dispatchEvent(new HashChangeEvent('hashchange', { newURL: window.location.href }));
+    expect(component.state()).toBe(OrderTrackingState.Loading);
+    expect(request.cancelled).toBe(false);
+    request.flush({ success: true, message: '', data: savedOrder });
+    await fixture.whenStable();
+    expect(component.order()?.orderNumber).toBe(savedOrder.orderNumber);
   });
 
   it('offers saved-receipt tracking only explicitly when a reload has no fragment', async () => {

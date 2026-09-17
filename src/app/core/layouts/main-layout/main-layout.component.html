@@ -1,5 +1,5 @@
 <div class="storefront-layout min-h-screen flex flex-col">
-  <a class="skip-link" href="#main-content">انتقل للمحتوى</a>
+  <a class="skip-link" [href]="contentLink()">انتقل للمحتوى</a>
   <app-header />
   <main id="main-content" class="flex-grow" tabindex="-1">
     <router-outlet />

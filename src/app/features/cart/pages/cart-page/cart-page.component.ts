@@ -63,6 +63,7 @@ import {
   EMPTY_DELIVERY_DRAFT,
   CHECKOUT_ERROR_TEXT,
   CHECKOUT_REVIEW_TEXT,
+  CHECKOUT_STORAGE_TEXT,
   CheckoutPricingSnapshot,
   CheckoutPriceReview,
   createDeliveryForm,
@@ -113,6 +114,8 @@ export class CartPageComponent implements OnInit {
   pricingReview = signal<CheckoutPriceReview | null>(null);
   itemErrors = signal<Record<string, string>>({});
   checkoutReviewText = CHECKOUT_REVIEW_TEXT;
+  checkoutStorageText = CHECKOUT_STORAGE_TEXT;
+  checkoutStorageMessage = this.orderService.storageMessage;
   isRefreshingReceipt = signal(false);
   submitError = signal('');
   receiptError = signal('');
@@ -283,6 +286,10 @@ export class CartPageComponent implements OnInit {
   }
 
   submitOrder(): void {
+    if (this.checkoutStorageMessage()) {
+      this.focusAfterTransition(CheckoutFocusTarget.StorageFeedback);
+      return;
+    }
     if (this.items().length === 0 || this.checkoutBusy()) return;
     this.attemptedSubmit.set(true);
     this.submitError.set('');
@@ -316,6 +323,19 @@ export class CartPageComponent implements OnInit {
     const payload = this.orderService.pendingRequest();
     if (!payload) return;
     this.placeOrder(this.orderService.retryPendingOrder(), payload, null);
+  }
+
+  recheckCheckoutStorage(): void {
+    if (this.checkoutBusy()) return;
+    this.orderService.recheckPendingStorage();
+    this.submitError.set('');
+    this.focusAfterTransition(
+      this.checkoutStorageMessage()
+        ? CheckoutFocusTarget.StorageFeedback
+        : this.showReceipt()
+          ? CheckoutFocusTarget.Receipt
+          : CheckoutFocusTarget.Cart,
+    );
   }
 
   confirmPricingReview(): void {
@@ -535,6 +555,11 @@ export class CartPageComponent implements OnInit {
         },
         error: (error: ApiErrorResponse) => {
           const hasItemErrors = this.showItemErrors(error, payload);
+          if (this.checkoutStorageMessage()) {
+            this.submitError.set('');
+            this.focusAfterTransition(CheckoutFocusTarget.StorageFeedback);
+            return;
+          }
           this.submitError.set(
             hasItemErrors ? CHECKOUT_REVIEW_TEXT.itemsRejected : CHECKOUT_REVIEW_TEXT.quoteFailed,
           );
@@ -634,6 +659,11 @@ export class CartPageComponent implements OnInit {
         error: (error: ApiErrorResponse) => {
           const removedReview = this.pricingReview() !== null;
           this.pricingReview.set(null);
+          if (this.checkoutStorageMessage()) {
+            this.submitError.set('');
+            this.focusAfterTransition(CheckoutFocusTarget.StorageFeedback);
+            return;
+          }
           if (removedReview || this.requiresFreshQuoteReview()) {
             this.focusAfterTransition(CheckoutFocusTarget.Feedback);
           }

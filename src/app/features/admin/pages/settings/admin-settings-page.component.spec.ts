@@ -69,4 +69,29 @@ describe('Admin settings integrity', () => {
     expect(component.saveError()).toBeTruthy();
     http.expectNone((request) => request.method === 'PUT');
   });
+
+  it('blocks fractional-piastre and nonfinite shipping fees before any settings write', () => {
+    http.expectOne(endpoint).flush({ success: true, data: DEFAULT_ADMIN_SETTINGS });
+    for (const fee of [1.001, 10000.01, Number.NaN, Number.POSITIVE_INFINITY]) {
+      component.settingsForm.controls.deliveryFee.setValue(fee);
+      component.saveSettings();
+      expect(component.invalidFee()).toBe(true);
+      expect(component.isSubmitting()).toBe(false);
+      expect(component.saveError()).toBeTruthy();
+      http.expectNone((request) => request.method === 'PUT');
+    }
+  });
+
+  it('saves exact fractional shipping fees without rounding and preserves the existing cap', () => {
+    http.expectOne(endpoint).flush({ success: true, data: DEFAULT_ADMIN_SETTINGS });
+    for (const fee of [0.01, 19.99, 10000]) {
+      component.settingsForm.controls.deliveryFee.setValue(fee);
+      component.saveSettings();
+      const save = http.expectOne(endpoint);
+      expect(save.request.method).toBe('PUT');
+      expect(save.request.body.deliveryFee).toBe(fee);
+      save.flush({ success: true, data: save.request.body });
+      expect(component.invalidFee()).toBe(false);
+    }
+  });
 });

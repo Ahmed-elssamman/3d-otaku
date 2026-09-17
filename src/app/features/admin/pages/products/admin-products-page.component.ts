@@ -28,6 +28,9 @@ import { AdminProductTableComponent } from '../../components/admin-product-table
 import { AdminProductQuery } from '../../../products/models/product-query.model';
 import { AdminProductPageEvent } from '../../components/admin-product-table.control';
 import { AdminProductCategory } from '../../models/admin-product-category.model';
+import { AdminProductRecord } from '../../models/admin-product-form.model';
+import { ApiErrorResponse } from '@core/models/api-response.model';
+import { ADMIN_PRODUCT_MUTATION_TEXT } from '../../data/admin-products.data';
 
 @Component({
   selector: 'app-admin-products-page',
@@ -75,7 +78,11 @@ export class AdminProductsPageComponent implements OnInit {
   selectedPreviewProduct = signal<Product | null>(null);
   previewVisible = signal<boolean>(false);
   isLoading = signal<boolean>(false);
-  productsList = signal<Product[]>([]);
+  productsList = signal<AdminProductRecord[]>([]);
+  mutationText = ADMIN_PRODUCT_MUTATION_TEXT;
+  mutationError = signal('');
+  private blockedDeletionRevisions = signal<Record<string, number | null>>({});
+  private reviewingDeletionList = signal(false);
   totalRecords = signal(0);
   loadError = signal('');
   previewLoading = signal(false);
@@ -113,6 +120,7 @@ export class AdminProductsPageComponent implements OnInit {
           return this.adminProductService.getProducts(query).pipe(
             catchError(() => {
               this.loadError.set('تعذر تحميل المنتجات. حاول مرة أخرى.');
+              this.reviewingDeletionList.set(false);
               return of(null);
             }),
             finalize(() => this.isLoading.set(false)),
@@ -123,6 +131,11 @@ export class AdminProductsPageComponent implements OnInit {
       .subscribe((response) => {
         if (!response) return;
         this.productsList.set(response.data);
+        if (this.reviewingDeletionList()) {
+          this.blockedDeletionRevisions.set({});
+          this.mutationError.set('');
+          this.reviewingDeletionList.set(false);
+        }
         this.totalRecords.set(response.meta.totalItems);
         const lastPageStart =
           Math.max(0, Math.ceil(response.meta.totalItems / this.rows()) - 1) * this.rows();
@@ -171,6 +184,12 @@ export class AdminProductsPageComponent implements OnInit {
       query.featured = this.selectedFeaturedFilter() === AdminFeaturedFilter.FEATURED;
     }
     this.productRequests.next(query);
+  }
+
+  reloadProductsForReview(): void {
+    if (this.busyProductId()) return;
+    this.reviewingDeletionList.set(true);
+    this.loadProducts();
   }
 
   onSearchTermChange(value: string): void {
@@ -253,6 +272,16 @@ export class AdminProductsPageComponent implements OnInit {
 
   deleteProduct(productId: string): void {
     if (this.busyProductId()) return;
+    const product = this.productsList().find((record) => record.id === productId);
+    if (
+      !product ||
+      product.revision === null ||
+      this.blockedDeletionRevisions()[productId] === product.revision
+    ) {
+      this.mutationError.set(this.mutationText.review);
+      return;
+    }
+    const revision = product.revision;
     this.confirmationService.confirm({
       message: 'سيُزال المنتج من الكتالوج. تأكد من اختيار المنتج الصحيح قبل الحذف.',
       header: 'تأكيد حذف المنتج',
@@ -263,13 +292,14 @@ export class AdminProductsPageComponent implements OnInit {
         if (this.busyProductId()) return;
         this.busyProductId.set(productId);
         this.adminProductService
-          .deleteProduct(productId)
+          .deleteProduct(productId, revision)
           .pipe(
             finalize(() => this.busyProductId.set('')),
             takeUntilDestroyed(this.destroyRef),
           )
           .subscribe({
             next: () => {
+              this.mutationError.set('');
               this.messageService.add({
                 severity: 'success',
                 summary: 'تم حذف المنتج',
@@ -278,7 +308,14 @@ export class AdminProductsPageComponent implements OnInit {
               this.loadProducts();
               this.loadCategories();
             },
-            error: () => {
+            error: (error: ApiErrorResponse) => {
+              this.blockedDeletionRevisions.update((revisions) => ({
+                ...revisions,
+                [productId]: revision,
+              }));
+              this.mutationError.set(
+                error.statusCode === 404 ? this.mutationText.deleted : this.mutationText.review,
+              );
               this.messageService.add({
                 severity: 'error',
                 summary: 'لم يتم تأكيد الحذف',

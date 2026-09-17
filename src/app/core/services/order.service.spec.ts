@@ -13,6 +13,8 @@ import { PaymentSummaryState } from '../enums/payment-summary-state.enum';
 import { OrderPaymentSummary } from '../models/order-payment-summary.model';
 import { OrderService } from './order.service';
 import { GUEST_ORDER_TRACKING } from '../api/guest-order-tracking.context';
+import { vi } from 'vitest';
+import { OrderStorageIssue } from '../enums/order-storage-issue.enum';
 
 describe('OrderService checkout safety', () => {
   let service: OrderService;
@@ -75,7 +77,310 @@ describe('OrderService checkout safety', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.verify();
+    vi.restoreAllMocks();
+  });
+
+  it.each(['QuotaExceededError', 'SecurityError'])(
+    'sends no first order when identity storage throws %s',
+    (name) => {
+      const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('Storage unavailable', name);
+      });
+      const errors: ApiErrorResponse[] = [];
+      service
+        .createOrder(payload)
+        .subscribe({ error: (error: ApiErrorResponse) => errors.push(error) });
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      expect(errors[0].statusCode).toBe(503);
+      expect(errors[0].errors?.['checkoutStorage']).toBeTruthy();
+      expect(service.storageIssue()).toBe(OrderStorageIssue.WriteFailed);
+      expect(service.storageMessage()).toContain('فلم نرسل الطلب');
+      expect(service.hasPendingSubmission()).toBe(false);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBeNull();
+      write.mockRestore();
+      service.recheckPendingStorage();
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      service.createOrder(payload).subscribe();
+      const request = http.expectOne(`${environment.apiBaseUrl}/orders`);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toContain(
+        request.request.headers.get('Idempotency-Key'),
+      );
+      request.flush({ success: true, data: serverOrder });
+    },
+  );
+
+  it('retains the written identity when its verification read fails, without sending the first POST', () => {
+    const getItem = Storage.prototype.getItem;
+    const read = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      const value = getItem.call(this, key);
+      if (key === ORDER_STORAGE_KEYS.pendingSubmission && value)
+        throw new DOMException('Read blocked', 'SecurityError');
+      return value;
+    });
+    service.createOrder(payload).subscribe({ error: () => null });
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    expect(service.storageIssue()).toBe(OrderStorageIssue.Unavailable);
+    expect(service.hasPendingSubmission()).toBe(true);
+    read.mockRestore();
+    const saved = sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission) || '';
+    const restored = TestBed.runInInjectionContext(() => new OrderService());
+    restored.retryPendingOrder().subscribe();
+    const retry = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    expect(saved).toContain(retry.request.headers.get('Idempotency-Key'));
+    expect(retry.request.body).toEqual({ ...payload, currency: 'EGP' });
+    retry.flush({ success: true, data: serverOrder });
+  });
+
+  it('does not interpret blocked reads as an empty checkout and restores the original attempt on explicit recheck', () => {
+    service.createOrder(payload).subscribe({ error: () => null });
+    const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const key = original.request.headers.get('Idempotency-Key');
+    original.error(new ProgressEvent('response lost'));
+    const read = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Read blocked', 'SecurityError');
+    });
+    const restored = TestBed.runInInjectionContext(() => new OrderService());
+    expect(restored.hasPendingSubmission()).toBe(true);
+    expect(restored.pendingRequest()).toBeNull();
+    restored.quoteOrder({ items: payload.items }).subscribe({ error: () => null });
+    restored.createOrder(payload).subscribe({ error: () => null });
+    restored.retryPendingOrder().subscribe({ error: () => null });
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    http.expectNone(`${environment.apiBaseUrl}/orders/quote`);
+    read.mockRestore();
+    restored.recheckPendingStorage();
+    expect(restored.canRetryPendingSubmission()).toBe(true);
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    restored
+      .createOrder({ ...payload, customer: { ...payload.customer, email: 'edited@example.test' } })
+      .subscribe({ error: () => null });
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    restored.retryPendingOrder().subscribe();
+    const retry = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    expect(retry.request.headers.get('Idempotency-Key')).toBe(key);
+    expect(retry.request.body).toEqual({ ...payload, currency: 'EGP' });
+    retry.flush({ success: true, data: serverOrder });
+  });
+
+  it('blocks malformed nonempty saved state without deleting it or replacing its identity', () => {
+    const valid = { key: 'saved-checkout-key-1234', payload: JSON.stringify(payload) };
+    for (const raw of [
+      '{broken',
+      'null',
+      '[]',
+      JSON.stringify({ ...valid, key: 'bad' }),
+      JSON.stringify({ ...valid, payload: '[]' }),
+      JSON.stringify({ ...valid, state: 'future-state' }),
+    ]) {
+      sessionStorage.setItem(ORDER_STORAGE_KEYS.pendingSubmission, raw);
+      const restored = TestBed.runInInjectionContext(() => new OrderService());
+      expect(restored.hasPendingSubmission()).toBe(true);
+      expect(restored.pendingRequest()).toBeNull();
+      restored.recheckPendingStorage();
+      restored.quoteOrder({ items: payload.items }).subscribe({ error: () => null });
+      restored.createOrder(payload).subscribe({ error: () => null });
+      restored.retryPendingOrder().subscribe({ error: () => null });
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      http.expectNone(`${environment.apiBaseUrl}/orders/quote`);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBe(raw);
+      expect(restored.storageIssue()).toBe(OrderStorageIssue.Unavailable);
+    }
+  });
+
+  it('keeps the in-memory snapshot when storage becomes corrupt after a lost response', () => {
+    service.createOrder(payload).subscribe({ error: () => null });
+    const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const key = original.request.headers.get('Idempotency-Key');
+    original.error(new ProgressEvent('response lost'));
+    const saved = sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission) || '';
+    sessionStorage.setItem(ORDER_STORAGE_KEYS.pendingSubmission, '{broken');
+    service.retryPendingOrder().subscribe({ error: () => null });
+    expect(service.pendingRequest()).toEqual({ ...payload, currency: 'EGP' });
+    expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBe('{broken');
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    sessionStorage.setItem(ORDER_STORAGE_KEYS.pendingSubmission, saved);
+    service.recheckPendingStorage();
+    service.retryPendingOrder().subscribe();
+    const retry = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    expect(retry.request.headers.get('Idempotency-Key')).toBe(key);
+    retry.flush({ success: true, data: serverOrder });
+  });
+
+  it.each([422, 409])(
+    'does not unlock a revised attempt when saving the confirmed %s rejection fails',
+    (status) => {
+      service.createOrder(payload).subscribe({ error: () => null });
+      const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+      const key = original.request.headers.get('Idempotency-Key');
+      const saved = sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission);
+      const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('Full', 'QuotaExceededError');
+      });
+      original.flush(
+        {
+          success: false,
+          errors:
+            status === 409 ? { checkoutNotRecorded: ['Not recorded'] } : { address: ['Invalid'] },
+        },
+        { status, statusText: 'Rejected' },
+      );
+      expect(service.storageIssue()).toBe(OrderStorageIssue.Unavailable);
+      expect(service.requiresFreshQuoteReview()).toBe(false);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBe(saved);
+      write.mockRestore();
+      service
+        .createOrder({ ...payload, customer: { ...payload.customer, address: 'Changed address' } })
+        .subscribe({ error: () => null });
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      service.retryPendingOrder().subscribe();
+      const retry = http.expectOne(`${environment.apiBaseUrl}/orders`);
+      expect(retry.request.headers.get('Idempotency-Key')).toBe(key);
+      retry.flush({ success: true, data: serverOrder });
+    },
+  );
+
+  it.each(['receipt', 'cleanup'])(
+    'keeps a confirmed receipt and blocks a new checkout when %s storage fails until read-only cleanup succeeds',
+    (failure) => {
+      service.createOrder(payload).subscribe();
+      const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+      const key = original.request.headers.get('Idempotency-Key');
+      const write = Storage.prototype.setItem;
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+        this: Storage,
+        storageKey: string,
+        value: string,
+      ) {
+        if (failure === 'receipt' && storageKey === ORDER_STORAGE_KEYS.receipt)
+          throw new DOMException('Full', 'QuotaExceededError');
+        write.call(this, storageKey, value);
+      });
+      const remove = Storage.prototype.removeItem;
+      vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (
+        this: Storage,
+        storageKey: string,
+      ) {
+        if (failure === 'cleanup' && storageKey === ORDER_STORAGE_KEYS.pendingSubmission)
+          throw new DOMException('Blocked', 'SecurityError');
+        remove.call(this, storageKey);
+      });
+      original.flush({ success: true, data: serverOrder });
+      expect(service.receipt()?.orderNumber).toBe(serverOrder.orderNumber);
+      expect(service.hasPendingSubmission()).toBe(true);
+      expect(service.canRetryPendingSubmission()).toBe(false);
+      expect(service.storageIssue()).toBe(OrderStorageIssue.CleanupRequired);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toContain(key);
+      service
+        .createOrder({ ...payload, items: [{ productId: 'new-product', quantity: 1 }] })
+        .subscribe({ error: () => null });
+      service.recheckPendingStorage();
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      expect(service.hasPendingSubmission()).toBe(true);
+      vi.restoreAllMocks();
+      service.recheckPendingStorage();
+      http.expectNone(`${environment.apiBaseUrl}/orders`);
+      expect(service.storageIssue()).toBe(OrderStorageIssue.None);
+      expect(service.hasPendingSubmission()).toBe(false);
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBeNull();
+      expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.receipt)).toContain(serverOrder.orderNumber);
+    },
+  );
+
+  it('replays the durably saved identity after cancellation and reload even if additional writes are blocked', () => {
+    const subscription = service.createOrder(payload).subscribe();
+    const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const key = original.request.headers.get('Idempotency-Key');
+    subscription.unsubscribe();
+    expect(original.cancelled).toBe(true);
+    const restored = TestBed.runInInjectionContext(() => new OrderService());
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Full', 'QuotaExceededError');
+    });
+    restored.retryPendingOrder().subscribe();
+    const retry = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    expect(retry.request.headers.get('Idempotency-Key')).toBe(key);
+    expect(retry.request.body).toEqual({ ...payload, currency: 'EGP' });
+    retry.flush({ success: true, data: serverOrder });
+    expect(restored.receipt()?.orderNumber).toBe(serverOrder.orderNumber);
+    expect(restored.hasPendingSubmission()).toBe(true);
+  });
+
+  it('preserves refreshed shipping, payment and status details when confirmed cleanup later succeeds', () => {
+    service.createOrder(payload).subscribe();
+    const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new DOMException('Cleanup blocked', 'SecurityError');
+    });
+    original.flush({ success: true, data: serverOrder });
+    expect(service.storageIssue()).toBe(OrderStorageIssue.CleanupRequired);
+    service.trackOrder(serverOrder.orderNumber, 'private-guest-token').subscribe();
+    http.expectOne(`${environment.apiBaseUrl}/orders/track/${serverOrder.orderNumber}`).flush({
+      success: true,
+      data: {
+        ...serverOrder,
+        deliveryFee: 49.75,
+        deliveryFeeConfirmed: true,
+        totalAmount: 399.75,
+        status: OrderStatus.PROCESSING,
+        updatedAt: '2026-09-17T06:30:00Z',
+        paymentSummary: {
+          state: PaymentSummaryState.RecordedBalance,
+          recordedCollected: 100,
+          recordedRefunded: 0,
+          recordedNet: 100,
+          balanceDue: 299.75,
+          credit: 0,
+          shippingConfirmed: true,
+        },
+      },
+    });
+    const refreshed = service.receipt();
+    expect(refreshed?.total).toBe(399.75);
+    remove.mockRestore();
+    service.recheckPendingStorage();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    expect(service.hasPendingSubmission()).toBe(false);
+    const reloaded = TestBed.runInInjectionContext(() => new OrderService());
+    expect(reloaded.receipt()).toEqual(refreshed);
+    expect(reloaded.receipt()?.status).toBe(OrderStatus.PROCESSING);
+    expect(reloaded.receipt()?.deliveryFeeConfirmed).toBe(true);
+    expect(reloaded.receipt()?.paymentSummary?.balanceDue).toBe(299.75);
+    expect(reloaded.receipt()?.trackingToken).toBe('private-guest-token');
+  });
+
+  it('does not substitute a different tracked receipt for the order whose cleanup is pending', () => {
+    service.createOrder(payload).subscribe();
+    const original = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+      throw new DOMException('Cleanup blocked', 'SecurityError');
+    });
+    original.flush({ success: true, data: serverOrder });
+    const resolved = service.receipt();
+    service.trackOrder('OTK-DIFFERENT', 'different-private-token').subscribe();
+    http.expectOne(`${environment.apiBaseUrl}/orders/track/OTK-DIFFERENT`).flush({
+      success: true,
+      data: {
+        ...serverOrder,
+        _id: 'different-order',
+        orderNumber: 'OTK-DIFFERENT',
+        trackingToken: 'different-private-token',
+      },
+    });
+    expect(service.receipt()?.orderNumber).toBe('OTK-DIFFERENT');
+    remove.mockRestore();
+    service.recheckPendingStorage();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    expect(service.hasPendingSubmission()).toBe(false);
+    const reloaded = TestBed.runInInjectionContext(() => new OrderService());
+    expect(reloaded.receipt()).toEqual(resolved);
+    expect(reloaded.receipt()?.orderNumber).toBe(serverOrder.orderNumber);
+    expect(reloaded.receipt()?.trackingToken).toBe('private-guest-token');
+  });
 
   it('reuses the pending idempotency key after a lost response and keeps the server receipt', () => {
     service.createOrder(payload).subscribe({ error: () => null });

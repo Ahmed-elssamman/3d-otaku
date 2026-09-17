@@ -1,6 +1,8 @@
 import { test, expect } from './local-api.fixture.mjs';
 import { verifyPrivateGuestTracking } from './guest-tracking.helper.mjs';
 
+test.use({ trace: 'off' });
+
 test('Arabic storefront loads real catalog and mobile navigation stays accessible', async ({
   page,
 }) => {
@@ -35,6 +37,11 @@ test('header search, category filters and browser history preserve catalog state
   await page.getByRole('button', { name: 'بحث', exact: true }).click();
   await expect(page).toHaveURL(/\/products\?search=phone/);
   await expect(page.getByRole('searchbox', { name: 'ابحث عن منتج' })).toHaveValue('phone');
+  await expect(page.locator('app-product-card')).toHaveCount(3);
+  await page.getByRole('link', { name: 'انتقل للمحتوى', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeFocused();
+  await expect(page).toHaveURL(/\/products\?search=phone#main-content$/);
   await expect(page.locator('app-product-card')).toHaveCount(3);
   await expect(
     page.getByRole('heading', { name: 'حامل موبايل صغير بخطوط بارزة', exact: true }),
@@ -127,7 +134,9 @@ test('guest checkout validates Egyptian details, saves a real order and privatel
   expect(order.currency).toBe('EGP');
   expect(order.total).toBe(100);
   expect(order.deliveryFeeConfirmed).toBe(false);
-  expect(order.trackingToken).toBeTruthy();
+  expect(Boolean(order.trackingToken), 'The saved guest order has a private tracking token').toBe(
+    true,
+  );
   await expect(page.getByRole('heading', { name: 'شكرًا لاختيارك 3D Otaku' })).toBeVisible();
   await expect(page.locator('#receipt-title')).toBeFocused();
   await expect(page.getByText(order.orderNumber, { exact: true })).toBeVisible();
@@ -135,18 +144,26 @@ test('guest checkout validates Egyptian details, saves a real order and privatel
   await expect(page).toHaveURL(/\/products$/);
   await page.goto('/cart');
   await expect(page.getByText(order.orderNumber, { exact: true })).toBeVisible();
+  const storedTrackingToken = await page.evaluate(
+    () => JSON.parse(sessionStorage.getItem('3d-otaku-order-receipt')).trackingToken,
+  );
   expect(
-    await page.evaluate(
-      () => JSON.parse(sessionStorage.getItem('3d-otaku-order-receipt')).trackingToken,
-    ),
-  ).toBe(order.trackingToken);
+    storedTrackingToken === order.trackingToken,
+    'Returning to the receipt preserves its original private token',
+  ).toBe(true);
   await page.reload();
   await expect(page.getByText(order.orderNumber, { exact: true })).toBeVisible();
   const tracking = page.waitForRequest((request) => request.url().includes('/api/orders/track/'));
   await page.getByRole('button', { name: 'تحديث الحالة' }).click();
   const request = await tracking;
-  expect(request.headers()['x-order-token']).toBe(order.trackingToken);
-  expect(request.url()).not.toContain(order.trackingToken);
+  expect(
+    request.headers()['x-order-token'] === order.trackingToken,
+    'Receipt refresh sends the original token in its private header',
+  ).toBe(true);
+  expect(
+    request.url().includes(order.trackingToken),
+    'Receipt refresh must not put its private token in the request URL',
+  ).toBe(false);
   await expect(page.getByText(order.orderNumber, { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'تحديث الحالة', exact: true })).toBeEnabled();
   await verifyPrivateGuestTracking({

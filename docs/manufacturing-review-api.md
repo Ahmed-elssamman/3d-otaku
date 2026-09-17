@@ -8,6 +8,8 @@ New administrator `POST /api/admin/products` requests now create inactive produc
 
 `GET /api/admin/products/:id` continues returning the product, including its private `manufacturingReview`. The actions return the usual `{ success, message, data }` envelope:
 
+Full administrator product responses also include private top-level `revision`. Ordinary product edits, publication/featured switches and deletion require this captured value as `expectedRevision`; it is distinct from the manufacturing-review revision below. See the [product-write concurrency and configuration contract](admin-product-writes.md). These revision checks do not replace manufacturing approval or its dedicated revision checks.
+
 | Action | Body | `data` |
 | --- | --- | --- |
 | `POST /manufacturing-review/start` | `StartManufacturingReviewRequest` | Full administrator product |

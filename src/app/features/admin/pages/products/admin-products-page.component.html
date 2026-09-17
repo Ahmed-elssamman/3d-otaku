@@ -78,6 +78,19 @@
       </button>
     </div>
   } @else {
+    @if (mutationError()) {
+      <div class="product-notice product-error" role="alert">
+        <p>{{ mutationError() }}</p>
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          [disabled]="isLoading() || busyProductId() !== ''"
+          (click)="reloadProductsForReview()"
+        >
+          {{ mutationText.reload }}
+        </button>
+      </div>
+    }
     <div class="product-table-panel">
       <app-admin-product-table
         [products]="productsList()"

@@ -8,6 +8,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:server": "node --test scripts/server-client-identity.test.mjs",
     "test:e2e": "playwright test",
     "test:smoke": "node scripts/browser-smoke.mjs",
     "catalog:verify": "node scripts/download-models.js",

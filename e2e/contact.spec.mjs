@@ -1,5 +1,7 @@
 import { test, expect } from './local-api.fixture.mjs';
 
+test.use({ trace: 'off' });
+
 test.beforeEach(async ({ baseURL }) => {
   if (!baseURL || !['localhost', '127.0.0.1'].includes(new URL(baseURL).hostname)) {
     throw new Error('Contact submissions are tested against the local environment only.');
@@ -58,7 +60,10 @@ test('custom request validates Egyptian details and safely recovers a lost serve
     } else {
       expect(response.status()).toBe(200);
       expect(receipt.data.requestNumber).toBe(firstNumber);
-      expect(route.request().headers()['idempotency-key']).toBe(firstKey);
+      expect(
+        route.request().headers()['idempotency-key'] === firstKey,
+        'Custom-request recovery reuses the original private request key',
+      ).toBe(true);
       expect(route.request().postDataJSON()).toEqual(sentBodies[0]);
       await route.fulfill({ response });
     }

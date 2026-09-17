@@ -97,6 +97,7 @@ async function removeTestProduct(page, request, id, marker) {
   }
   const cleanup = await request.delete(`${apiBase}/admin/products/${encodeURIComponent(id)}`, {
     headers,
+    data: { expectedRevision: product.revision },
   });
   expect(cleanup.ok()).toBe(true);
 }
@@ -105,6 +106,7 @@ test('admin signs in, browses real pages and saves an inactive product with an i
   page,
   request,
 }, testInfo) => {
+  test.setTimeout(90000);
   const marker = `qa-admin-${Date.now()}-${testInfo.project.name}`;
   const productName = `Local QA ${marker}`;
   const pageErrors = [];
@@ -409,6 +411,19 @@ test('admin signs in, browses real pages and saves an inactive product with an i
       contentType: 'text/plain',
     });
 
+    const galleryUrls = Array.from(
+      { length: 31 },
+      (_, index) => `${image.url}#qa-gallery-${index}`,
+    );
+    await page.locator('#product-galleryImages').fill(galleryUrls.join(', '));
+    await page.getByRole('button', { name: 'حفظ ومتابعة التعديل', exact: true }).click();
+    await expect(page.locator('.validation-notice')).toContainText('30');
+    await expect(page.locator('#field-gallery-images .field-error-msg')).toContainText('30');
+    expect(productMutations).toEqual([]);
+    await expect(page.locator('#product-galleryImages')).toHaveValue(galleryUrls.join(', '));
+    await page.locator('#product-galleryImages').fill('');
+    await expect(page.locator('.validation-notice')).toHaveCount(0);
+
     const createPromise = page.waitForResponse(
       (response) =>
         response.url().endsWith('/api/admin/products') && response.request().method() === 'POST',
@@ -437,14 +452,49 @@ test('admin signs in, browses real pages and saves an inactive product with an i
         response.url().endsWith(`/api/admin/products/${createdId}`) &&
         response.request().method() === 'PUT',
     );
-    await page.getByRole('button', { name: 'حفظ ومتابعة التعديل', exact: true }).click();
+    const updateUrl = new URL(`/api/admin/products/${createdId}`, page.url()).href;
+    let releaseSave = () => {};
+    const heldSave = new Promise((resolve) => {
+      releaseSave = resolve;
+    });
+    let saveReachedServer = false;
+    await page.route(updateUrl, async (route) => {
+      if (route.request().method() !== 'PUT') return route.fallback();
+      const payload = route.request().postDataJSON();
+      expect(payload.isActive).toBe(false);
+      expect(payload.expectedRevision).toBe(created.revision);
+      const response = await route.fetch({ maxRetries: 0 });
+      saveReachedServer = true;
+      await heldSave;
+      await route.fulfill({ response });
+    });
+    try {
+      await page.getByRole('button', { name: 'حفظ ومتابعة التعديل', exact: true }).click();
+      await expect.poll(() => saveReachedServer, { timeout: 15000 }).toBe(true);
+      await expect(page.locator('#product-name')).toBeDisabled();
+      await expect(page.locator('#product-price')).toBeDisabled();
+      const uploadInputs = page.locator('.product-editor input[type="file"]');
+      await expect(uploadInputs).toHaveCount(5);
+      for (const input of await uploadInputs.all()) await expect(input).toBeDisabled();
+      await expect(
+        page.getByRole('button', { name: 'حفظ ومتابعة التعديل', exact: true }),
+      ).toBeDisabled();
+      await page.screenshot({ path: testInfo.outputPath('product-save-locked.png') });
+    } finally {
+      releaseSave();
+    }
     const updateResponse = await updatePromise;
+    await page.unroute(updateUrl);
     expect(updateResponse.ok()).toBe(true);
     const { data: updated } = await updateResponse.json();
     expect(updated.id || updated._id).toBe(createdId);
     expect(updated.price).toBe(285);
     expect(updated.category).toBe(importedCategory);
     expect(updated.isActive).toBe(false);
+    expect(updated.revision).toBe(created.revision + 1);
+    await expect(page.locator('#product-name')).toBeEnabled();
+    await expect(page.locator('#product-price')).toBeEnabled();
+    await expect(page.locator('#product-isActive')).toBeDisabled();
     expect(productMutations).toEqual(['POST', 'PUT']);
     const publicResponse = await request.get(`${apiBase}/products/${marker}`);
     expect(publicResponse.status()).toBe(404);
@@ -485,6 +535,47 @@ test('admin signs in, browses real pages and saves an inactive product with an i
       .locator('p-table tbody tr')
       .filter({ hasText: `${productName} updated` });
     await expect(fixtureRow).toHaveCount(1);
+    await fixtureRow.getByRole('button', { name: 'حذف', exact: true }).click();
+    const changedAfterConfirmation = await request.put(`${apiBase}/admin/products/${createdId}`, {
+      headers: adminHeaders,
+      data: { expectedRevision: updated.revision, price: 286, isActive: false },
+    });
+    expect(changedAfterConfirmation.ok()).toBe(true);
+    const currentBeforeDelete = (await changedAfterConfirmation.json()).data;
+    const rejectedDeletion = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === `/api/admin/products/${createdId}` &&
+        response.request().method() === 'DELETE',
+    );
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'حذف المنتج', exact: true })
+      .click();
+    const staleDeletion = await rejectedDeletion;
+    expect(staleDeletion.status()).toBe(409);
+    expect(staleDeletion.request().postDataJSON()).toEqual({ expectedRevision: updated.revision });
+    expect(
+      (
+        await (
+          await request.get(`${apiBase}/admin/products/${createdId}`, { headers: adminHeaders })
+        ).json()
+      ).data,
+    ).toEqual(currentBeforeDelete);
+    await expect(page.locator('.products-page .product-error')).toContainText(
+      'حمّل القائمة الحالية',
+    );
+    const reviewedListResponse = page.waitForResponse((response) => {
+      const url = new URL(response.url());
+      return (
+        url.pathname === '/api/admin/products' &&
+        url.searchParams.get('search') === marker &&
+        response.request().method() === 'GET'
+      );
+    });
+    await page.getByRole('button', { name: 'تحميل القائمة الحالية للمراجعة', exact: true }).click();
+    const reviewedList = await (await reviewedListResponse).json();
+    expect(reviewedList.data[0].revision).toBe(currentBeforeDelete.revision);
+    await expect(page.locator('.products-page .product-error')).toHaveCount(0);
     const deletedId = createdId;
     const deleteResponse = page.waitForResponse(
       (response) =>
@@ -504,12 +595,22 @@ test('admin signs in, browses real pages and saves an inactive product with an i
       .getByRole('alertdialog')
       .getByRole('button', { name: 'حذف المنتج', exact: true })
       .click();
-    expect((await deleteResponse).ok()).toBe(true);
+    const confirmedDeletion = await deleteResponse;
+    expect(confirmedDeletion.ok()).toBe(true);
+    expect(confirmedDeletion.request().postDataJSON()).toEqual({
+      expectedRevision: currentBeforeDelete.revision,
+    });
     createdId = '';
-    const filteredAfterDelete = await (await filteredAfterDeleteResponse).json();
+    expect((await filteredAfterDeleteResponse).ok()).toBe(true);
+    await expect(page.getByText('لا توجد منتجات مطابقة', { exact: true })).toBeVisible();
+    const filteredAfterDeleteCheck = await request.get(`${apiBase}/admin/products`, {
+      headers: adminHeaders,
+      params: { search: marker },
+    });
+    expect(filteredAfterDeleteCheck.ok()).toBe(true);
+    const filteredAfterDelete = await filteredAfterDeleteCheck.json();
     expect(filteredAfterDelete.meta.totalItems).toBe(0);
     expect(filteredAfterDelete.data).toHaveLength(0);
-    await expect(page.getByText('لا توجد منتجات مطابقة', { exact: true })).toBeVisible();
 
     await page.reload();
     await expect(page.locator('.p-paginator-current')).toContainText('من 16 منتج');

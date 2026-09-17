@@ -2,6 +2,52 @@
 
 These investigations follow the six-sample Lighthouse checkpoint in [performance-audit.md](performance-audit.md). Diagnostic timings are not substitute Lighthouse scores.
 
+## Noto face deduplication — not adopted, 17 September 07:40–07:41 UTC
+
+One cold baseline/candidate pair used frozen **06:41** output and the same actual mobile throttling as the optional-font diagnostic. The candidate removed exactly the two duplicate Noto declarations from full CSS, reducing it **72,756 → 71,990 bytes** while preserving initial critical declarations, `swap`, font files, preloads and all other styles. Separate raw-document and native navigation gates checked that each document retained the necessary initial faces. [The complete results](../artifacts/font-face-deduplication/RESULTS.md) retain all observations and verified hashes for **24 raw payload files**.
+
+FCP improved **1,676 → 1,516 ms**, LCP **2,160 → 1,868 ms** and total layout **1,557.153 → 1,323.559 ms**, but long tasks increased **1,691 → 1,743 ms**. Most favorable layout differences occurred before full-CSS activation and cannot be credited to removing duplicate registration. The target persisted: both arms recorded **611 `Fonts changed` invalidations** after activation, and the following layout worsened **53.805 → 79.894 ms**. Both retained the same raw **0.018792** shift marked `hadRecentInput` before deliberate interactions. No stage 2 or source adoption followed this mixed pair.
+
+Both samples and the planned cart click/Enter, return, native cart/login and JavaScript-disabled SSR gates passed. Font bytes, actual Noto glyphs and final geometry matched; the candidate ended with one Noto entry per weight. There were no timed API calls, network errors, business writes or console errors. Expected post-navigation cancelled public GETs and JavaScript-disabled CSP blocks were classified narrowly before execution and retained. This does not revise the earlier optional experiment's failed checks.
+
+The face inventory also identified a byte-identical PrimeIcons declaration in critical and full CSS, leaving two PrimeIcons entries in both arms. Its presence before the global invalidation suggests a further isolated hypothesis, but does not prove the duplicate caused it: other full stylesheet rules activate simultaneously. The final **07:31** canonical Lighthouse pass was separate and kept application font delivery unchanged.
+
+### Removing all three full-CSS faces — rejected before execution
+
+Follow-up preparation found that the home SSR document contains all three initial faces, but frozen `index.csr.html` contains only the two Noto faces. The retained native cart/login results confirm one PrimeIcons entry supplied by full CSS. Removing all three full-CSS faces while leaving initial documents unchanged would remove the icon font from native CSR entries. The candidate therefore fails its document-preservation requirement structurally; no snapshot capture, preview, browser comparison or source change followed. The [rejected preparation record](../artifacts/all-font-face-deduplication/RESULTS.md) retains the native-versus-SSR evidence. Adding an initial face or serving route-specific styles would be a different treatment, and was not attempted.
+
+## Complete optional-font policy — not adopted, 17 September 07:10–07:11 UTC
+
+One cold mobile baseline/candidate pair used frozen **06:41** output, actual 4× CPU/network throttling and fresh browser contexts. The candidate changed only the two Noto `font-display` descriptors in both critical and full CSS, retaining the exact fonts and preloads. The earlier critical-only optional experiment did not isolate this policy. [Chrome's preload/optional explanation](https://web.dev/articles/preload-optional-fonts?hl=en) and [CSS Fonts 4](https://drafts.csswg.org/css-fonts-4/#font-display-desc) supported testing the complete policy, without guaranteeing font availability or a modern 100 ms timer.
+
+FCP worsened **1,484 → 1,576 ms**, LCP improved **1,900 → 1,740 ms**, total observed layout worsened **1,397.462 → 1,503.262 ms**, and long tasks increased **1,539 → 1,682 ms**. The optional arm moved a large layout after its LCP; it did not remove that work. Both ended with identical Noto glyphs and geometry. Each raw observer retained a **0.018792** shift marked `hadRecentInput` before deliberate test interactions; reported CLS zero must not be interpreted as no late shift.
+
+Both cart click/Enter and return assertions completed. The runner nevertheless exited 1 because strict post-timing request checks caught aborted public GETs during navigation in both arms. Timed font requests had no failures; no sample was retried or discarded. The result does not justify adoption or stage 2. [Full results](../artifacts/optional-font-diagnostic/RESULTS.md) retain both timings, screenshots, limitations and verified hashes for all twenty raw output files. Application font delivery remains unchanged.
+
+Artifact analysis also found duplicate Noto declarations in the initial critical CSS and full stylesheet. Full-CSS activation precedes 611 font invalidations in both arms; this motivated the separate deduplication experiment above and cannot explain the baseline's earlier 277 ms layout. The canonical **06:41** pass was independently archived with **21 verified payload files** in [baseline-2026-09-17-0641](../artifacts/performance/baseline-2026-09-17-0641/archive-verification.json) before the subsequent admin build.
+
+## Same Noto font bytes in initial HTML — rejected before browser execution
+
+**Unconditional font inlining was rejected on its repeat-document transfer cost.** The proposed diagnostic was prepared and its four scripts passed syntax checks, but no build snapshot, candidate server, browser navigation or timing comparison was executed. This is a structural rejection, not a measured browser failure or performance improvement. Application font delivery remains unchanged.
+
+The hypothesis came from the retained **05:44 build** control traces in `artifacts/home-hydration-diagnostic/runs/2026-09-17T05-49-23.063Z/`, not new measurements. Run 1 / run 4 spent **1126 / 1184 ms** in the first full-document layout. Once the existing Noto faces became usable at roughly **1653–1669 ms**, another layout dirtied **595 of 613 objects** and took **366 / 341 ms**. The hero image had finished downloading at **577 / 546 ms**, with final image LCP at **2127 / 2113 ms**. First Angular module evaluation began later, at **2908 / 2881 ms**. Thus script splitting cannot explain the pre-LCP layout work in these particular cold runs. These traces lack detailed glyph-shaping subevents: their layout durations are not measurements of pure Arabic shaping, and the font/layout ordering alone does not prove how much work early font availability would remove.
+
+The actual SSR order already has both Noto font preloads before critical CSS, followed by the asynchronous full stylesheet. Both the critical CSS and full stylesheet contain the same two face definitions. The candidate would have put the **exact existing WOFF2 bytes** into the critical definitions, removed the two preload tags and duplicate full-CSS faces, given that derived stylesheet a distinct content-hash identity, and explicitly allowed font `data:` URLs in CSP. Family, weights, Unicode ranges, glyphs, content and geometry would remain the same. It was not a font replacement, extra preload or content-hiding proposal.
+
+Offline calculation used the exact retained `baseline-ssr.html` and font files, verifying their SHA-256 filenames: **45,492 bytes regular + 46,720 bytes bold = 92,212 bytes**. Compression used the preview's Brotli quality 5 and gzip level 6. These are compressed **body sizes**, excluding response/request headers, not measured browser transfers.
+
+| Offline payload                                                 | Existing delivery | Proposed inline delivery | Difference |
+| --------------------------------------------------------------- | ----------------: | -----------------------: | ---------: |
+| HTML, uncompressed bytes                                        |            117759 |                   240203 |    +122444 |
+| HTML, Brotli bytes                                              |             20896 |                   114262 |     +93366 |
+| HTML, gzip bytes                                                |             23812 |                   118181 |     +94369 |
+| HTML + full stylesheet + two Noto fonts, cold Brotli body bytes |            126304 |                   127215 |       +911 |
+| Same three resource groups, cold gzip body bytes                |            130087 |                   131983 |      +1896 |
+
+Cold aggregate bytes are close because inlining moves the same font payload into HTML. However, HTML responses are **`no-store`**, while the existing separate font files are immutable and reusable. Every subsequent full-document request would carry approximately **93 KB extra Brotli HTML**, regardless of whether CPU/layout improved. This exceeds the proposed **10 KiB repeat-body regression limit** without needing the planned twelve timing navigations. It also moves those bytes ahead of body/image discovery. Ordinary client-side route transitions do not request another document, so this penalty is specifically for repeat full navigations, reloads and new document loads; no repeat LCP value was measured or inferred.
+
+The unexecuted procedure and scripts remain under `artifacts/same-font-delivery/` for auditability. No favorable timing is assumed and no adoption is authorized. The preceding canonical pass was independently archived at **2026-09-17T06:32:25.994Z** in `artifacts/performance/baseline-2026-09-17-0544/`: **13 reports + 4 metadata files + 4 original compiled identity files**, all **21 payload files SHA-verified**, with originals retained and `archive-verification.json` recording the copy. Its build is `main-NOO3XGHS.js` / `styles-LJHQOUSH.css`, **2026-09-17T05:44:24.928Z**.
+
 ## Home card incremental hydration — rejected, 17 September 05:49–05:52 UTC
 
 **The candidate was not adopted.** It showed inconsistent cold timing changes and failed the first purchase interaction in both timed candidate runs and the separate early-click/Enter checks. No retakes followed. The exact candidate source patch was reversed before the experiment; afterward the original 05:44 production output was restored from its verified snapshot and the normal preview restarted. These diagnostic results are not Lighthouse scores or a replacement canonical pass.
@@ -12,14 +58,14 @@ The candidate replaces `withEventReplay()` with the public Angular 21 `withIncre
 
 The four actual timing navigations ran **control, candidate, candidate, control**, starting at **05:49:24.315, 05:49:35.931, 05:50:18.393 and 05:51:00.462 UTC**. Both arms used the unchanged copied preview server at the same loopback origin, equal SSR warm-up, fresh browser contexts, disabled browser cache, 390×844 mobile viewport, DPR 2, CPU slowdown 4× and real network throttling: 150 ms latency, 1638.4 × 1024 / 8 download bytes/s and 675 × 1024 / 8 upload bytes/s. No document/body substitution or instant fulfilled resource was used. Cold metrics were captured before interaction; all four raw traces, network records and initial screenshots remain retained.
 
-| Actual cold metric | Pair 1 control | Pair 1 candidate | Difference | Pair 2 control | Pair 2 candidate | Difference |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| FCP, ms | 1664 | 1776 | +112 | 1664 | 1592 | −72 |
-| LCP, ms | 2128 | 2260 | +132 | 2116 | 2060 | −56 |
-| Long-task duration, ms | 2208 | 2399 | +191 | 2308 | 2214 | −94 |
-| Observed long-task excess over 50 ms, summed ms | 1908 | 2099 | +191 | 2008 | 1914 | −94 |
-| Resource Timing transfer bytes | 287477 | 285858 | −1619 | 287477 | 285858 | −1619 |
-| CLS | 0 | 0 | 0 | 0 | 0 | 0 |
+| Actual cold metric                              | Pair 1 control | Pair 1 candidate | Difference | Pair 2 control | Pair 2 candidate | Difference |
+| ----------------------------------------------- | -------------: | ---------------: | ---------: | -------------: | ---------------: | ---------: |
+| FCP, ms                                         |           1664 |             1776 |       +112 |           1664 |             1592 |        −72 |
+| LCP, ms                                         |           2128 |             2260 |       +132 |           2116 |             2060 |        −56 |
+| Long-task duration, ms                          |           2208 |             2399 |       +191 |           2308 |             2214 |        −94 |
+| Observed long-task excess over 50 ms, summed ms |           1908 |             2099 |       +191 |           2008 |             1914 |        −94 |
+| Resource Timing transfer bytes                  |         287477 |           285858 |      −1619 |         287477 |           285858 |      −1619 |
+| CLS                                             |              0 |                0 |          0 |              0 |                0 |          0 |
 
 The long-task figures are observed browser measurements, **not Lighthouse simulated TBT**. Cold transfer decreased by 1619 bytes while the estimated initial build increased by 7.28 kB raw / 2.65 kB compressed; neither figure establishes a user-visible benefit. Initial geometry matched, all six candidate cards remained unhydrated below the viewport, and the cold windows had no browser API reads, console/hydration errors or attempted writes. The two pairs are not a median or evidence that the favorable second pair outweighs the first pair's regressions.
 

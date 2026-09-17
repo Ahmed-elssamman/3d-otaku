@@ -47,12 +47,25 @@ import {
   ADMIN_PRODUCT_VALIDATION_FIELDS,
   ADMIN_PRODUCT_META_FIELDS,
   ADMIN_PRODUCT_REVIEW_TEXT,
+  ADMIN_PRODUCT_SAVE_TEXT,
+  ADMIN_PRODUCT_LIMIT_TEXT,
+  ADMIN_PRODUCT_LIMITS,
+  ADMIN_PRODUCT_FORM_LABELS,
+  adminProductFormValue,
+  adminProductComparisonValue,
+  mergeAdminProductDraft,
+  adminProductListValues,
+  adminProductServerFieldErrors,
+  adminProductGalleryCapacityMessage,
+  AdminProductServerFieldError,
   createAdminProductForm,
   FormValidationError,
 } from './admin-product-form-page.control';
 import {
   AdminManufacturingReviewStatus,
   AdminProductRecord,
+  AdminProductFormValue,
+  AdminProductConflictField,
 } from '../../models/admin-product-form.model';
 import { ApiErrorResponse } from '@core/models/api-response.model';
 import { ManufacturingReviewComponent } from '../../components/manufacturing-review/manufacturing-review.component';
@@ -91,6 +104,8 @@ export class AdminProductFormPageComponent implements OnInit {
   categoryLoadError = signal('');
   categoryText = ADMIN_CATEGORY_TEXT;
   reviewText = ADMIN_PRODUCT_REVIEW_TEXT;
+  saveText = ADMIN_PRODUCT_SAVE_TEXT;
+  limitText = ADMIN_PRODUCT_LIMIT_TEXT;
   badgeOptions = PRODUCT_BADGE_OPTIONS;
   materialOptions = PRODUCT_MATERIAL_OPTIONS;
   modelTypeOptions = PRODUCT_MODEL_TYPE_OPTIONS;
@@ -111,29 +126,56 @@ export class AdminProductFormPageComponent implements OnInit {
   attemptedSubmit = signal<boolean>(false);
   selectedModelFileName = signal<string>('');
   galleryUploadProgress = signal<string>('');
+  gallerySelectionError = signal('');
   galleryPreviewUrls = signal<string[]>([]);
   reviewUnsaved = signal(false);
   reviewBusy = signal(false);
   isStartingReview = signal(false);
   reviewStartError = signal('');
   reviewStartConflict = signal(false);
+  productSaveConflict = signal(false);
+  saveError = signal('');
+  private serverFieldErrors = signal<AdminProductServerFieldError[]>([]);
+  isLoadingConflict = signal(false);
+  conflictProduct = signal<AdminProductRecord | null>(null);
+  conflictLoadError = signal('');
+  private savedProductValues = signal<AdminProductFormValue | null>(null);
   private savedProductForm = signal('');
+  productRevisionUnavailable = computed(
+    () => this.isEditMode() && this.existingProduct()?.revision === null,
+  );
+  needsProductReview = computed(
+    () => this.productSaveConflict() || this.productRevisionUnavailable(),
+  );
+  canAcceptProductReview = computed(
+    () =>
+      this.conflictProduct()?.revision !== null &&
+      this.conflictProduct() !== null &&
+      !this.productEditorBusy(),
+  );
+  manufacturingEditorBlocked = computed(
+    () => this.productEditorBusy() || this.needsProductReview(),
+  );
   productEditorBusy = computed(
     () =>
       this.isSubmitting() ||
       this.isStartingReview() ||
       this.isLoadingProduct() ||
+      this.isLoadingConflict() ||
       this.isUploadingImage() ||
       this.isUploadingModel() ||
       this.isUploadingGallery() ||
       this.isUploadingPoster() ||
       this.isUploadingSocial(),
   );
+  uploadDisabled = computed(() => this.productEditorBusy() || this.reviewBusy());
   canSaveProduct = computed(
     () =>
       !this.isSubmitting() &&
       !this.isStartingReview() &&
       !this.reviewStartConflict() &&
+      !this.needsProductReview() &&
+      !this.isLoadingConflict() &&
       !this.isLoadingProduct() &&
       !this.productLoadError() &&
       !this.isUploadingImage() &&
@@ -159,6 +201,21 @@ export class AdminProductFormPageComponent implements OnInit {
   private formStatus = toSignal(this.productForm.statusChanges, {
     initialValue: this.productForm.status,
   });
+  conflictFields = computed<AdminProductConflictField[]>(() => {
+    const product = this.conflictProduct();
+    const saved = this.savedProductValues();
+    if (!product || !saved) return [];
+    const current = adminProductFormValue(product);
+    const local = this.formValue();
+    return (Object.keys(ADMIN_PRODUCT_FORM_LABELS) as Array<keyof AdminProductFormValue>)
+      .filter((key) => current[key] !== saved[key])
+      .map((key) => ({
+        key,
+        label: ADMIN_PRODUCT_FORM_LABELS[key],
+        current: adminProductComparisonValue(current[key]),
+        local: adminProductComparisonValue(local[key]),
+      }));
+  });
   categoryOptions = computed(() =>
     adminCategoryOptions(this.categories(), this.formValue().category ?? '', true),
   );
@@ -177,6 +234,7 @@ export class AdminProductFormPageComponent implements OnInit {
       !this.productEditorBusy() &&
       !this.productEditorDirty() &&
       !this.productLoadError() &&
+      !this.needsProductReview() &&
       !this.reviewStartConflict()
     );
   });
@@ -223,6 +281,14 @@ export class AdminProductFormPageComponent implements OnInit {
         message: 'حدد مدة موجبة ووحدتها، والحد الأقصى لا يقل عن الحد الأدنى.',
         category: 'المواصفات',
       });
+    for (const error of this.serverFieldErrors()) {
+      if (
+        values[error.key] === error.rejectedValue &&
+        !errors.some((entry) => entry.id === error.id)
+      ) {
+        errors.push(error);
+      }
+    }
     return errors;
   });
 
@@ -234,12 +300,22 @@ export class AdminProductFormPageComponent implements OnInit {
       const invalid = this.validationErrors().some((error) => error.id === field.id);
       errors[field.id] = invalid && (control.touched || this.attemptedSubmit());
     }
+    for (const error of this.validationErrors()) {
+      if (this.attemptedSubmit()) errors[error.id] = true;
+    }
     return errors;
   });
+  fieldMessages = computed(
+    () =>
+      Object.fromEntries(
+        this.validationErrors().map((error) => [error.id, error.message]),
+      ) as Record<string, string>,
+  );
   specFields = computed(() =>
     ADMIN_PRODUCT_SPEC_FIELDS.map((field) => ({
       ...field,
       invalid: this.fieldErrors()[field.id] || false,
+      error: this.fieldMessages()[field.id] || '',
     })),
   );
   metaFields = ADMIN_PRODUCT_META_FIELDS;
@@ -305,7 +381,10 @@ export class AdminProductFormPageComponent implements OnInit {
       });
     this.productForm.controls.galleryImages.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value) => this.galleryPreviewUrls.set(this.extractList(value)));
+      .subscribe((value) => {
+        this.galleryPreviewUrls.set(this.extractList(value));
+        this.gallerySelectionError.set('');
+      });
   }
 
   ngOnInit(): void {
@@ -334,8 +413,62 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   retryLoadProduct(): void {
+    if (this.productEditorBusy() || this.reviewBusy()) return;
     const productId = this.productId();
     if (productId) this.loadProduct(productId);
+  }
+
+  loadProductForReview(): void {
+    const product = this.existingProduct();
+    if (!product || this.productEditorBusy() || this.reviewBusy() || this.reviewUnsaved()) return;
+    this.isLoadingConflict.set(true);
+    this.conflictLoadError.set('');
+    this.conflictProduct.set(null);
+    this.adminProductService
+      .getProductById(product.id)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoadingConflict.set(false)),
+      )
+      .subscribe({
+        next: (response) => this.conflictProduct.set(response.data),
+        error: (error: ApiErrorResponse) =>
+          this.conflictLoadError.set(
+            error.statusCode === 404 ? this.saveText.deleted : this.saveText.reloadError,
+          ),
+      });
+  }
+
+  keepLocalProductChanges(): void {
+    this.acceptProductReview(true);
+  }
+
+  discardLocalProductChanges(): void {
+    this.acceptProductReview(false);
+  }
+
+  private acceptProductReview(keepLocal: boolean): void {
+    const current = this.conflictProduct();
+    const saved = this.savedProductValues();
+    if (!current || !saved || !this.canAcceptProductReview()) return;
+    const merged = keepLocal
+      ? mergeAdminProductDraft(
+          saved,
+          this.productForm.getRawValue(),
+          adminProductFormValue(current),
+        )
+      : null;
+    this.existingProduct.set(current);
+    this.populateForm(current);
+    if (merged) {
+      this.productForm.patchValue(merged);
+      this.galleryPreviewUrls.set(this.extractList(merged.galleryImages));
+      this.restorePublicationControl();
+    }
+    this.productSaveConflict.set(false);
+    this.conflictProduct.set(null);
+    this.saveError.set('');
+    this.attemptedSubmit.set(false);
   }
 
   onManufacturingProductUpdated(product: AdminProductRecord): void {
@@ -419,54 +552,29 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   private populateForm(product: AdminProductRecord): void {
+    this.serverFieldErrors.set([]);
     this.slugEditedManually.set(true);
-    this.productForm.patchValue({
-      name: product.name,
-      slug: product.slug,
-      category: product.category,
-      shortDescription: product.shortDescription,
-      description: product.description,
-      price: product.price,
-      discountPrice: product.discountPrice ?? null,
-      badge: product.badge ?? ProductBadge.NONE,
-      isFeatured: product.isFeatured,
-      isActive: product.isActive,
-      mainImage: product.image,
-      galleryImages: (product.gallery ?? []).join(', '),
-      modelUrl: product.modelUrl || '',
-      modelType:
-        PRODUCT_MODEL_TYPE_OPTIONS.find((option) => option.value === product.modelType)?.value ||
-        getModelTypeFromPath(product.modelUrl || '') ||
-        ProductModelType.GLB,
-      posterImage: product.posterImage ?? '',
-      imageAlt: product.imageAlt ?? '',
-      socialImage: product.socialImage ?? '',
-      material: product.material,
-      finish: product.finish,
-      color: product.color,
-      size: product.size,
-      weight: product.weight,
-      printTime: product.printTime,
-      isMadeToOrder: product.isMadeToOrder ?? false,
-      productionTimeMin: product.productionTimeMin ?? null,
-      productionTimeMax: product.productionTimeMax ?? null,
-      productionTimeUnit: product.productionTimeUnit ?? null,
-      layerHeight: product.layerHeight ?? '',
-      infill: product.infill ?? '',
-      metaTitle: product.metaTitle ?? '',
-      metaDescription: product.metaDescription ?? '',
-      keywords: (product.keywords ?? []).join(', '),
-      tags: (product.tags ?? []).join(', '),
-      safetyNote: product.safetyNote,
-    });
+    this.productForm.patchValue(adminProductFormValue(product));
     this.galleryPreviewUrls.set(product.gallery ?? []);
+    this.restorePublicationControl();
+    this.savedProductValues.set(this.productForm.getRawValue());
+    this.savedProductForm.set(JSON.stringify(this.productForm.getRawValue()));
+  }
+
+  private restorePublicationControl(): void {
     if (this.publicationBlocked()) {
       this.productForm.controls.isActive.setValue(false);
       this.productForm.controls.isActive.disable({ emitEvent: false });
-    } else {
+    } else if (!this.isSubmitting()) {
       this.productForm.controls.isActive.enable({ emitEvent: false });
     }
-    this.savedProductForm.set(JSON.stringify(this.productForm.getRawValue()));
+  }
+
+  private finishProductSave(): void {
+    this.isSubmitting.set(false);
+    this.productForm.enable({ emitEvent: false });
+    this.restorePublicationControl();
+    this.productForm.updateValueAndValidity();
   }
 
   onSlugChange(): void {
@@ -507,6 +615,7 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   private uploadImage(event: Event, field: AdminImageField): void {
+    if (this.uploadDisabled()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -546,10 +655,20 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   onGalleryImagesSelected(event: Event): void {
+    if (this.uploadDisabled()) return;
     const input = event.target as HTMLInputElement;
     const files = Array.from(input.files || []).filter((file) => this.validImageFile(file));
     input.value = '';
     if (!files.length) return;
+    const remaining = Math.max(
+      0,
+      ADMIN_PRODUCT_LIMITS.gallery - new Set(this.galleryPreviewUrls()).size,
+    );
+    if (files.length > remaining) {
+      this.gallerySelectionError.set(adminProductGalleryCapacityMessage(remaining));
+      return;
+    }
+    this.gallerySelectionError.set('');
     this.isUploadingGallery.set(true);
     this.galleryUploadProgress.set(`0/${files.length}`);
     let completed = 0;
@@ -582,12 +701,14 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   removeGalleryImage(index: number): void {
+    if (this.uploadDisabled()) return;
     const urls = [...this.galleryPreviewUrls()];
     urls.splice(index, 1);
     this.productForm.controls.galleryImages.setValue(urls.join(', '));
   }
 
   onModelFileSelected(event: Event): void {
+    if (this.uploadDisabled()) return;
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
@@ -639,7 +760,7 @@ export class AdminProductFormPageComponent implements OnInit {
     if (!this.canSaveProduct()) return;
     this.attemptedSubmit.set(true);
 
-    if (this.productForm.invalid) {
+    if (this.productForm.invalid || this.validationErrors().length) {
       this.productForm.markAllAsTouched();
       const count = this.validationErrors().length;
       this.messageService.add({
@@ -651,20 +772,25 @@ export class AdminProductFormPageComponent implements OnInit {
       return;
     }
 
-    this.isSubmitting.set(true);
     const product = this.buildProduct();
-    if (!product) {
-      this.isSubmitting.set(false);
-      return;
-    }
+    if (!product) return;
+    const revision = this.existingProduct()?.revision ?? null;
+    if (this.isEditMode() && revision === null) return;
+    this.isSubmitting.set(true);
+    this.saveError.set('');
+    this.serverFieldErrors.set([]);
+    const submittedValues = this.productForm.getRawValue();
+    this.productForm.disable({ emitEvent: false });
 
-    if (this.isEditMode()) {
+    if (this.isEditMode() && revision !== null) {
       this.adminProductService
-        .updateProduct(product.id, product)
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .updateProduct(product.id, product, revision)
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          finalize(() => this.finishProductSave()),
+        )
         .subscribe({
           next: (response) => {
-            this.isSubmitting.set(false);
             this.existingProduct.set(response.data);
             this.populateForm(response.data);
             this.messageService.add({
@@ -679,7 +805,14 @@ export class AdminProductFormPageComponent implements OnInit {
             }
           },
           error: (err: ApiErrorResponse) => {
-            this.isSubmitting.set(false);
+            if (err.statusCode === 422 && !err.errors?.['expectedRevision']?.length) {
+              this.showValidationRejection(err, submittedValues, false);
+              return;
+            }
+            if (err.statusCode !== 422 || err.errors?.['expectedRevision']?.length) {
+              this.productSaveConflict.set(true);
+              this.conflictProduct.set(null);
+            }
             const errorMsg =
               err.statusCode === 409
                 ? this.existingProduct()?.requiresManufacturingReview
@@ -691,15 +824,18 @@ export class AdminProductFormPageComponent implements OnInit {
               summary: 'تعذر حفظ التعديل',
               detail: errorMsg,
             });
+            this.saveError.set(this.productSaveConflict() ? this.saveText.conflict : errorMsg);
           },
         });
     } else {
       this.adminProductService
         .createProduct(product)
-        .pipe(takeUntilDestroyed(this.destroyRef))
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          finalize(() => this.finishProductSave()),
+        )
         .subscribe({
           next: (res) => {
-            this.isSubmitting.set(false);
             const createdId = res.data?.id || res.data?._id || product.id;
             const createdProduct = { ...product, ...res.data, id: createdId };
             this.existingProduct.set(createdProduct);
@@ -718,7 +854,10 @@ export class AdminProductFormPageComponent implements OnInit {
             }
           },
           error: (err: ApiErrorResponse) => {
-            this.isSubmitting.set(false);
+            if (err.statusCode === 422) {
+              this.showValidationRejection(err, submittedValues, true);
+              return;
+            }
             let errorMsg = 'لم يتم تأكيد إنشاء المنتج. تحقق من القائمة قبل تكرار الحفظ.';
             if (err.errors?.['isActive']?.length) {
               errorMsg = this.reviewText.activeCreationError;
@@ -735,13 +874,31 @@ export class AdminProductFormPageComponent implements OnInit {
     }
   }
 
+  private showValidationRejection(
+    error: ApiErrorResponse,
+    values: AdminProductFormValue,
+    creating: boolean,
+  ): void {
+    this.serverFieldErrors.set(adminProductServerFieldErrors(error.errors ?? {}, values));
+    const detail =
+      creating && error.errors?.['isActive']?.length
+        ? this.reviewText.activeCreationError
+        : creating
+          ? this.saveText.rejectedCreate
+          : this.saveText.rejectedUpdate;
+    this.saveError.set(detail);
+    this.messageService.add({ severity: 'error', summary: 'راجع بيانات المنتج', detail });
+  }
+
   scrollToField(fieldId: string): void {
     const el = document.getElementById(fieldId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const targetInput = el.querySelector(
-        'input, textarea, select, .p-select, .p-inputnumber-input',
-      ) as HTMLElement | null;
+      const targetInput = el.matches('input, textarea, select')
+        ? el
+        : (el.querySelector(
+            'input, textarea, select, .p-select, .p-inputnumber-input',
+          ) as HTMLElement | null);
       targetInput?.focus?.();
     }
   }
@@ -759,10 +916,12 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   cancel(): void {
+    if (this.isSubmitting()) return;
     this.router.navigate(['/admin/products']);
   }
 
   previewProduct(): void {
+    if (this.isSubmitting()) return;
     const product = this.existingProduct();
     if (product?.isActive) this.router.navigate(['/products', product.slug]);
   }
@@ -815,11 +974,7 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   private extractList(value: string | null): string[] {
-    if (!value) return [];
-    return value
-      .split(/[,،]/)
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
+    return adminProductListValues(value);
   }
 
   private buildSlug(value: string): string {

@@ -105,7 +105,182 @@ original screenshots and [pixel localization](../artifacts/font-research-noto/pi
 Source integration preserves all original font fingerprints and OFL. The frozen
 visual gate is separate from the rebuilt-app verification below.
 
-## Current integrated verification — 05:09 build
+## Current integrated verification — 07:31 build
+
+Production completed at **2026-09-17T07:31:16.112Z** in **10.070 seconds**,
+producing `main-BOWHSGTL.js` / `styles-LJHQOUSH.css`, initial **488.14 kB raw /
+131.20 kB estimated transfer**. The Noto, hero, icon subset and stylesheet bytes
+are unchanged. No new font/rendering candidate was adopted.
+
+Angular passed **291/291 tests across 44 files in 6.21 seconds**, test build
+**07:30:14.358 UTC / 6.907 seconds**; backend passed **201/201**. The corrected
+administrator browser scope passed **10/10 distinct device cases in 1.4 minutes**
+on this build, with a real 13-second quota-reset wait. The first invocation's
+one CDP response-body fixture failure and nine unrun cases remain retained.
+[Product edit safety](../docs/admin-product-edit-safety.md) preserves that failure,
+preceding compiler corrections, exact reports and the affected scope. This is
+not a new complete storefront suite; earlier scopes remain dated below.
+
+The first complete six-sample Lighthouse pass, with no retakes, ran at
+**07:44:37.045–07:45:24.947 UTC** with development stopped and competing jobs idle.
+It requested only **/media/primeicons-subset-E2J67QVD.woff2** for PrimeIcons,
+once per page: **9,568-byte body / 10,483-byte transfer**. Both Noto weights were
+requested once with unchanged **45,492 / 46,720-byte bodies**. The three fonts
+totaled **104,527 transferred bytes per page**, unchanged from the 06:41 baseline.
+No original WOFF2 or EOT/WOFF/TTF/SVG fallback was requested. CSS remained
+**14,171 transferred / 72,756 decoded bytes**; image transfer was unchanged.
+Full-page transfer changed **+6 / −4 / −3 bytes** on home/catalog/product.
+
+Performance scored **87/90/91 mobile and 99/100/100 desktop**, with 100 in the
+other categories. Regressions include home mobile speed index **+1,396.9 ms**,
+all four home desktop timed metrics, catalog/product mobile TBT and product
+desktop speed index. [The performance audit](../docs/performance-audit.md)
+retains every metric and regression; unchanged fonts do not establish causation.
+
+Preflight and post-pass analysis verified the four current build files, three
+Noto/hero source/dist assets, reviewed/emitted icon subset hashes, all 13 current
+report hashes, 13 baseline reports and all **21 entries** of the
+[06:41 archive](../artifacts/performance/baseline-2026-09-17-0641/), including its
+four exact original build files. Settings/version, resource totals and font
+request/body counts match. Evidence: [verification-0731.json](../artifacts/performance/verification-0731.json)
+and [analysis-0731.json](../artifacts/performance/analysis-0731.json). All six
+reports have zero run warnings, runtime errors, console-error audit items,
+failed requests or browser API calls; cache/image waste estimates are zero.
+
+After Chrome closed, the read-only subset check at
+**07:45:59.988–07:46:00.039 UTC** confirmed **200**, `font/woff2`, exactly
+9,568 bytes and SHA-256
+`a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef`, with
+`Cache-Control: public, max-age=31536000, immutable`. Its conditional ETag
+request returned **304 with an empty body** and the same policy. The
+[HTTP record](../artifacts/primeicons-http-verification-2026-09-17T07-45-59.988Z.json)
+is separate from timing. Other URLs were not re-requested by this post-pass
+HTTP check; current source/dist identities and dated prior HTTP evidence are
+separate checks. Local headers do not establish deployed CDN behavior or
+repeat-visit speed.
+
+<a id="current-integrated-verification--0641-build"></a>
+
+## Historical integrated verification — 06:41 build
+
+Production completed at **2026-09-17T06:41:26.504Z** in **9.331 seconds**,
+producing `main-XQERADW5.js` / `styles-LJHQOUSH.css`, initial **488.13 kB raw /
+131.14 kB estimated transfer**. The stylesheet, Noto, hero and icon subset bytes
+are unchanged. The same-font inlining proposal was rejected before browser
+execution because the retained home HTML gains **93,366 Brotli bytes**, downloaded
+again on each full navigation;
+the prepared diagnostic was not run. This is a structural decision, not a measured
+font performance gain. [Performance experiments](../docs/performance-experiments.md)
+retain the offline calculation and earlier rejected hydration evidence.
+
+Angular passed **278/278 tests across 43 files in 5.70 seconds**, test build
+**06:40:52.069 UTC / 6.010 seconds**; backend passed **192/192**. The preceding
+277/278 unit result was a `SpyLocation` fixture mismatch, corrected without
+removing path/query assertions. Browser evidence covers **24 distinct device
+cases across two builds: 9 on 06:34 and 15 on final 06:41**. The initial scope
+retained **9 passed / 1 failed / 10 not run in 32.6 seconds**, exposing a real
+skip-link navigation defect. After correction, desktop **3/3 passed in 8.7 seconds**
+and mobile **12/12 passed in 39.5 seconds**. This is not 24 cases on the final
+build or a complete 37-scenario run. [Public-page QA](../docs/public-pages-qa.md)
+preserves the exact reports and earlier failures; functional checks are separate
+from font/performance measurements.
+
+The complete six-sample Lighthouse pass at **06:45:35.192–06:46:19.952 UTC**
+requested only **`/media/primeicons-subset-E2J67QVD.woff2`** for PrimeIcons, once
+per page, with a **9,568-byte body / 10,483-byte transfer**. Both Noto weights
+were requested once with unchanged **45,492 / 46,720-byte bodies**. Three fonts
+totaled **104,527 transferred bytes per page**, unchanged from the 05:44 baseline.
+No original WOFF2 or EOT/WOFF/TTF/SVG fallback was requested. Images and CSS transfer
+were unchanged; scripts increased **3,194 / 3,353 / 3,189 bytes** and full-page
+transfer increased **3,189 / 3,346 / 3,024 bytes** on home/catalog/product.
+Performance scored **87/89/90 mobile and 99/100/100 desktop**, with 100 in the
+other categories. Regressions include catalog mobile LCP **+84.3 ms**, product
+mobile FCP **+176.8 ms** and the desktop timing regressions listed in the
+[performance audit](../docs/performance-audit.md). No isolated font timing gain
+is attributed to these unchanged assets.
+
+Preflight and post-pass analysis verified the four current build files, three
+Noto/hero source/dist assets, reviewed/emitted icon subset hashes, all 13 current
+report hashes, and all **21 entries** in the primary
+[05:44 archive](../artifacts/performance/baseline-2026-09-17-0544/): 13 reports,
+four metadata files and four original build files. Exact settings, Lighthouse
+version, timestamps, resource totals and font request/body counts passed.
+Evidence is [verification-0641.json](../artifacts/performance/verification-0641.json)
+and [analysis-0641.json](../artifacts/performance/analysis-0641.json). All six
+reports have zero run warnings, runtime errors, console-error audit items,
+failed requests or browser API calls; cache/image waste estimates are zero.
+
+After Chrome closed, the read-only subset check at
+**06:46:56.511–06:46:56.552 UTC** confirmed **200**, `font/woff2`, exactly
+9,568 bytes and SHA-256
+`a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef`, with
+`Cache-Control: public, max-age=31536000, immutable`. The conditional ETag request
+returned **304 with an empty body** and the same policy. The
+[HTTP record](../artifacts/primeicons-http-verification-2026-09-17T06-46-56.511Z.json)
+is separate from timing; no verification requests ran during Lighthouse.
+Development restarted only afterward, completing at **06:47:04.533 UTC** in
+6.293 seconds. Other font/image URLs were not re-requested in this post-pass
+HTTP check; their current source/dist identities were verified and prior HTTP
+evidence remains historical. Local headers do not establish deployed CDN behavior
+or repeat-visit speed.
+
+## Historical integrated verification — 05:44 build
+
+Production completed at **2026-09-17T05:44:24.928Z** in **9.035 seconds**, producing
+`main-NOO3XGHS.js` / `styles-LJHQOUSH.css`, initial **484.86 kB raw / 130.03 kB
+estimated transfer**. No font or image asset changed in this checkpoint. The
+home-card incremental-hydration candidate was rejected and the original source
+and all 193 compiled baseline files were restored before the canonical pass.
+Its diagnostic measurements are not adopted performance improvements.
+
+The ordinary Angular suite passed **256/256 across 42 files in 5.83 seconds** after
+one corrected amount-format assertion. Re-running those same tests for the rejected
+candidate did not add unique test coverage. Browser evidence is **12 distinct device
+cases** on the API previously verified by **183 backend tests**: related auth,
+recovery and product/cart checks **10/10 in 24.4 seconds**, plus final private-link
+checks **2/2 in 13.9 seconds**. An initial desktop private-link pass remains an
+additional execution of the same case. These are not a new whole-suite 70-case run.
+The backend subsequently passed **185/185** for a bounded validation fix and was
+activated for Lighthouse; the earlier browser checks did not run on that API
+revision. [Guest-tracking frontend](../docs/guest-tracking-frontend.md) and
+[the performance report](../docs/performance-audit.md) retain the exact scopes.
+
+The one complete six-sample Lighthouse pass at **06:01:53.594–06:02:44.386 UTC**
+requested only **`/media/primeicons-subset-E2J67QVD.woff2`** for PrimeIcons, once per
+page, with a **9,568-byte body / 10,483-byte transfer**. Each Noto weight was requested
+once with its pinned body size. Exactly three fonts totaled **104,527 transferred
+bytes per page**, unchanged from the archived complete 05:13 pass. No original
+WOFF2 or EOT/WOFF/TTF/SVG fallback was requested; those source/dependency files remain
+preserved on disk. Image transfer was unchanged. Script transfer increased by
+**1,479 / 1,474 / 1,475 bytes** on home/catalog/product; full-page totals increased
+by **1,480 / 1,471 / 1,477 bytes**. CSS transfer increased **14,168→14,171 bytes**
+and raw CSS **72,714→72,756 bytes**. All timing regressions remain in the separate
+report, including lower mobile performance scores **86/89/90** versus **89/90/92**;
+unchanged font bytes do not establish a causal explanation.
+
+Preflight and post-pass analysis verified four current build files, three Noto/hero
+source/dist assets, reviewed/emitted subset hashes, 13 current report hashes,
+and the baseline's exact **21 archived entries**: 13 reports, four metadata files
+and four original build files. Those originals are included in 21. Settings,
+Lighthouse version, report/build identity, font counts and body lengths also matched
+the declared comparison. Evidence is [verification-0544.json](../artifacts/performance/verification-0544.json),
+with historical [baseline-2026-09-17-0513/](../artifacts/performance/baseline-2026-09-17-0513/)
+preserved. Current reports contain zero run warnings, runtime errors, console-error
+audit items, failed requests or browser API calls; cache/image waste estimates are zero.
+
+After Chrome closed, the read-only subset HTTP check at
+**06:03:14.258–06:03:14.309 UTC** confirmed **200**, `font/woff2`, 9,568 bytes and
+SHA-256 `a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef`, with
+`Cache-Control: public, max-age=31536000, immutable`. Conditional ETag returned
+**304 with an empty body** and the same policy. The
+[new HTTP record](../artifacts/primeicons-http-verification-2026-09-17T06-03-14.258Z.json)
+preserves earlier observations. No verification requests ran during timing;
+development port 4200 restarted afterward, completing at **06:03:52.496 UTC**.
+Other Noto/hero/alias/original-font URLs were not re-requested in this post-pass
+check; their earlier HTTP evidence below remains historical. Local headers do
+not establish deployed CDN behavior or repeat-visit performance.
+
+## Historical integrated verification — 05:09 build
 
 The final production build completed at **2026-09-17T05:09:50.721Z** in **10.283 seconds**,
 producing `main-P6YL7ZPA.js` / `styles-Y3PILGOW.css`, initial **483.50 kB raw /

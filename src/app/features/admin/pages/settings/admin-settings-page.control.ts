@@ -1,5 +1,9 @@
 import { AbstractControl, FormBuilder, ValidationErrors, Validators } from '@angular/forms';
 import { normalizeEgyptMobile } from '@core/utils/egypt-phone.util';
+import { checkoutPiastres } from '@core/utils/checkout-quote.util';
+
+export const ADMIN_SETTINGS_DELIVERY_FEE_ERROR =
+  'أدخل مبلغًا من صفر إلى 10000 ج.م بحد أقصى منزلتين عشريتين، أو اتركه فارغًا.';
 
 export enum AdminSettingsField {
   BrandName = 'brandName',
@@ -196,6 +200,12 @@ function brandName(control: AbstractControl): ValidationErrors | null {
   return value.length >= 2 && value.length <= 100 ? null : { name: true };
 }
 
+function optionalDeliveryFee(control: AbstractControl<number | null>): ValidationErrors | null {
+  return control.value === null || checkoutPiastres(control.value) !== null
+    ? null
+    : { decimals: true };
+}
+
 export function createAdminSettingsForm(builder: FormBuilder) {
   return builder.nonNullable.group({
     brandName: ['', [brandName]],
@@ -208,7 +218,11 @@ export function createAdminSettingsForm(builder: FormBuilder) {
     instagramUrl: ['', [optionalAdminUrl]],
     tiktokUrl: ['', [optionalAdminUrl]],
     youtubeUrl: ['', [optionalAdminUrl]],
-    deliveryFee: builder.control<number | null>(null, [Validators.min(0), Validators.max(10000)]),
+    deliveryFee: builder.control<number | null>(null, [
+      Validators.min(0),
+      Validators.max(10000),
+      optionalDeliveryFee,
+    ]),
     deliveryDays: ['', [Validators.maxLength(100)]],
     maintenanceMode: [false],
   });

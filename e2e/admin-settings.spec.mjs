@@ -103,6 +103,17 @@ test('admin settings validate, persist and restore real Egyptian contact and del
 
     await page.locator('#setting-whatsappNumber').fill('٠١٠١٢٣٤٥٦٧٨');
     await page.locator('#setting-phone').fill('02 2345 6789');
+    await page.locator('#setting-deliveryFee').fill('1.001');
+    await page.getByRole('button', { name: 'حفظ الإعدادات', exact: true }).click();
+    await expect(page.locator('#setting-deliveryFee')).toHaveAttribute('aria-invalid', 'true');
+    await expect(
+      page.getByText('أدخل مبلغًا من صفر إلى 10000 ج.م بحد أقصى منزلتين عشريتين، أو اتركه فارغًا.'),
+    ).toBeVisible();
+    expect(saveCount).toBe(0);
+    await page.screenshot({
+      path: testInfo.outputPath('delivery-fee-precision-error.png'),
+      fullPage: true,
+    });
     await page.locator('#setting-deliveryFee').fill('0');
     await page.locator('#setting-deliveryDays').fill('مدة اختبار محلي مؤقتة');
     const firstSave = waitForSave();

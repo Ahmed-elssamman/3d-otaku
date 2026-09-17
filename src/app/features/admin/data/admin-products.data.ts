@@ -107,3 +107,9 @@ export const PRODUCTION_TIME_UNIT_OPTIONS: AdminEnumOption<ProductionTimeUnit>[]
 ];
 
 export const MODEL_UPLOAD_HELP_TEXT = `${SUPPORTED_MODEL_FORMATS_LABEL} · الحد الأقصى ${MAX_MODEL_UPLOAD_SIZE_LABEL}`;
+export const ADMIN_PRODUCT_MUTATION_TEXT = {
+  review:
+    'لم يتأكد الحذف أو تغيّرت نسخة المنتج. حمّل القائمة الحالية وراجع المنتج قبل تأكيد حذف جديد؛ لن نكرر الحذف تلقائيًا.',
+  deleted: 'المنتج غير متاح أو حُذف بالفعل. حمّل القائمة الحالية للتحقق.',
+  reload: 'تحميل القائمة الحالية للمراجعة',
+};

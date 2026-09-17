@@ -9,6 +9,7 @@ import { AdminSettings } from '../../models/admin-settings.model';
 import { normalizeEgyptMobile } from '@core/utils/egypt-phone.util';
 import { environment } from '../../../../../environments/environment';
 import {
+  ADMIN_SETTINGS_DELIVERY_FEE_ERROR,
   ADMIN_SETTINGS_INPUT,
   ADMIN_SETTINGS_SECTIONS,
   createAdminSettingsForm,
@@ -38,6 +39,7 @@ export class AdminSettingsPageComponent {
   savedMessage = signal('');
   attemptedSubmit = signal(false);
   inputTypes = ADMIN_SETTINGS_INPUT;
+  deliveryFeeError = ADMIN_SETTINGS_DELIVERY_FEE_ERROR;
   canSave = computed(
     () =>
       !this.isLoading() &&

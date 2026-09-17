@@ -107,6 +107,7 @@ export class ManufacturingReviewComponent {
   canUnpublish = computed(
     () =>
       this.product().isActive &&
+      this.product().revision !== null &&
       !this.busy() &&
       !this.productEditorBusy() &&
       !this.productEditorDirty() &&
@@ -305,10 +306,11 @@ export class ManufacturingReviewComponent {
   }
 
   unpublishProduct(): void {
-    if (!this.canUnpublish()) return;
+    const product = this.product();
+    if (!this.canUnpublish() || product.revision === null) return;
     this.begin(ManufacturingAction.Unpublishing);
     this.manufacturingService
-      .unpublishProduct(this.product().id)
+      .unpublishProduct(product.id, product.revision)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.action.set(ManufacturingAction.Idle)),

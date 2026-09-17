@@ -1,5 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Location } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { filter, map } from 'rxjs';
 import { AppHeaderComponent } from '@shared/components/app-header/app-header.component';
 import { AppFooterComponent } from '@shared/components/app-footer/app-footer.component';
 
@@ -10,4 +13,18 @@ import { AppFooterComponent } from '@shared/components/app-footer/app-footer.com
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
 })
-export class MainLayoutComponent {}
+export class MainLayoutComponent {
+  private location = inject(Location);
+  private router = inject(Router);
+  private currentPath = toSignal(
+    this.router.events.pipe(
+      filter((event) => event instanceof NavigationEnd),
+      map(() => this.location.path()),
+    ),
+    { initialValue: this.location.path() },
+  );
+
+  contentLink = computed(() =>
+    this.location.prepareExternalUrl(`${this.currentPath()}#main-content`),
+  );
+}

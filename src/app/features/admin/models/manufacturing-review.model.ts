@@ -45,6 +45,7 @@ export interface QuoteManufacturingReviewRequest {
 }
 
 export interface UnpublishManufacturingProductRequest {
+  expectedRevision: number;
   isActive: boolean;
 }
 

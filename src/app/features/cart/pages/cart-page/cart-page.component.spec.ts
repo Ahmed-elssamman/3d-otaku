@@ -139,6 +139,123 @@ describe('Egyptian guest checkout', () => {
     expect(component.showReceipt()).toBe(false);
   });
 
+  it('renders truthful zero-submission storage feedback and rechecks without sending or discarding the draft', async () => {
+    const draft = component.deliveryForm.getRawValue();
+    const fixture = TestBed.createComponent(CartPageComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.deliveryForm.patchValue(draft);
+    component.submitOrder();
+    const setItem = Storage.prototype.setItem;
+    const write = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === ORDER_STORAGE_KEYS.pendingSubmission)
+        throw new DOMException('Full', 'QuotaExceededError');
+      setItem.call(this, key, value);
+    });
+    flushQuote();
+    await fixture.whenStable();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    expect(component.isSubmittingOrder()).toBe(false);
+    expect(component.isQuoting()).toBe(false);
+    expect(component.submitError()).toBe('');
+    const feedback: HTMLElement | null = fixture.nativeElement.querySelector(
+      '#checkout-storage-feedback',
+    );
+    expect(feedback?.textContent).toContain('فلم نرسل الطلب');
+    expect(fixture.nativeElement.textContent).not.toContain('لم نتمكن من تأكيد استلام الطلب');
+    expect(component.deliveryForm.getRawValue()).toEqual(draft);
+    expect(cart.itemCount()).toBe(2);
+    write.mockRestore();
+    component.recheckCheckoutStorage();
+    await fixture.whenStable();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    http.expectNone(`${environment.apiBaseUrl}/orders/quote`);
+    expect(fixture.nativeElement.querySelector('#checkout-storage-feedback')).toBeNull();
+    expect(component.deliveryForm.getRawValue()).toEqual(draft);
+    expect(cart.itemCount()).toBe(2);
+  });
+
+  it('keeps corrupt pending state locked and offers storage checking and contact without exposing the raw record', async () => {
+    const raw = '{private-corrupt-recovery-data';
+    sessionStorage.setItem(ORDER_STORAGE_KEYS.pendingSubmission, raw);
+    orders.recheckPendingStorage();
+    const fixture = TestBed.createComponent(CartPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.componentInstance.submitOrder();
+    fixture.componentInstance.recheckCheckoutStorage();
+    await fixture.whenStable();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    http.expectNone(`${environment.apiBaseUrl}/orders/quote`);
+    expect(fixture.nativeElement.textContent).toContain(
+      'تعذّر التحقق من بيانات محاولة الطلب المحفوظة',
+    );
+    expect(fixture.nativeElement.textContent).toContain('إعادة فحص التخزين');
+    expect(fixture.nativeElement.textContent).not.toContain(raw);
+    expect(fixture.nativeElement.textContent).not.toContain('إعادة محاولة الطلب السابق');
+    const contactLink: HTMLAnchorElement | null =
+      fixture.nativeElement.querySelector('a[href="/contact"]');
+    expect(contactLink?.textContent).toContain('التواصل مع المتجر');
+    expect(sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission)).toBe(raw);
+    expect(cart.itemCount()).toBe(2);
+  });
+
+  it('shows a successful receipt with a cleanup warning until storage recovery completes without another order', async () => {
+    const draft = component.deliveryForm.getRawValue();
+    const fixture = TestBed.createComponent(CartPageComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.deliveryForm.patchValue(draft);
+    submitWithQuote();
+    const request = http.expectOne(`${environment.apiBaseUrl}/orders`);
+    const removeItem = Storage.prototype.removeItem;
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+    ) {
+      if (key === ORDER_STORAGE_KEYS.pendingSubmission)
+        throw new DOMException('Blocked', 'SecurityError');
+      removeItem.call(this, key);
+    });
+    request.flush({
+      success: true,
+      data: {
+        id: 'stored-order',
+        orderNumber: 'OTK-STORAGE',
+        items: [],
+        customer: request.request.body.customer,
+        subtotal: 500,
+        total: 500,
+        deliveryFee: 0,
+        deliveryFeeConfirmed: false,
+        status: OrderStatus.PENDING,
+        trackingToken: 'a'.repeat(64),
+        createdAt: '2026-09-17T06:00:00Z',
+      },
+    });
+    await fixture.whenStable();
+    expect(component.showReceipt()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#receipt-title')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('#checkout-storage-feedback')?.textContent,
+    ).toContain('وصل إيصال الطلب');
+    expect(orders.hasPendingSubmission()).toBe(true);
+    remove.mockRestore();
+    component.recheckCheckoutStorage();
+    await fixture.whenStable();
+    http.expectNone(`${environment.apiBaseUrl}/orders`);
+    expect(component.showReceipt()).toBe(true);
+    expect(fixture.nativeElement.querySelector('#checkout-storage-feedback')).toBeNull();
+    expect(orders.hasPendingSubmission()).toBe(false);
+    expect(orders.receipt()?.orderNumber).toBe('OTK-STORAGE');
+  });
+
   it('renders the refreshed confirmed shipping and discount without continuing to promise an unknown fee', async () => {
     const receipt: OrderApiRecord = {
       id: 'order-shipping-receipt',

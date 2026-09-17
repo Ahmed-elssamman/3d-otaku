@@ -14,10 +14,13 @@ import {
 import { AdminProductFormPageComponent } from './admin-product-form-page.component';
 import { emptyManufacturingInputs } from '../../components/manufacturing-review/manufacturing-review.component.control';
 import { apiErrorInterceptor } from '@core/interceptors/api-error.interceptor';
+import { UploadService } from '@core/services/upload.service';
+import { ADMIN_PRODUCT_LIMITS } from './admin-product-form-page.control';
 
 function manufacturingCandidate(): AdminProductRecord {
   return {
     id: 'start-review-candidate',
+    revision: 0,
     name: 'Local review candidate',
     slug: 'local-review-candidate',
     category: ProductCategory.DESK_MODELS,
@@ -180,10 +183,12 @@ describe('Admin product editing', () => {
       price: 0,
     });
     component.saveProduct(true);
-    http.expectOne(`${environment.apiBaseUrl}/admin/products`).flush(
-      { success: false, message: 'Draft required', errors: { isActive: ['Start unpublished.'] } },
-      { status: 422, statusText: 'Unprocessable Entity' },
-    );
+    http
+      .expectOne(`${environment.apiBaseUrl}/admin/products`)
+      .flush(
+        { success: false, message: 'Draft required', errors: { isActive: ['Start unpublished.'] } },
+        { status: 422, statusText: 'Unprocessable Entity' },
+      );
     expect(component.isSubmitting()).toBe(false);
     expect(component.isEditMode()).toBe(false);
     expect(component.existingProduct()).toBeNull();
@@ -427,6 +432,7 @@ describe('Admin product editing', () => {
 
   it('keeps an imported draft editable while publication awaits real manufacturing review', () => {
     const draft: AdminProductRecord = {
+      revision: 0,
       id: 'review-draft',
       name: 'Licensed draft',
       slug: 'licensed-draft',
@@ -573,5 +579,311 @@ describe('Admin product editing', () => {
     ).toEqual([{ value: ProductCategory.DESK_MODELS, label: 'قطع المكتب' }]);
     component.productForm.controls.category.setValue(' ');
     expect(component.productForm.controls.category.invalid).toBe(true);
+  });
+
+  it('locks every editor control and programmatic upload path until a delayed save completes', () => {
+    const product = loadCandidate(enrolledCandidate({ ...manufacturingCandidate(), price: 0 }));
+    component.productForm.controls.description.setValue('Saved inactive draft');
+    component.saveProduct(true);
+    const save = http.expectOne(`${environment.apiBaseUrl}/admin/products/${product.id}`);
+    expect(save.request.body.expectedRevision).toBe(0);
+    expect(save.request.body.discountPrice).toBeNull();
+    expect(component.productForm.disabled).toBe(true);
+    expect(component.productForm.controls.name.disabled).toBe(true);
+    expect(component.productForm.controls.price.disabled).toBe(true);
+    expect(component.productForm.controls.modelUrl.disabled).toBe(true);
+    const event = new Event('change');
+    component.onMainImageFileSelected(event);
+    component.onPosterImageSelected(event);
+    component.onSocialImageSelected(event);
+    component.onGalleryImagesSelected(event);
+    component.onModelFileSelected(event);
+    component.removeGalleryImage(0);
+    component.saveProduct(true);
+    component.cancel();
+    http.expectNone((request) => request.method !== 'GET');
+    expect(TestBed.inject(Router).navigate).not.toHaveBeenCalled();
+    save.flush({
+      success: true,
+      message: 'Saved',
+      data: { ...product, description: 'Saved inactive draft', revision: 1 },
+    });
+    expect(component.isSubmitting()).toBe(false);
+    expect(component.productForm.controls.name.enabled).toBe(true);
+    expect(component.productForm.controls.price.value).toBe(0);
+    expect(component.productForm.controls.isActive.disabled).toBe(true);
+    expect(component.productEditorDirty()).toBe(false);
+    component.productForm.controls.description.setValue('Next explicit edit');
+    component.saveProduct(true);
+    const next = http.expectOne(`${environment.apiBaseUrl}/admin/products/${product.id}`);
+    expect(next.request.body.expectedRevision).toBe(1);
+    next.flush({
+      success: true,
+      message: 'Saved',
+      data: { ...product, description: 'Next explicit edit', revision: 2 },
+    });
+  });
+
+  it('retains invalid money and null discount on a definite 422 and uses the same loaded revision after correction', () => {
+    const product = loadCandidate();
+    component.productForm.patchValue({
+      price: 1.001,
+      discountPrice: null,
+      description: 'Keep this draft',
+    });
+    component.saveProduct(true);
+    http.expectOne(`${environment.apiBaseUrl}/admin/products/${product.id}`).flush(
+      {
+        success: false,
+        message: 'Invalid price',
+        errors: { price: ['Use at most two decimals.'] },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    expect(component.productForm.controls.price.value).toBe(1.001);
+    expect(component.productForm.controls.discountPrice.value).toBeNull();
+    expect(component.productForm.controls.description.value).toBe('Keep this draft');
+    expect(component.productForm.controls.price.enabled).toBe(true);
+    expect(component.productSaveConflict()).toBe(false);
+    expect(component.saveError()).toBe(component.saveText.rejectedUpdate);
+    expect(component.fieldMessages()['field-price']).toContain('لم يقبل الخادم');
+    component.productForm.controls.price.setValue(0);
+    component.saveProduct(true);
+    const correction = http.expectOne(`${environment.apiBaseUrl}/admin/products/${product.id}`);
+    expect(correction.request.body).toMatchObject({
+      expectedRevision: 0,
+      price: 0,
+      discountPrice: null,
+      isActive: false,
+    });
+    correction.flush({
+      success: true,
+      message: 'Saved',
+      data: { ...product, price: 0, description: 'Keep this draft', revision: 1 },
+    });
+  });
+
+  it('preserves a stale draft until explicit review and merges local changes without restoring an old publication state', () => {
+    const product = loadCandidate({
+      ...manufacturingCandidate(),
+      isActive: true,
+      finish: 'Matte',
+      color: 'Green',
+      size: '12 cm',
+      weight: '40 g',
+      printTime: '3 hours',
+    });
+    component.productForm.patchValue({ description: 'Local description', price: 275 });
+    component.saveProduct(true);
+    const url = `${environment.apiBaseUrl}/admin/products/${product.id}`;
+    const save = http.expectOne(url);
+    expect(save.request.body.expectedRevision).toBe(0);
+    save.flush(
+      { success: false, message: 'Stale product', errors: { expectedRevision: ['Reload.'] } },
+      { status: 409, statusText: 'Conflict' },
+    );
+    expect(component.productForm.controls.description.value).toBe('Local description');
+    expect(component.productForm.controls.isActive.value).toBe(true);
+    expect(component.productForm.controls.name.enabled).toBe(true);
+    expect(component.canSaveProduct()).toBe(false);
+    component.saveProduct(true);
+    http.expectNone(url);
+    component.loadProductForReview();
+    const current = {
+      ...product,
+      isActive: false,
+      revision: 3,
+      name: 'New server name',
+      price: 290,
+      image: '/uploads/new.webp',
+    };
+    http.expectOne(url).flush({ success: true, message: 'Current', data: current });
+    expect(component.productForm.controls.name.value).toBe(product.name);
+    expect(component.productForm.controls.description.value).toBe('Local description');
+    expect(component.canSaveProduct()).toBe(false);
+    expect(component.conflictFields()).toContainEqual({
+      key: 'isActive',
+      label: 'منشور في المتجر',
+      current: 'لا',
+      local: 'نعم',
+    });
+    component.productForm.controls.description.setValue('Local description after reload');
+    component.keepLocalProductChanges();
+    expect(component.productForm.controls.name.value).toBe('New server name');
+    expect(component.productForm.controls.mainImage.value).toBe('/uploads/new.webp');
+    expect(component.productForm.controls.description.value).toBe('Local description after reload');
+    expect(component.productForm.controls.price.value).toBe(275);
+    expect(component.productForm.controls.isActive.value).toBe(false);
+    expect(component.productEditorDirty()).toBe(true);
+    http.expectNone(url);
+    component.saveProduct(true);
+    const retry = http.expectOne(url);
+    expect(retry.request.body).toMatchObject({
+      expectedRevision: 3,
+      isActive: false,
+      name: 'New server name',
+      description: 'Local description after reload',
+      price: 275,
+    });
+    retry.flush({
+      success: true,
+      message: 'Saved',
+      data: { ...current, description: 'Local description after reload', price: 275, revision: 4 },
+    });
+  });
+
+  it('keeps a draft locked when conflict recovery fails or the server has no usable revision', () => {
+    const product = loadCandidate({ ...manufacturingCandidate(), revision: null });
+    component.productForm.controls.description.setValue('Retain while unavailable');
+    component.saveProduct(true);
+    const url = `${environment.apiBaseUrl}/admin/products/${product.id}`;
+    http.expectNone(url);
+    expect(component.productRevisionUnavailable()).toBe(true);
+    component.loadProductForReview();
+    http
+      .expectOne(url)
+      .flush({ success: false, message: 'Deleted' }, { status: 404, statusText: 'Not Found' });
+    expect(component.conflictLoadError()).toBe(component.saveText.deleted);
+    expect(component.productForm.controls.description.value).toBe('Retain while unavailable');
+    expect(component.canSaveProduct()).toBe(false);
+    component.loadProductForReview();
+    http.expectOne(url).flush({
+      success: true,
+      message: 'Current',
+      data: { ...product, description: 'Current server copy', revision: 2 },
+    });
+    component.discardLocalProductChanges();
+    expect(component.productForm.controls.description.value).toBe('Current server copy');
+    expect(component.productEditorDirty()).toBe(false);
+    expect(component.canSaveProduct()).toBe(true);
+    http.expectNone(url);
+  });
+
+  it('rejects an oversized gallery and safety note without truncation, then accepts an empty inactive draft after correction', () => {
+    const gallery = Array.from(
+      { length: ADMIN_PRODUCT_LIMITS.gallery + 1 },
+      (_, index) => `/uploads/product.webp#image-${index}`,
+    ).join(', ');
+    const safetyNote = 'س'.repeat(ADMIN_PRODUCT_LIMITS.safetyNote + 1);
+    component.productForm.patchValue({
+      name: 'مسودة محلية',
+      category: ProductCategory.DESK_MODELS,
+      material: ProductMaterial.PLA_PLUS,
+      price: 0,
+      galleryImages: gallery,
+      safetyNote,
+    });
+    component.saveProduct(true);
+    http.expectNone((request) => request.method === 'POST');
+    expect(component.productForm.controls.galleryImages.value).toBe(gallery);
+    expect(component.productForm.controls.safetyNote.value).toBe(safetyNote);
+    expect(component.validationErrors().map((error) => error.id)).toEqual(
+      expect.arrayContaining(['field-gallery-images', 'field-safety-note']),
+    );
+    expect(component.fieldMessages()['field-gallery-images']).toContain('30');
+    expect(component.fieldMessages()['field-safety-note']).toContain('5000');
+    component.productForm.patchValue({ galleryImages: '', safetyNote: '' });
+    expect(component.productForm.valid).toBe(true);
+    component.saveProduct(true);
+    const saved = http.expectOne(`${environment.apiBaseUrl}/admin/products`);
+    expect(saved.request.body).toMatchObject({
+      price: 0,
+      discountPrice: null,
+      gallery: [],
+      safetyNote: '',
+      isActive: false,
+      modelUrl: '',
+      posterImage: null,
+      productionTimeMin: null,
+      productionTimeMax: null,
+      productionTimeUnit: null,
+    });
+    saved.flush({
+      success: true,
+      message: 'Saved',
+      data: enrolledCandidate({ ...manufacturingCandidate(), ...saved.request.body }),
+    });
+  });
+
+  it('rejects gallery files beyond remaining capacity before uploading and preserves the existing draft', () => {
+    const gallery = Array.from(
+      { length: ADMIN_PRODUCT_LIMITS.gallery - 1 },
+      (_, index) => `/uploads/saved-${index}.webp`,
+    ).join(', ');
+    component.productForm.patchValue({
+      galleryImages: gallery,
+      description: 'Keep this description',
+    });
+    const before = component.productForm.getRawValue();
+    const upload = vi.spyOn(TestBed.inject(UploadService), 'uploadImage');
+    const input = document.createElement('input');
+    input.type = 'file';
+    Object.defineProperty(input, 'files', {
+      value: [
+        new File(['a'], 'a.webp', { type: 'image/webp' }),
+        new File(['b'], 'b.webp', { type: 'image/webp' }),
+      ],
+    });
+    const event = new Event('change');
+    Object.defineProperty(event, 'target', { value: input });
+    component.onGalleryImagesSelected(event);
+    expect(upload).not.toHaveBeenCalled();
+    expect(component.gallerySelectionError()).toContain('المتبقية في المعرض 1 صورة');
+    expect(component.gallerySelectionError()).toContain('لم نرفع أي ملف');
+    expect(component.productForm.getRawValue()).toEqual(before);
+    expect(component.isUploadingGallery()).toBe(false);
+    http.expectNone((request) => request.method === 'POST');
+  });
+
+  it('maps definite server-only creation errors to fields and clears only the corrected values without uncertain-creation copy', () => {
+    component.productForm.patchValue({
+      name: 'Local draft',
+      category: ProductCategory.DESK_MODELS,
+      material: ProductMaterial.PLA_PLUS,
+      price: 0,
+      mainImage: '/uploads/first.webp',
+    });
+    component.saveProduct(true);
+    http.expectOne(`${environment.apiBaseUrl}/admin/products`).flush(
+      {
+        success: false,
+        message: 'Server-only validation',
+        errors: {
+          image: ['<img src=x onerror=alert(1)>'],
+          category: ['Additional server restriction.'],
+          constructor: ['Do not display this unsupported key.'],
+        },
+      },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    expect(component.saveError()).toBe(component.saveText.rejectedCreate);
+    expect(component.saveError()).not.toContain('لم يتم تأكيد');
+    expect(component.isEditMode()).toBe(false);
+    expect(component.existingProduct()).toBeNull();
+    expect(component.fieldErrors()['field-main-image']).toBe(true);
+    expect(component.fieldErrors()['field-category']).toBe(true);
+    expect(component.fieldMessages()['field-main-image']).toContain('لم يقبل الخادم');
+    expect(Object.values(component.fieldMessages()).join(' ')).not.toContain('<img');
+    expect(component.validationErrors()).toHaveLength(2);
+    component.productForm.controls.mainImage.setValue('/uploads/corrected.webp');
+    expect(component.fieldErrors()['field-main-image']).toBe(false);
+    expect(component.fieldErrors()['field-category']).toBe(true);
+    component.saveProduct(true);
+    http.expectNone((request) => request.method === 'POST');
+    component.productForm.controls.category.setValue('تصنيف مصحح');
+    component.saveProduct(true);
+    const retry = http.expectOne(`${environment.apiBaseUrl}/admin/products`);
+    expect(retry.request.body).toMatchObject({
+      image: '/uploads/corrected.webp',
+      category: 'تصنيف مصحح',
+      price: 0,
+      discountPrice: null,
+      isActive: false,
+    });
+    retry.flush({
+      success: true,
+      message: 'Created',
+      data: enrolledCandidate({ ...manufacturingCandidate(), ...retry.request.body }),
+    });
   });
 });

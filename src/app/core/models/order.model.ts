@@ -129,3 +129,8 @@ export interface PendingOrderSubmission {
   payload: string;
   state: PendingOrderState;
 }
+
+export interface ResolvedOrderSubmission {
+  submission: PendingOrderSubmission;
+  order: Order;
+}

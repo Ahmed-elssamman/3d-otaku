@@ -1,6 +1,8 @@
 import { ApiErrorResponse } from '@core/models/api-response.model';
 import { Order } from '@core/models/order.model';
 
+export const ORDER_TRACKING_CONTENT_ANCHOR = 'main-content';
+
 export const ORDER_TRACKING_TEXT = {
   title: 'متابعة طلبك',
   description: 'راجع حالة الطلب وتفاصيله المحفوظة من رابط المتابعة الخاص بك.',

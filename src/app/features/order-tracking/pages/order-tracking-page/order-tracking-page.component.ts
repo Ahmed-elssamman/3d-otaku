@@ -35,6 +35,7 @@ import {
 } from '../../../orders/orders.control';
 import { OrderTrackingState } from './order-tracking-page.enum';
 import {
+  ORDER_TRACKING_CONTENT_ANCHOR,
   ORDER_TRACKING_TEXT,
   isUsableTrackedOrder,
   trackingErrorMessage,
@@ -146,6 +147,11 @@ export class OrderTrackingPageComponent implements OnInit {
 
   private captureFragment(fragment: string): void {
     const normalized = fragment.replace(/^#/, '');
+    if (normalized === ORDER_TRACKING_CONTENT_ANCHOR) {
+      if (this.state() === OrderTrackingState.Initializing)
+        this.state.set(OrderTrackingState.Missing);
+      return;
+    }
     const browser = this.document.defaultView;
     try {
       browser?.history.replaceState(

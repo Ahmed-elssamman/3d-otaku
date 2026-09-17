@@ -80,7 +80,7 @@
               الحقل الفارغ يعني أن الرسوم غير مؤكدة بعد. القيمة صفر تعني توصيلًا بدون رسوم.
             </p>
             @if (invalidFee()) {
-              <p class="field-error">أدخل قيمة من صفر إلى 10000 ج.م أو اتركها فارغة.</p>
+              <p class="field-error">{{ deliveryFeeError }}</p>
             }
           </div>
           <div class="settings-field field-wide">

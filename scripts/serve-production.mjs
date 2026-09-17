@@ -53,7 +53,9 @@ await stat(path.join(directory, 'index.csr.html')).catch(() => {
   throw new Error('Production build missing. Run npm run build first.');
 });
 process.env.STORE_API_ORIGIN = apiOrigin.origin;
-const { renderStorefront } = await import('../dist/3d-otaku/server/server.mjs');
+// This loopback-only preview receives browsers directly, never through a trusted edge.
+process.env.STORE_TRUSTED_PROXY_ADDRESSES = '';
+const { renderStorefrontFromNodeRequest } = await import('../dist/3d-otaku/server/server.mjs');
 
 function securityHeaders(response, html = '') {
   const scriptHashes = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)]
@@ -74,16 +76,20 @@ function proxy(request, response) {
   const destination = new URL(apiOrigin);
   destination.pathname = requestedUrl.pathname;
   destination.search = requestedUrl.search;
+  const headers = { ...request.headers };
+  for (const name of Object.keys(headers)) {
+    if (name.startsWith('x-forwarded-') || name === 'forwarded' || name === 'x-real-ip') {
+      delete headers[name];
+    }
+  }
+  headers.host = apiOrigin.host;
+  headers['x-forwarded-host'] = request.headers.host;
+  headers['x-forwarded-proto'] = 'http';
   const upstream = http.request(
     destination,
     {
       method: request.method,
-      headers: {
-        ...request.headers,
-        host: apiOrigin.host,
-        'x-forwarded-host': request.headers.host || `127.0.0.1:${port}`,
-        'x-forwarded-proto': 'http',
-      },
+      headers,
     },
     (upstreamResponse) => {
       const headers = { ...upstreamResponse.headers };
@@ -114,8 +120,8 @@ function acceptsEncoding(header, encoding) {
   });
 }
 
-async function serveDocument(request, response, url) {
-  const rendered = await renderStorefront(new Request(url, { method: 'GET' }));
+async function serveDocument(request, response) {
+  const rendered = await renderStorefrontFromNodeRequest(request);
   if (!rendered) {
     response.writeHead(404, { 'Cache-Control': 'no-store' }).end('Page not found.');
     return;
@@ -139,17 +145,46 @@ async function serveDocument(request, response, url) {
   response.end(request.method === 'HEAD' ? null : body);
 }
 
+function validatedRequestUrl(request) {
+  const authority = request.headers.host;
+  const target = request.url || '';
+  if (
+    typeof authority !== 'string' ||
+    !authority ||
+    /[\s/\\?#@]/.test(authority) ||
+    !target.startsWith('/') ||
+    target.startsWith('//') ||
+    target.includes('\\') ||
+    target.includes('#')
+  )
+    return null;
+  try {
+    const origin = new URL(`http://${authority}`);
+    if (
+      !localHosts.has(origin.hostname) ||
+      origin.port !== String(port) ||
+      origin.username ||
+      origin.password ||
+      origin.pathname !== '/' ||
+      origin.search ||
+      origin.hash
+    )
+      return null;
+    const url = new URL(target, origin);
+    return url.origin === origin.origin ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 const server = http.createServer(async (request, response) => {
   securityHeaders(response);
   try {
-    const origin = new URL(`http://${request.headers.host || `127.0.0.1:${port}`}`);
-    if (!localHosts.has(origin.hostname) || origin.port !== String(port)) {
-      response.writeHead(400, { 'Cache-Control': 'no-store' }).end('Invalid host.');
-      return;
-    }
-    const url = new URL(request.url, origin);
-    if (url.origin !== origin.origin) {
-      response.writeHead(400).end('Invalid request origin.');
+    const url = validatedRequestUrl(request);
+    if (!url) {
+      response
+        .writeHead(400, { 'Cache-Control': 'no-store' })
+        .end('Invalid request authority or target.');
       return;
     }
     const pathname = decodeURIComponent(url.pathname);
@@ -173,7 +208,7 @@ const server = http.createServer(async (request, response) => {
         response.writeHead(404, { 'Cache-Control': 'no-store' }).end('Asset not found.');
         return;
       }
-      await serveDocument(request, response, url);
+      await serveDocument(request, response);
       return;
     }
     const extension = path.extname(filename);

@@ -2,7 +2,39 @@
 
 The historical verification below began locally on 16 September 2026 against port 4200 and the isolated API on port 4000. No production data was changed. The latest checkpoint uses production preview port 4300; its device results are distinguished below. Performance measurements are separate evidence in the [performance audit](performance-audit.md).
 
-## Current private-tracking verification — 17 September, 05:44 UTC build
+## Current scoped product-editor verification — 17 September, 07:31 UTC build
+
+Final production **`main-BOWHSGTL.js` / `styles-LJHQOUSH.css`** completed at **`2026-09-17T07:31:16.112Z` in 10.070 seconds**, initial **488.14 kB raw / 131.20 kB estimated transfer**; identity: `artifacts/performance/current-0731-build-identity.json`. The full Angular suite passed **291/291 across 44 files in 6.21 seconds** (`artifacts/admin-product-bounds-angular-tests.log`); backend passed **201 tests**.
+
+The affected administrator scope passed **10/10 distinct device cases in one corrected invocation, 1.4 minutes**: five scenarios on desktop and mobile covering delayed save locking, 31-image gallery rejection, stale deletion confirmation/review, manufacturing approval, stale manufacturing review, explicit stale-form merge and legacy-copy review requirements. These scenarios use real local API responses and disposable inactive products. The health fixture waited **13 seconds** after observing **129 requests remaining**, respecting the actual quota. Report: `artifacts/playwright-2026-09-17-product-edit-corrected/report`; log: `artifacts/admin-product-edit-corrected-browser.log`.
+
+The retained first invocation has **one failed desktop case at 12.6 seconds and nine unrun cases**. It reached DELETE 200 and the visible empty list, then failed because CDP no longer retained the subsequent list response body for `response.json()`. The fixture correction checks browser GET 200, the empty UI and a fresh read-only filtered API response with zero records. Application source/build remained unchanged; the successful invocation was not a timing retake. Original evidence: `artifacts/playwright-2026-09-17-product-edit-safety/report` and `artifacts/admin-product-edit-browser.log`.
+
+This is a ten-case administrator verification, not a new full public-page or complete-project pass. [Product edit safety](admin-product-edit-safety.md) records contracts, field bounds, retained unit/compiler history and screenshots. Desktop save-lock/comparison and mobile comparison captures were inspected; the mobile capture contains a transient toast over the heading, while the lower comparison and actions remain responsive. Earlier public/storage/tracking coverage stays scoped to its dated builds below. Performance remains separate evidence in [performance-audit.md](performance-audit.md).
+
+<a id="current-storage-and-skip-link-verification--17-september-0641-utc-build"></a>
+
+## Historical storage and skip-link verification — 17 September, 06:41 UTC build
+
+Final production **`main-XQERADW5.js` / `styles-LJHQOUSH.css`** completed at **`2026-09-17T06:41:26.504Z` in 9.331 seconds**, initial **488.13 kB raw / 131.14 kB estimated transfer**. Identity: `artifacts/performance/current-0641-build-identity.json`. The full Angular suite passed **278/278 across 43 files in 5.70 seconds**, with test bundle completion at **`2026-09-17T06:40:52.069Z` in 6.010 seconds**; backend passed **192 tests**. The successful unit log is `artifacts/skip-link-corrected-angular-tests.log`. Its preceding **277-pass / 1-failure** run exposed a `SpyLocation` fixture mismatch (duplicated base path and omitted query), corrected using real `Location`, `MockPlatformLocation` and `APP_BASE_HREF`; the failed log remains `artifacts/skip-link-final-angular-tests.log`.
+
+| Invocation | Actual result and build | Retained report / log |
+| --- | --- | --- |
+| Initial desktop scope | **9 passed, 1 failed, 10 not run; 32.6 seconds**, on 06:34 `main-A4UN3ZC3.js`. The guest skip link caused a real navigation defect. | `artifacts/playwright-2026-09-17-storage-money-final/report`; `artifacts/storage-money-browser-final.log` |
+| Corrected desktop scope | **3/3 passed in 8.7 seconds**, on final 06:41. Covers SSR/no-JavaScript HTML across three public routes, search-query navigation, and guest tracking. | `artifacts/playwright-2026-09-17-skip-link-desktop/report`; `artifacts/skip-link-desktop-browser.log` |
+| Final mobile scope | **12/12 passed in 39.5 seconds**, on final 06:41. Covers all ten original scenarios plus the SSR and search-query cases. | `artifacts/playwright-2026-09-17-storage-skip-mobile/report`; `artifacts/storage-skip-mobile-browser.log` |
+
+This is **24 distinct device cases across scoped runs: 15 on final 06:41 and 9 on preceding 06:34**. It is not 24 cases on the final build, one uninterrupted run, or a complete 37-scenario suite. The twelve-scenario scope includes settings precision, two checkout-pricing cases, lost guest-response recovery, SSR document content, cart hydration, delayed account prefill, two storage cases, catalog search/history, product/cart media and guest tracking.
+
+The initial browser failure was an application bug: native `href="#main-content"` resolved against `<base href="/">`, taking the customer from `/track` to `/#main-content`. The shared layout now derives a native href from the current path/query and deployment base; fragment credentials are excluded. The final guest scenario verifies keyboard focus reaches `#main-content`, the URL remains `/track#main-content`, the receipt stays visible, and tracking is not repeated. The SSR case checks the generated link without JavaScript; search checks query preservation. This application correction is separate from the failed `SpyLocation` unit fixture.
+
+The two new storage scenarios passed on both devices (**4 cases**), on unchanged storage source across those builds. Blocked writes send no order POST; the explicit storage check sends no request; the later explicit submit creates exactly one real order and failed local cleanup completes without another POST. Reloaded read-denied and corrupt seeded pending records remain locked and preserve the cart/draft. These are narrow storage hooks and real backend responses, with no fabricated network success or production-limit bypass. The storage cases assert no horizontal overflow or page/console errors and save four viewport screenshots per device. [Checkout storage safety](checkout-storage-safety.md) records the 14 initial storage unit cases plus two refreshed-receipt regressions and their earlier 274/276 checkpoints.
+
+Performance and final catalog-preservation evidence are maintained separately in the [performance audit](performance-audit.md) and [implementation progress](implementation-progress.md#current-verification-evidence); these functional passes do not establish a new performance measurement.
+
+<a id="current-private-tracking-verification--17-september-0544-utc-build"></a>
+
+## Historical private-tracking verification — 17 September, 05:44 UTC build
 
 The new `/track` page opens a copied private guest-receipt link without signing in. It removes credentials from the URL fragment before its GET, provides explicit saved-receipt resume after reload, and preserves the cart and pending checkout. The full Angular suite passed **256/256 across 42 files in 5.83 seconds** after one corrected amount-format assertion; backend passed **183/183**. Production `main-NOO3XGHS.js` / `styles-LJHQOUSH.css` completed at **`2026-09-17T05:44:24.928Z` in 9.035 seconds**, initial **484.86 kB raw / 130.03 kB estimated transfer**; identity: `artifacts/performance/current-0544-build-identity.json`.
 
@@ -111,7 +143,7 @@ Checkout now obtains a read-only current quote before a new submission. Matching
 
 ## Reproducible browser runs with production rate limits
 
-All eleven browser spec files import `test` and `expect` from `e2e/local-api.fixture.mjs`. Its automatic fixture runs before each scenario and requests only the loopback API's `/api/health`. It matches the draft-8 `RateLimit-Policy` entry with `q=300; w=60` to the corresponding `RateLimit` remaining/reset values. When fewer than 150 requests remain, or health responds with HTTP 429, it waits the server's reported reset time plus one second and checks again. The fixture has a separate 90-second timeout; scenario timeouts are unchanged. Missing quota headers, invalid origins, other health failures and insufficient time to wait fail explicitly.
+The browser spec files import `test` and `expect` from `e2e/local-api.fixture.mjs`. Its automatic fixture runs before each scenario and requests only the loopback API's `/api/health`. It matches the draft-8 `RateLimit-Policy` entry with `q=300; w=60` to the corresponding `RateLimit` remaining/reset values. When fewer than 150 requests remain, or health responds with HTTP 429, it waits the server's reported reset time plus one second and checks again. The fixture has a separate 90-second timeout; scenario timeouts are unchanged. Missing quota headers, invalid origins, other health failures and insufficient time to wait fail explicitly.
 
 The reserve covers the inspected individual scenarios; expanding a scenario's request volume requires revisiting that budget. This preflight includes the health read itself and reflects API calls made by SSR as well as browser requests. Logs contain only the project/scenario and numerical remaining/wait values. It does not intercept business requests, retry their assertions, reset limiter stores, spoof client addresses or change production limits. Existing credential-flow trace/screenshot settings are preserved.
 

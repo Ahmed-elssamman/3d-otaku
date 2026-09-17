@@ -1,4 +1,5 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpContext, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { GUEST_ORDER_TRACKING } from '../api/guest-order-tracking.context';
 import { Observable, catchError, defer, map, of, tap, throwError } from 'rxjs';
@@ -10,10 +11,19 @@ import {
   Order,
   OrderApiRecord,
   PendingOrderSubmission,
+  ResolvedOrderSubmission,
   CheckoutQuote,
   CheckoutQuoteRequest,
 } from '../models/order.model';
-import { ORDER_STORAGE_KEYS, ORDER_TRACKING_RESPONSE_MESSAGE } from '../constants/order.constants';
+import {
+  ORDER_STORAGE_KEYS,
+  ORDER_TRACKING_RESPONSE_MESSAGE,
+  ORDER_PENDING_KEY_PATTERN,
+  ORDER_PENDING_STATES,
+  ORDER_STORAGE_ERROR_FIELD,
+  ORDER_STORAGE_MESSAGES,
+} from '../constants/order.constants';
+import { OrderStorageIssue } from '../enums/order-storage-issue.enum';
 import { OrderStatus } from '../enums/order-status.enum';
 import { PendingOrderState } from '../enums/pending-order-state.enum';
 import { environment } from '../../../environments/environment';
@@ -32,6 +42,9 @@ import {
 export class OrderService {
   private api = inject(ApiService);
   private http = inject(HttpClient);
+  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private storageIssueSignal = signal(OrderStorageIssue.None);
+  private resolvedSubmission: ResolvedOrderSubmission | null = null;
   private ordersSignal = signal<Order[]>([]);
   private receiptSignal = signal<Order | null>(this.loadReceipt());
   private pendingSubmission = signal<PendingOrderSubmission | null>(this.loadPendingSubmission());
@@ -41,12 +54,21 @@ export class OrderService {
 
   orders = computed(() => this.ordersSignal());
   receipt = this.receiptSignal.asReadonly();
-  hasPendingSubmission = computed(() => this.pendingSubmission() !== null);
+  storageIssue = this.storageIssueSignal.asReadonly();
+  storageMessage = computed(() => ORDER_STORAGE_MESSAGES[this.storageIssue()]);
+  hasPendingSubmission = computed(
+    () =>
+      this.pendingSubmission() !== null || this.storageIssue() === OrderStorageIssue.Unavailable,
+  );
   canRetryPendingSubmission = computed(
-    () => this.pendingSubmission()?.state === PendingOrderState.UNCERTAIN,
+    () =>
+      this.storageIssue() === OrderStorageIssue.None &&
+      this.pendingSubmission()?.state === PendingOrderState.UNCERTAIN,
   );
   requiresFreshQuoteReview = computed(
-    () => this.pendingSubmission()?.state === PendingOrderState.NOT_RECORDED,
+    () =>
+      this.storageIssue() === OrderStorageIssue.None &&
+      this.pendingSubmission()?.state === PendingOrderState.NOT_RECORDED,
   );
   pendingRequest = computed(() => {
     const pending = this.pendingSubmission();
@@ -54,17 +76,20 @@ export class OrderService {
   });
 
   quoteOrder(request: CheckoutQuoteRequest): Observable<ApiResponse<CheckoutQuote>> {
-    if (this.canRetryPendingSubmission())
-      return throwError(() => this.submissionError('checkoutDetails'));
-    return this.api
-      .post<CheckoutQuote, CheckoutQuoteRequest>(API_ENDPOINTS.orders.quote, request)
-      .pipe(
-        map((response) => {
-          const quote = normalizeCheckoutQuote(response.data, request);
-          if (!quote) throw this.submissionError('checkoutQuoteInvalid');
-          return { ...response, data: quote };
-        }),
-      );
+    return defer(() => {
+      if (!this.synchronizePendingStorage()) return throwError(() => this.storageError());
+      if (this.canRetryPendingSubmission())
+        return throwError(() => this.submissionError('checkoutDetails'));
+      return this.api
+        .post<CheckoutQuote, CheckoutQuoteRequest>(API_ENDPOINTS.orders.quote, request)
+        .pipe(
+          map((response) => {
+            const quote = normalizeCheckoutQuote(response.data, request);
+            if (!quote) throw this.submissionError('checkoutQuoteInvalid');
+            return { ...response, data: quote };
+          }),
+        );
+    });
   }
 
   createOrder(payload: CreateOrderPayload): Observable<ApiResponse<Order>> {
@@ -94,31 +119,50 @@ export class OrderService {
       return of({ success: true, message: 'Mock order created.', data: mockOrder });
     }
 
-    const pending = this.pendingSubmission();
-    const serializedPayload = JSON.stringify(normalizedPayload);
-    if (pending?.state === PendingOrderState.UNCERTAIN && pending.payload !== serializedPayload) {
-      return throwError(() => this.submissionError('checkoutDetails'));
-    }
-    const submission: PendingOrderSubmission = {
-      key: pending?.state === PendingOrderState.UNCERTAIN ? pending.key : crypto.randomUUID(),
-      payload: serializedPayload,
-      state: PendingOrderState.UNCERTAIN,
-    };
-    this.savePendingSubmission(submission);
-    return this.sendSubmission(
-      normalizedPayload,
-      submission,
-      pending?.state !== PendingOrderState.UNCERTAIN,
-    );
+    return defer(() => {
+      if (!this.synchronizePendingStorage()) return throwError(() => this.storageError());
+      const pending = this.pendingSubmission();
+      const serializedPayload = JSON.stringify(normalizedPayload);
+      if (pending?.state === PendingOrderState.UNCERTAIN && pending.payload !== serializedPayload) {
+        return throwError(() => this.submissionError('checkoutDetails'));
+      }
+      const submission: PendingOrderSubmission = {
+        key: pending?.state === PendingOrderState.UNCERTAIN ? pending.key : crypto.randomUUID(),
+        payload: serializedPayload,
+        state: PendingOrderState.UNCERTAIN,
+      };
+      if (
+        pending?.state !== PendingOrderState.UNCERTAIN &&
+        !this.savePendingSubmission(submission)
+      ) {
+        return throwError(() => this.storageError());
+      }
+      return this.sendSubmission(
+        normalizedPayload,
+        submission,
+        pending?.state !== PendingOrderState.UNCERTAIN,
+      );
+    });
   }
 
   retryPendingOrder(): Observable<ApiResponse<Order>> {
-    const pending = this.pendingSubmission();
-    const payload = this.pendingRequest();
-    if (!pending || !payload || pending.state !== PendingOrderState.UNCERTAIN) {
-      return throwError(() => this.submissionError('checkoutRecovery'));
+    return defer(() => {
+      if (!this.synchronizePendingStorage()) return throwError(() => this.storageError());
+      const pending = this.pendingSubmission();
+      const payload = this.pendingRequest();
+      if (!pending || !payload || pending.state !== PendingOrderState.UNCERTAIN) {
+        return throwError(() => this.submissionError('checkoutRecovery'));
+      }
+      return this.sendSubmission(payload, pending, false);
+    });
+  }
+
+  recheckPendingStorage(): void {
+    if (this.resolvedSubmission) {
+      this.finishResolvedSubmission();
+    } else {
+      this.synchronizePendingStorage();
     }
-    return this.sendSubmission(payload, pending, false);
   }
 
   requestsMatch(first: CreateOrderPayload, second: CreateOrderPayload): boolean {
@@ -153,9 +197,10 @@ export class OrderService {
             response.data,
             ...orders.filter((order) => order.id !== response.data.id),
           ]);
-          this.saveReceipt(response.data);
-          this.pendingSubmission.set(null);
-          this.removeStoredValue(ORDER_STORAGE_KEYS.pendingSubmission);
+          this.receiptRevision++;
+          this.receiptSignal.set(response.data);
+          this.resolvedSubmission = { submission, order: response.data };
+          this.finishResolvedSubmission();
         }),
         catchError((error: ApiErrorResponse | HttpErrorResponse) => {
           const status = error instanceof HttpErrorResponse ? error.status : error.statusCode;
@@ -180,7 +225,10 @@ export class OrderService {
             this.pendingSubmission()?.key === submission.key &&
             this.pendingSubmission()?.payload === submission.payload
           ) {
-            this.savePendingSubmission({ ...submission, state: PendingOrderState.NOT_RECORDED });
+            this.savePendingSubmission(
+              { ...submission, state: PendingOrderState.NOT_RECORDED },
+              OrderStorageIssue.Unavailable,
+            );
             return throwError(() => error);
           }
           const quoteRejected =
@@ -196,10 +244,13 @@ export class OrderService {
             sequence === this.submissionSequence &&
             this.pendingSubmission()?.key === submission.key
           ) {
-            this.savePendingSubmission({
-              ...submission,
-              state: PendingOrderState.VALIDATION_REJECTED,
-            });
+            this.savePendingSubmission(
+              {
+                ...submission,
+                state: PendingOrderState.VALIDATION_REJECTED,
+              },
+              OrderStorageIssue.Unavailable,
+            );
           }
           return throwError(() => error);
         }),
@@ -296,9 +347,97 @@ export class OrderService {
     this.saveStoredValue(ORDER_STORAGE_KEYS.receipt, JSON.stringify(order));
   }
 
-  private savePendingSubmission(submission: PendingOrderSubmission): void {
-    this.pendingSubmission.set(submission);
-    this.saveStoredValue(ORDER_STORAGE_KEYS.pendingSubmission, JSON.stringify(submission));
+  private savePendingSubmission(
+    submission: PendingOrderSubmission,
+    failure = OrderStorageIssue.WriteFailed,
+  ): boolean {
+    let written = false;
+    try {
+      if (!this.isBrowser) throw this.storageError();
+      const serialized = JSON.stringify(submission);
+      sessionStorage.setItem(ORDER_STORAGE_KEYS.pendingSubmission, serialized);
+      written = true;
+      if (sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission) !== serialized) {
+        throw this.storageError();
+      }
+      this.pendingSubmission.set(submission);
+      this.storageIssueSignal.set(OrderStorageIssue.None);
+      return true;
+    } catch {
+      // Keep the identity if writing succeeded but its read-back could not be verified.
+      if (written) this.pendingSubmission.set(submission);
+      this.storageIssueSignal.set(written ? OrderStorageIssue.Unavailable : failure);
+      return false;
+    }
+  }
+
+  private synchronizePendingStorage(): boolean {
+    if (this.resolvedSubmission) {
+      this.storageIssueSignal.set(OrderStorageIssue.CleanupRequired);
+      return false;
+    }
+    try {
+      const stored = this.readPendingSubmission();
+      const current = this.pendingSubmission();
+      if (
+        current &&
+        (!stored || current.key !== stored.key || current.payload !== stored.payload)
+      ) {
+        throw this.storageError();
+      }
+      this.pendingSubmission.set(stored);
+      this.storageIssueSignal.set(OrderStorageIssue.None);
+      return true;
+    } catch {
+      this.storageIssueSignal.set(OrderStorageIssue.Unavailable);
+      return false;
+    }
+  }
+
+  private finishResolvedSubmission(): void {
+    const resolved = this.resolvedSubmission;
+    if (!resolved) return;
+    try {
+      const stored = this.readPendingSubmission();
+      if (
+        stored &&
+        (stored.key !== resolved.submission.key || stored.payload !== resolved.submission.payload)
+      ) {
+        throw this.storageError();
+      }
+      const currentReceipt = this.receiptSignal();
+      const receipt =
+        currentReceipt?.id === resolved.order.id &&
+        currentReceipt.orderNumber === resolved.order.orderNumber
+          ? currentReceipt
+          : resolved.order;
+      if (!this.saveStoredValue(ORDER_STORAGE_KEYS.receipt, JSON.stringify(receipt))) {
+        throw this.storageError();
+      }
+      sessionStorage.removeItem(ORDER_STORAGE_KEYS.pendingSubmission);
+      if (sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission) !== null) {
+        throw this.storageError();
+      }
+      this.pendingSubmission.set(null);
+      this.resolvedSubmission = null;
+      this.storageIssueSignal.set(OrderStorageIssue.None);
+    } catch {
+      this.storageIssueSignal.set(OrderStorageIssue.CleanupRequired);
+    }
+  }
+
+  private storageError(): ApiErrorResponse {
+    const message =
+      ORDER_STORAGE_MESSAGES[this.storageIssueSignal()] ||
+      ORDER_STORAGE_MESSAGES[OrderStorageIssue.Unavailable];
+    return {
+      success: false,
+      statusCode: 503,
+      message,
+      errors: { [ORDER_STORAGE_ERROR_FIELD]: [message] },
+      timestamp: new Date().toISOString(),
+      path: API_ENDPOINTS.orders.create,
+    };
   }
 
   private submissionError(field: string): ApiErrorResponse {
@@ -340,6 +479,7 @@ export class OrderService {
   }
 
   private loadReceipt(): Order | null {
+    if (!this.isBrowser) return null;
     try {
       const raw = sessionStorage.getItem(ORDER_STORAGE_KEYS.receipt);
       if (!raw) return null;
@@ -356,43 +496,51 @@ export class OrderService {
   }
 
   private loadPendingSubmission(): PendingOrderSubmission | null {
+    if (!this.isBrowser) return null;
     try {
-      const raw = sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission);
-      if (!raw) return null;
-      const submission = JSON.parse(raw) as Partial<PendingOrderSubmission>;
-      if (
-        !submission ||
-        typeof submission.key !== 'string' ||
-        !submission.key ||
-        typeof submission.payload !== 'string' ||
-        !this.parsePayload(submission.payload)
-      )
-        return null;
-      return {
-        key: submission.key,
-        payload: submission.payload,
-        state:
-          submission.state === PendingOrderState.NOT_RECORDED
-            ? PendingOrderState.NOT_RECORDED
-            : submission.state === PendingOrderState.VALIDATION_REJECTED
-              ? PendingOrderState.VALIDATION_REJECTED
-              : PendingOrderState.UNCERTAIN,
-      };
+      return this.readPendingSubmission();
     } catch {
+      this.storageIssueSignal.set(OrderStorageIssue.Unavailable);
       return null;
     }
   }
 
-  private saveStoredValue(key: string, value: string): void {
+  private readPendingSubmission(): PendingOrderSubmission | null {
+    if (!this.isBrowser) throw this.storageError();
+    const raw = sessionStorage.getItem(ORDER_STORAGE_KEYS.pendingSubmission);
+    if (!raw) return null;
+    const submission = JSON.parse(raw) as Partial<PendingOrderSubmission> | null;
+    if (
+      !submission ||
+      Array.isArray(submission) ||
+      typeof submission.key !== 'string' ||
+      !ORDER_PENDING_KEY_PATTERN.test(submission.key) ||
+      typeof submission.payload !== 'string' ||
+      !this.parsePayload(submission.payload) ||
+      (Object.hasOwn(submission, 'state') &&
+        !ORDER_PENDING_STATES.includes(submission.state as PendingOrderState))
+    )
+      throw this.storageError();
+    return {
+      key: submission.key,
+      payload: submission.payload,
+      state: submission.state ?? PendingOrderState.UNCERTAIN,
+    };
+  }
+
+  private saveStoredValue(key: string, value: string): boolean {
     try {
+      if (!this.isBrowser) return false;
       sessionStorage.setItem(key, value);
+      return sessionStorage.getItem(key) === value;
     } catch {
-      return;
+      return false;
     }
   }
 
   private removeStoredValue(key: string): void {
     try {
+      if (!this.isBrowser) return;
       sessionStorage.removeItem(key);
     } catch {
       return;

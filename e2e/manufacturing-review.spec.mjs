@@ -74,7 +74,14 @@ async function prepareFixture(page, request, baseURL, fromLegacy = false) {
     expect(protectedProducts.some((product) => product.id === current.id)).toBe(false);
     expect([marker, fixture.slug]).toContain(current.slug);
     expect(current.isActive).toBe(false);
-    expect((await request.delete(productUrl, { headers })).ok()).toBe(true);
+    expect(
+      (
+        await request.delete(productUrl, {
+          headers,
+          data: { expectedRevision: current.revision },
+        })
+      ).ok(),
+    ).toBe(true);
     for (const original of protectedProducts) {
       const result = await request.get(`${apiBase}/admin/products/${original.id}`, { headers });
       expect((await result.json()).data).toEqual(original);
@@ -85,6 +92,7 @@ async function prepareFixture(page, request, baseURL, fromLegacy = false) {
     const updated = await request.put(productUrl, {
       headers,
       data: {
+        expectedRevision: fixture.revision,
         name: `اختبار محلي للتصنيع ${marker}`,
         slug: marker,
         price: 100,
@@ -94,6 +102,7 @@ async function prepareFixture(page, request, baseURL, fromLegacy = false) {
       },
     });
     expect(updated.ok()).toBe(true);
+    const savedFixture = (await updated.json()).data;
     await page.route('**/*', async (route) => {
       const currentRequest = route.request();
       const url = new URL(currentRequest.url());
@@ -123,7 +132,7 @@ async function prepareFixture(page, request, baseURL, fromLegacy = false) {
     await page.goto(`/admin/products/${fixture.id}/edit`);
     const panel = page.locator('app-manufacturing-review');
     await expect(panel.getByRole('heading', { name: 'مراجعة التصنيع والتكلفة' })).toBeVisible();
-    return { headers, fixture, source, productUrl, marker, panel, cleanup };
+    return { headers, fixture, savedFixture, source, productUrl, marker, panel, cleanup };
   } catch (error) {
     await cleanup();
     throw error;
@@ -280,7 +289,7 @@ test('a stale manufacturing edit keeps local input and requires explicit reload 
     await panel.locator('#review-consumedFilamentGrams').fill('120');
     const changed = await request.put(productUrl, {
       headers,
-      data: { price: 110, isActive: false },
+      data: { price: 110, isActive: false, expectedRevision: context.savedFixture.revision },
     });
     expect(changed.ok()).toBe(true);
     const staleSave = actionResponse(page, fixture.id, '', 'PUT');
@@ -301,6 +310,117 @@ test('a stale manufacturing edit keeps local input and requires explicit reload 
     const saved = await saveInputs(page, context);
     expect(saved.manufacturingReview.consumedFilamentGrams).toBe(125);
     expect(saved.isActive).toBe(false);
+  } finally {
+    await context.cleanup();
+  }
+});
+
+test('a stale product save preserves local edits and merges only after explicit review', async ({
+  page,
+  request,
+  baseURL,
+}, testInfo) => {
+  const context = await prepareFixture(page, request, baseURL);
+  const { headers, productUrl, savedFixture } = context;
+  const localName = `تعديل محلي ${context.marker}`;
+  const currentName = `نسخة الخادم ${context.marker}`;
+  const currentDescription = 'وصف محفوظ في جلسة أخرى لا يجوز استبداله ببيانات قديمة.';
+  const productPath = new URL(productUrl).pathname;
+  const mutations = [];
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  page.on('request', (request) => {
+    if (new URL(request.url()).pathname === productPath && request.method() === 'PUT') {
+      mutations.push(request.postDataJSON().expectedRevision);
+    }
+  });
+  const saveButton = page.getByRole('button', { name: 'حفظ ومتابعة التعديل', exact: true });
+  try {
+    await page.locator('#product-name').fill(localName);
+    const externalSave = await request.put(productUrl, {
+      headers,
+      data: {
+        expectedRevision: savedFixture.revision,
+        name: currentName,
+        description: currentDescription,
+        price: 110,
+        isActive: false,
+      },
+    });
+    expect(externalSave.ok()).toBe(true);
+    const current = (await externalSave.json()).data;
+    const rejectedSave = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === productPath && response.request().method() === 'PUT',
+    );
+    await saveButton.click();
+    expect((await rejectedSave).status()).toBe(409);
+    const conflict = page.locator('.product-conflict');
+    await expect(conflict).toBeVisible();
+    await expect(page.locator('#product-name')).toHaveValue(localName);
+    await expect(page.locator('#product-price')).toHaveValue('100');
+    await expect(saveButton).toBeDisabled();
+    expect(mutations).toEqual([savedFixture.revision]);
+    expect((await (await request.get(productUrl, { headers })).json()).data).toEqual(current);
+
+    const reviewResponse = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === productPath && response.request().method() === 'GET',
+    );
+    await conflict.getByRole('button', { name: 'تحميل أحدث نسخة للمراجعة', exact: true }).click();
+    expect((await reviewResponse).ok()).toBe(true);
+    await expect(conflict.locator('.conflict-fields')).toContainText(currentName);
+    await expect(conflict.locator('.conflict-fields')).toContainText(localName);
+    await expect(conflict.locator('.conflict-fields')).toContainText(currentDescription);
+    await expect(page.locator('#product-name')).toHaveValue(localName);
+    await expect(page.locator('#product-price')).toHaveValue('100');
+    await expect(saveButton).toBeDisabled();
+    expect(mutations).toEqual([savedFixture.revision]);
+    await conflict.scrollIntoViewIfNeeded();
+    await page.screenshot({
+      path: testInfo.outputPath('product-conflict-review.png'),
+      fullPage: true,
+    });
+    await conflict.screenshot({ path: testInfo.outputPath('product-conflict-panel.png') });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+
+    await conflict
+      .getByRole('button', { name: 'الاحتفاظ بتعديلاتي ومراجعة الحفظ', exact: true })
+      .click();
+    await expect(conflict).toHaveCount(0);
+    await expect(page.locator('#product-name')).toHaveValue(localName);
+    await expect(page.locator('textarea[formcontrolname="description"]')).toHaveValue(
+      currentDescription,
+    );
+    await expect(page.locator('#product-price')).toHaveValue('110');
+    await expect(page.locator('#product-isActive')).not.toBeChecked();
+    await expect(page.locator('#product-isActive')).toBeDisabled();
+    await expect(saveButton).toBeEnabled();
+    expect(mutations).toEqual([savedFixture.revision]);
+
+    const explicitSave = page.waitForResponse(
+      (response) =>
+        new URL(response.url()).pathname === productPath && response.request().method() === 'PUT',
+    );
+    await saveButton.click();
+    const saved = await explicitSave;
+    expect(saved.ok()).toBe(true);
+    const result = (await saved.json()).data;
+    expect(result.name).toBe(localName);
+    expect(result.description).toBe(currentDescription);
+    expect(result.price).toBe(110);
+    expect(result.isActive).toBe(false);
+    expect(result.revision).toBe(current.revision + 1);
+    expect(mutations).toEqual([savedFixture.revision, current.revision]);
+    await page.reload();
+    await expect(page.locator('#product-name')).toHaveValue(localName);
+    await expect(page.locator('#product-price')).toHaveValue('110');
+    expect((await request.get(`${apiBase}/products/${context.marker}`)).status()).toBe(404);
+    expect(errors).toEqual([]);
   } finally {
     await context.cleanup();
   }
@@ -341,12 +461,16 @@ test('a legacy product copy automatically requires review without approving its 
     expect(fixture.manufacturingReview.verifiedWeightGrams).toBeNull();
     expect(fixture.manufacturingReview.costing.laborCostEgp).toBeNull();
     expect(fixture.manufacturingReview.approvedQuote).toBeNull();
-    await expect(page.getByRole('button', { name: 'بدء مراجعة التصنيع', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'بدء مراجعة التصنيع', exact: true })).toHaveCount(
+      0,
+    );
     await expect(panel.locator('#review-consumedFilamentGrams')).toHaveValue('');
     await expect(panel.locator('#review-verifiedWeightGrams')).toHaveValue('');
     await expect(page.locator('#product-isActive')).toBeDisabled();
     await expect(panel.locator('.review-status')).toContainText('قيد المراجعة');
-    await panel.locator('#review-measurementReference').fill('مرجع اختبار فقط؛ القياسات غير متوفرة');
+    await panel
+      .locator('#review-measurementReference')
+      .fill('مرجع اختبار فقط؛ القياسات غير متوفرة');
     const saved = await saveInputs(page, context);
     expect(saved.manufacturingReview.consumedFilamentGrams).toBeNull();
     expect(saved.manufacturingReview.verifiedWeightGrams).toBeNull();

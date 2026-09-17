@@ -25,10 +25,17 @@
           label="عرض المنتج المنشور"
           severity="secondary"
           variant="outlined"
+          [disabled]="isSubmitting()"
           (onClick)="previewProduct()"
         />
       }
-      <p-button label="العودة للمنتجات" severity="secondary" variant="text" (onClick)="cancel()" />
+      <p-button
+        label="العودة للمنتجات"
+        severity="secondary"
+        variant="text"
+        [disabled]="isSubmitting()"
+        (onClick)="cancel()"
+      />
     </div>
   </header>
   @if (reviewUnsaved() || reviewBusy()) {
@@ -47,6 +54,64 @@
       </button>
     </div>
   } @else {
+    @if (needsProductReview()) {
+      <section class="editor-card product-conflict" aria-labelledby="product-conflict-title">
+        <h3 id="product-conflict-title">مراجعة النسخة الحالية قبل الحفظ</h3>
+        <p role="alert">
+          {{ productRevisionUnavailable() ? saveText.unavailable : saveText.conflict }}
+        </p>
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          [disabled]="productEditorBusy()"
+          (click)="loadProductForReview()"
+        >
+          {{ saveText.reload }}
+        </button>
+        @if (isLoadingConflict()) {
+          <p role="status">{{ saveText.loading }}</p>
+        }
+        @if (conflictLoadError()) {
+          <p class="error-notice" role="alert">{{ conflictLoadError() }}</p>
+        }
+        @if (conflictProduct()) {
+          <p>{{ saveText.guidance }}</p>
+          @if (conflictFields().length) {
+            <dl class="conflict-fields">
+              @for (field of conflictFields(); track field.key) {
+                <div>
+                  <dt>{{ field.label }}</dt>
+                  <dd>النسخة الحالية: {{ field.current }}</dd>
+                  <dd>في نموذجك: {{ field.local }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p>{{ saveText.noFields }}</p>
+          }
+          <div class="editor-actions">
+            <button
+              type="button"
+              class="shop-button shop-button-primary"
+              [disabled]="!canAcceptProductReview()"
+              (click)="keepLocalProductChanges()"
+            >
+              {{ saveText.keep }}
+            </button>
+            <button
+              type="button"
+              class="shop-button shop-button-secondary"
+              [disabled]="!canAcceptProductReview()"
+              (click)="discardLocalProductChanges()"
+            >
+              {{ saveText.discard }}
+            </button>
+          </div>
+        }
+      </section>
+    } @else if (saveError()) {
+      <p class="error-notice" role="alert">{{ saveError() }}</p>
+    }
     @if (attemptedSubmit() && validationErrors().length) {
       <div class="validation-notice" role="alert">
         <h3>راجع {{ validationErrors().length }} من بيانات المنتج</h3>
@@ -60,8 +125,14 @@
         </div>
       </div>
     }
-    <form [formGroup]="productForm" class="product-editor" (ngSubmit)="saveProduct(false)">
-      <div class="editor-fields">
+    <form
+      [formGroup]="productForm"
+      class="product-editor"
+      [attr.aria-busy]="isSubmitting()"
+      (ngSubmit)="saveProduct(false)"
+    >
+      <fieldset class="editor-fields" [disabled]="isSubmitting()">
+        <legend class="sr-only">بيانات المنتج</legend>
         <section class="editor-card" aria-labelledby="basic-title">
           <h3 id="basic-title">البيانات الأساسية والتسعير</h3>
           <div class="editor-grid">
@@ -79,7 +150,7 @@
                 [attr.aria-invalid]="fieldErrors()['field-name']"
               />
               @if (fieldErrors()['field-name']) {
-                <small class="field-error-msg">اكتب اسم المنتج بحد أقصى 200 حرف.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-name'] }}</small>
               }
             </div>
             <div
@@ -98,7 +169,7 @@
                 [attr.aria-invalid]="fieldErrors()['field-slug']"
               /><small>حروف وأرقام وشرطات. يُحافظ على الرابط عند تعديل الاسم.</small>
               @if (fieldErrors()['field-slug']) {
-                <small class="field-error-msg">أدخل رابطًا صالحًا بحد أقصى 160 حرفًا.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-slug'] }}</small>
               }
             </div>
             <div
@@ -119,7 +190,7 @@
                 appendTo="body"
               />
               @if (fieldErrors()['field-category']) {
-                <small class="field-error-msg">اختر تصنيف المنتج.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-category'] }}</small>
               }
               @if (categoriesLoading()) {
                 <small role="status">{{ categoryText.loading }}</small>
@@ -160,7 +231,9 @@
               ></textarea
               ><small>يظهر في بطاقات المنتجات، ومطلوب عند النشر.</small>
               @if (fieldErrors()['field-short-description']) {
-                <small class="field-error-msg">اكتب وصفًا مختصرًا قبل النشر.</small>
+                <small class="field-error-msg">{{
+                  fieldMessages()['field-short-description']
+                }}</small>
               }
             </div>
             <div
@@ -176,7 +249,7 @@
                 rows="4"
               ></textarea>
               @if (fieldErrors()['field-description']) {
-                <small class="field-error-msg">وصف المنتج مطلوب عند النشر.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-description'] }}</small>
               }
             </div>
             <div
@@ -192,10 +265,14 @@
                 [maxFractionDigits]="2"
               /><small>يمكن حفظ صفر للمسودة غير المسعّرة. يلزم سعر أكبر من صفر عند النشر.</small>
               @if (fieldErrors()['field-price']) {
-                <small class="field-error-msg">أدخل سعرًا صالحًا وفق حالة النشر.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-price'] }}</small>
               }
             </div>
-            <div class="admin-field" id="field-discount" [class.has-error]="hasPricingError()">
+            <div
+              class="admin-field"
+              id="field-discount"
+              [class.has-error]="fieldErrors()['field-discount']"
+            >
               <label for="product-discountPrice">السعر بعد الخصم (اختياري)</label
               ><p-inputnumber
                 inputId="product-discountPrice"
@@ -203,10 +280,8 @@
                 [min]="0"
                 [maxFractionDigits]="2"
               /><small>اتركه فارغًا عند عدم وجود خصم.</small>
-              @if (hasPricingError()) {
-                <small class="field-error-msg"
-                  >سعر الخصم يجب أن يكون أقل من السعر الأساسي وغير سالب.</small
-                >
+              @if (fieldErrors()['field-discount']) {
+                <small class="field-error-msg">{{ fieldMessages()['field-discount'] }}</small>
               }
             </div>
             <div class="toggle-field field-wide">
@@ -237,14 +312,18 @@
             رفع الملف لا يحفظ بيانات المنتج تلقائيًا. راجع المعاينة ثم احفظ التعديلات.
           </p>
           <div class="editor-grid">
-            <div class="admin-field field-wide">
+            <div
+              class="admin-field field-wide"
+              id="field-main-image"
+              [class.has-error]="fieldErrors()['field-main-image']"
+            >
               <label for="product-mainImage">الصورة الرئيسية</label
               ><label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingImage()"
                 ><input
                   type="file"
                   class="sr-only"
                   [accept]="imageAccept"
-                  [disabled]="isUploadingImage()"
+                  [disabled]="uploadDisabled()"
                   (change)="onMainImageFileSelected($event)"
                 />
                 @if (previewImage()) {
@@ -264,11 +343,22 @@
                 pInputText
                 id="product-mainImage"
                 formControlName="mainImage"
+                [attr.aria-invalid]="fieldErrors()['field-main-image']"
+                aria-describedby="field-main-image-feedback"
                 dir="ltr"
                 placeholder="أو أدخل رابط الصورة"
               />
+              <small
+                id="field-main-image-feedback"
+                [class.field-error-msg]="fieldErrors()['field-main-image']"
+                >{{ fieldMessages()['field-main-image'] || limitText.url }}</small
+              >
             </div>
-            <div class="admin-field field-wide">
+            <div
+              class="admin-field field-wide"
+              id="field-gallery-images"
+              [class.has-error]="fieldErrors()['field-gallery-images']"
+            >
               <label for="product-galleryImages">صور إضافية (اختيارية)</label
               ><label
                 class="media-upload-zone"
@@ -278,7 +368,7 @@
                   class="sr-only"
                   [accept]="imageAccept"
                   multiple
-                  [disabled]="isUploadingGallery()"
+                  [disabled]="uploadDisabled()"
                   (change)="onGalleryImagesSelected($event)"
                 /><i class="pi pi-images" aria-hidden="true"></i
                 ><span
@@ -295,6 +385,7 @@
                         class="gallery-thumb-remove"
                         [attr.aria-label]="'إزالة الصورة ' + (index + 1)"
                         (click)="removeGalleryImage(index)"
+                        [disabled]="uploadDisabled()"
                       >
                         <i class="pi pi-times" aria-hidden="true"></i>
                       </button>
@@ -306,11 +397,29 @@
                 pInputText
                 id="product-galleryImages"
                 formControlName="galleryImages"
+                [attr.aria-invalid]="fieldErrors()['field-gallery-images']"
+                aria-describedby="field-gallery-images-feedback"
                 dir="ltr"
                 placeholder="أو أدخل الروابط مفصولة بفاصلة"
               />
+              <small
+                id="field-gallery-images-feedback"
+                [class.field-error-msg]="
+                  fieldErrors()['field-gallery-images'] || gallerySelectionError()
+                "
+                [attr.role]="gallerySelectionError() ? 'alert' : null"
+                >{{
+                  gallerySelectionError() ||
+                    fieldMessages()['field-gallery-images'] ||
+                    limitText.gallery
+                }}</small
+              >
             </div>
-            <div class="admin-field field-wide">
+            <div
+              class="admin-field field-wide"
+              id="field-model-url"
+              [class.has-error]="fieldErrors()['field-model-url']"
+            >
               <label for="product-modelUrl">ملف المجسم (اختياري)</label
               ><label
                 class="media-upload-zone media-upload-zone--model"
@@ -319,7 +428,7 @@
                   type="file"
                   class="sr-only"
                   [accept]="modelFileAccept"
-                  [disabled]="isUploadingModel()"
+                  [disabled]="uploadDisabled()"
                   (change)="onModelFileSelected($event)"
                 /><i class="pi pi-box" aria-hidden="true"></i
                 ><span
@@ -330,9 +439,16 @@
                 pInputText
                 id="product-modelUrl"
                 formControlName="modelUrl"
+                [attr.aria-invalid]="fieldErrors()['field-model-url']"
+                aria-describedby="field-model-url-feedback"
                 dir="ltr"
                 placeholder="أو أدخل رابط ملف المجسم"
               />
+              <small
+                id="field-model-url-feedback"
+                [class.field-error-msg]="fieldErrors()['field-model-url']"
+                >{{ fieldMessages()['field-model-url'] || limitText.url }}</small
+              >
             </div>
             <div class="admin-field">
               <label for="product-modelType">صيغة ملف المجسم</label
@@ -349,7 +465,11 @@
               <label for="product-imageAlt">وصف الصورة لقارئ الشاشة (اختياري)</label
               ><input pInputText id="product-imageAlt" formControlName="imageAlt" />
             </div>
-            <div class="admin-field">
+            <div
+              class="admin-field"
+              id="field-poster-image"
+              [class.has-error]="fieldErrors()['field-poster-image']"
+            >
               <label for="product-posterImage">غلاف معاينة المجسم (اختياري)</label
               ><label
                 class="media-upload-zone media-upload-zone--compact"
@@ -358,7 +478,7 @@
                   type="file"
                   class="sr-only"
                   [accept]="imageAccept"
-                  [disabled]="isUploadingPoster()"
+                  [disabled]="uploadDisabled()"
                   (change)="onPosterImageSelected($event)"
                 /><i class="pi pi-image" aria-hidden="true"></i
                 ><strong>{{ posterUploadLabel() }}</strong></label
@@ -366,11 +486,22 @@
                 pInputText
                 id="product-posterImage"
                 formControlName="posterImage"
+                [attr.aria-invalid]="fieldErrors()['field-poster-image']"
+                aria-describedby="field-poster-image-feedback"
                 dir="ltr"
                 placeholder="أو أدخل رابط الصورة"
               />
+              <small
+                id="field-poster-image-feedback"
+                [class.field-error-msg]="fieldErrors()['field-poster-image']"
+                >{{ fieldMessages()['field-poster-image'] || limitText.url }}</small
+              >
             </div>
-            <div class="admin-field">
+            <div
+              class="admin-field"
+              id="field-social-image"
+              [class.has-error]="fieldErrors()['field-social-image']"
+            >
               <label for="product-socialImage">صورة مشاركة الرابط (اختيارية)</label
               ><label
                 class="media-upload-zone media-upload-zone--compact"
@@ -379,7 +510,7 @@
                   type="file"
                   class="sr-only"
                   [accept]="imageAccept"
-                  [disabled]="isUploadingSocial()"
+                  [disabled]="uploadDisabled()"
                   (change)="onSocialImageSelected($event)"
                 /><i class="pi pi-share-alt" aria-hidden="true"></i
                 ><strong>{{ socialUploadLabel() }}</strong></label
@@ -387,9 +518,16 @@
                 pInputText
                 id="product-socialImage"
                 formControlName="socialImage"
+                [attr.aria-invalid]="fieldErrors()['field-social-image']"
+                aria-describedby="field-social-image-feedback"
                 dir="ltr"
                 placeholder="أو أدخل رابط الصورة"
               />
+              <small
+                id="field-social-image-feedback"
+                [class.field-error-msg]="fieldErrors()['field-social-image']"
+                >{{ fieldMessages()['field-social-image'] || limitText.url }}</small
+              >
             </div>
           </div>
         </section>
@@ -417,7 +555,7 @@
                 appendTo="body"
               />
               @if (fieldErrors()['field-material']) {
-                <small class="field-error-msg">اختر الخامة المقصودة للقطعة.</small>
+                <small class="field-error-msg">{{ fieldMessages()['field-material'] }}</small>
               }
             </div>
             @for (field of specFields(); track field.key) {
@@ -428,13 +566,14 @@
                   [id]="'product-' + field.key"
                   [formControlName]="field.key"
                   [attr.aria-invalid]="field.invalid"
+                  [attr.aria-describedby]="field.id + '-feedback'"
                 />
                 @if (field.hint) {
                   <small>{{ field.hint }}</small>
                 }
-                @if (field.invalid) {
-                  <small class="field-error-msg">هذه البيانات مطلوبة عند النشر.</small>
-                }
+                <small [id]="field.id + '-feedback'" [class.field-error-msg]="field.invalid">{{
+                  field.error || limitText.specification
+                }}</small>
               </div>
             }
             <div class="toggle-field field-wide">
@@ -491,13 +630,22 @@
           <h3 id="meta-title">بيانات البحث والعناية</h3>
           <div class="editor-grid">
             @for (field of metaFields; track field.key) {
-              <div class="admin-field" [id]="field.id" [class.field-wide]="field.wide">
+              <div
+                class="admin-field"
+                [id]="field.id"
+                [class.field-wide]="field.wide"
+                [class.has-error]="fieldErrors()[field.id]"
+              >
                 <label [for]="'product-' + field.key">{{ field.label }}</label>
                 @if (field.multiline) {
                   <textarea
                     pTextarea
                     [id]="'product-' + field.key"
                     [formControlName]="field.key"
+                    [attr.aria-invalid]="fieldErrors()[field.id]"
+                    [attr.aria-describedby]="
+                      fieldErrors()[field.id] ? field.id + '-feedback' : null
+                    "
                     rows="3"
                   ></textarea>
                 } @else {
@@ -506,11 +654,16 @@
                 @if (field.hint) {
                   <small>{{ field.hint }}</small>
                 }
+                @if (fieldErrors()[field.id]) {
+                  <small [id]="field.id + '-feedback'" class="field-error-msg">{{
+                    fieldMessages()[field.id]
+                  }}</small>
+                }
               </div>
             }
           </div>
         </section>
-      </div>
+      </fieldset>
       <aside class="editor-preview" aria-label="معاينة الملفات">
         <app-admin-file-preview
           [imageUrl]="previewImage()"
@@ -529,7 +682,7 @@
         <app-manufacturing-review
           [product]="product"
           [productEditorDirty]="productEditorDirty()"
-          [productEditorBusy]="productEditorBusy()"
+          [productEditorBusy]="manufacturingEditorBlocked()"
           (productUpdated)="onManufacturingProductUpdated($event)"
           (dirtyChanged)="onReviewDirtyChanged($event)"
           (busyChanged)="onReviewBusyChanged($event)"

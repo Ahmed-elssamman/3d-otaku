@@ -1,11 +1,14 @@
 import { test as base, expect } from '@playwright/test';
 import { setTimeout as delay } from 'node:timers/promises';
+import { writeFile } from 'node:fs/promises';
 
 const API_LIMIT = 300;
 const API_WINDOW_SECONDS = 60;
 const SCENARIO_RESERVE = 150;
 const FIXTURE_TIMEOUT_MS = 90000;
 const PREFLIGHT_DEADLINE_MS = 89000;
+const ACTION_LIMIT = 30;
+const ACTION_WINDOW_SECONDS = 900;
 
 function localOrigin(value, ports) {
   const url = new URL(value);
@@ -54,6 +57,47 @@ function apiQuota(headers) {
     throw new Error('Local API health did not expose a valid draft-8 300/minute quota.');
   }
   return { remaining, resetSeconds };
+}
+
+function actionBucket(response, webOrigin, apiOrigin) {
+  const request = response.request();
+  const url = new URL(response.url());
+  if (request.method() !== 'POST' || ![webOrigin, apiOrigin].includes(url.origin)) return null;
+  if (['/api/auth/login', '/api/auth/register'].includes(url.pathname)) return 'auth';
+  if (['/api/orders', '/api/custom-orders', '/api/contact-messages'].includes(url.pathname))
+    return 'submission';
+  return null;
+}
+
+function actionQuota(headers) {
+  const policy = (headers['ratelimit-policy'] || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .find(
+      (entry) =>
+        numericParameter(entry, 'q') === ACTION_LIMIT &&
+        numericParameter(entry, 'w') === ACTION_WINDOW_SECONDS,
+    );
+  const identifier = policy?.match(/^"[^"]+"/)?.[0] || '';
+  const limit = (headers['ratelimit'] || '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .find((entry) => identifier && entry.startsWith(`${identifier};`));
+  const remaining = numericParameter(limit || '', 'r');
+  const resetSeconds = numericParameter(limit || '', 't');
+  if (
+    remaining === null ||
+    resetSeconds === null ||
+    !Number.isSafeInteger(remaining) ||
+    !Number.isSafeInteger(resetSeconds) ||
+    remaining < 0 ||
+    remaining > ACTION_LIMIT ||
+    resetSeconds < 0 ||
+    resetSeconds > ACTION_WINDOW_SECONDS
+  ) {
+    throw new Error('A local action response did not expose a valid draft-8 30/900 quota.');
+  }
+  return { limit: ACTION_LIMIT, windowSeconds: ACTION_WINDOW_SECONDS, remaining, resetSeconds };
 }
 
 async function reserveApiBudget(request, origin, testInfo) {
@@ -117,14 +161,50 @@ export async function withCheckoutQuote(request, apiOrigin, payload) {
 
 export const test = base.extend({
   _localApiBudget: [
-    async ({ request, baseURL }, use, testInfo) => {
-      localOrigin(baseURL || 'http://127.0.0.1:4200', [4200, 4300]);
+    async ({ request, context, baseURL }, use, testInfo) => {
+      const webOrigin = localOrigin(baseURL || 'http://127.0.0.1:4200', [4200, 4300]);
       const apiOrigin = localOrigin(
         process.env.STORE_API_ORIGIN || 'http://127.0.0.1:4000',
         [4000],
       );
       await reserveApiBudget(request, apiOrigin, testInfo);
-      await use(null);
+      const evidence = [];
+      const pendingReads = [];
+      let readFailed = false;
+      const observeResponse = (response) => {
+        const bucket = actionBucket(response, webOrigin, apiOrigin);
+        if (!bucket) return;
+        const observedAtUtc = new Date().toISOString();
+        pendingReads.push(
+          response
+            .allHeaders()
+            .then((headers) => {
+              evidence.push({
+                observedAtUtc,
+                bucket,
+                status: response.status(),
+                ...actionQuota(headers),
+              });
+            })
+            .catch(() => {
+              readFailed = true;
+            }),
+        );
+      };
+      context.on('response', observeResponse);
+      try {
+        await use(null);
+      } finally {
+        context.off('response', observeResponse);
+        await Promise.all(pendingReads);
+        evidence.sort((left, right) => left.observedAtUtc.localeCompare(right.observedAtUtc));
+        await writeFile(
+          testInfo.outputPath('quota-evidence.json'),
+          JSON.stringify(evidence, null, 2),
+        );
+        if (readFailed)
+          throw new Error('Local browser quota evidence was incomplete; no quota may be inferred.');
+      }
     },
     { auto: true, timeout: FIXTURE_TIMEOUT_MS },
   ],

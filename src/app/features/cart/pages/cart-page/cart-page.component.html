@@ -1,4 +1,27 @@
 <div class="checkout-page mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" dir="rtl">
+  @if (checkoutStorageMessage(); as storageMessage) {
+    <section
+      class="pending-checkout mb-6 rounded-2xl border p-5"
+      aria-labelledby="checkout-storage-title"
+    >
+      <h2 id="checkout-storage-title" class="text-lg font-bold">{{ checkoutStorageText.title }}</h2>
+      <p id="checkout-storage-feedback" tabindex="-1" role="alert" class="mt-3 text-sm leading-7">
+        {{ storageMessage }}
+      </p>
+      <p class="muted mt-2 text-sm leading-7">{{ checkoutStorageText.help }}</p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="checkoutBusy()"
+          (click)="recheckCheckoutStorage()"
+        >
+          {{ checkoutStorageText.recheck }}
+        </button>
+        <a routerLink="/contact" class="secondary-button">{{ checkoutStorageText.contact }}</a>
+      </div>
+    </section>
+  }
   @if (showReceipt()) {
     @if (receipt(); as order) {
       <section

@@ -10,8 +10,34 @@ export { ManufacturingReviewStatus as AdminManufacturingReviewStatus } from '../
 export interface AdminManufacturingReview extends ManufacturingReview {}
 
 export interface AdminProductRecord extends Product {
+  revision: number | null;
   requiresManufacturingReview?: boolean;
   manufacturingReview?: AdminManufacturingReview;
+}
+
+export interface AdminProductRevisionRequest {
+  expectedRevision: number;
+}
+
+export interface AdminProductPayload extends Omit<
+  Product,
+  | 'id'
+  | '_id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'deletedAt'
+  | 'imageVariants'
+  | 'configurationFingerprint'
+> {}
+
+export interface AdminProductUpdateRequest
+  extends AdminProductPayload, AdminProductRevisionRequest {}
+
+export interface AdminProductConflictField {
+  key: keyof AdminProductFormValue;
+  label: string;
+  current: string;
+  local: string;
 }
 
 export interface AdminProductFormValue {
@@ -22,13 +48,13 @@ export interface AdminProductFormValue {
   description: string;
   price: number | null;
   discountPrice: number | null;
-  badge: ProductBadge | null;
+  badge: ProductBadge;
   isFeatured: boolean;
   isActive: boolean;
   mainImage: string;
   galleryImages: string;
   modelUrl: string;
-  modelType: ProductModelType | null;
+  modelType: ProductModelType;
   posterImage: string;
   imageAlt: string;
   socialImage: string;

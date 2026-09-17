@@ -1,100 +1,137 @@
 # Production performance audit
 
-The complete **17 September 2026, 05:13:25.891–05:14:13.988 UTC** Lighthouse pass scored **89 / 90 / 92 on mobile** and **99 / 100 / 100 on desktop** for home, catalog and product. Accessibility, best practices and SEO scored **100 in all six samples**. Mobile LCP remains **3.49 / 3.21 / 3.22 seconds**. Font transfer is unchanged from the preceding complete pass. Timings are mixed: catalog mobile first paint, blocking time and speed index regressed, alongside other individual metrics below.
+The later **15:46:55.350 UTC** build adds verified SSR client identity. Its browser main script, stylesheet and CSR shell are byte-identical to the measured 07:31 build; the server entry changed. Initial browser size remains **488.14 kB / 131.20 kB estimated transfer**. [Build comparison](../artifacts/ssr-client-identity-build-identity.json) records those hashes. No new Lighthouse run was made for this server change: the scores below remain measurements of the earlier runtime. Before rebuilding, all 21 baseline payload files were copied and hash-verified in [the 07:31 archive](../artifacts/performance/baseline-2026-09-17-0731/archive-verification.json), with originals retained.
 
-This is **one sample per route/device from one complete sequential pass**, not a median or selection of favorable runs. All six reports are retained without retakes. The build fixes inquiry recovery and an order-receipt race; it introduces no font or rendering-strategy change. The reviewed Noto metadata optimization and PrimeIcons subset remain in place. No Tajawal, content-visibility, letter-spacing, eager-image, extra-modulepreload or incremental-hydration experiment was adopted.
+The complete **17 September 2026, 07:44:37.045–07:45:24.947 UTC** Lighthouse pass scored **87 / 90 / 91 on mobile** and **99 / 100 / 100 on desktop** for home, catalog and product. Accessibility, best practices and SEO scored **100 in all six samples**. Mobile LCP is **3.60 / 3.27 / 3.22 seconds**. Catalog and product mobile scores increased against the complete 06:41 baseline, but home mobile speed index regressed by **1,396.9 ms**; the other regressions remain below.
+
+This is **one sample per route/device from one complete sequential pass**, not a median or selection of favorable runs. All six first samples are retained without retakes. The 07:31 build includes product edit/revision safety and actionable field bounds. It adopts no new font or rendering strategy. Historical rejected experiments remain separate from these canonical measurements.
 
 ## Build and retained evidence
 
-Production completed at **2026-09-17T05:09:50.721Z** in **10.283 seconds**. Every report identifies `main-P6YL7ZPA.js` and `styles-Y3PILGOW.css`. Initial browser bundle size is **483.50 kB raw / 129.61 kB estimated transfer**, versus **483.48 / 129.57 kB** in the baseline. This estimate differs from the main entry alone and full-page transfer.
+Production completed at **2026-09-17T07:31:16.112Z** in **10.070 seconds**. Every report identifies `main-BOWHSGTL.js` and `styles-LJHQOUSH.css`. Initial browser bundle size is **488.14 kB raw / 131.20 kB estimated transfer**, versus **488.13 / 131.14 kB** in the 06:41 baseline: increases of **0.01 / 0.06 kB**. The stylesheet and server entry hashes are unchanged. Bundle estimates differ from the main entry alone and full-page transfer.
 
 | Artifact              |  Bytes | SHA-256                                                            |
 | --------------------- | -----: | ------------------------------------------------------------------ |
-| `main-P6YL7ZPA.js`    | 28,351 | `fca7f9986f6476059555e5b0851345e3cec7f748f868b4d86925f4a81936d0d7` |
-| `styles-Y3PILGOW.css` | 72,714 | `c866f65cc52dd74f3f4cb780f14e4920c1e2972a6249546e6bd1034754fa7316` |
-| `index.csr.html`      | 13,721 | `79501fbe21ca14b8f4e7548253636f582e3f408a3abeb2506c699119d692fe04` |
+| `main-BOWHSGTL.js`    | 28,980 | `7148a6cfc786f63aad9ea1d4329cbcc76f21dd44e0f68f60b64c9f905f9f6e5b` |
+| `styles-LJHQOUSH.css` | 72,756 | `a8148893427a7a303f64274445952cf50c847cde9cef29decd90c6b12442c842` |
+| `index.csr.html`      | 13,721 | `c274b87d70919cbe705fb4dd908e392315f585041ea14940d404dc4288c5fed8` |
 | `server/server.mjs`   | 10,029 | `76d13c875481a2ae8998f4d8809465bb1b858cad420e92937ea9d32641e25dfb` |
-
-The 17-byte raw CSS increase is `.order-2{order:2}`, emitted because Tailwind detected a test-fixture ID. It is not an application styling intervention. Contact's compiled chunk remains `MXI7G4LM` from the verified 04:57 build.
 
 Evidence remains under ignored [artifacts/performance/](../artifacts/performance/):
 
-- **Current:** six JSON reports, six HTML reports and [summary.json](../artifacts/performance/summary.json), pinned by [current-0509-sha256.json](../artifacts/performance/current-0509-sha256.json). All **13 report hashes are verified**. Summary SHA-256: `396fbb1518694949288b47fd7424ccaa20a465319b9ab41a380a92f5fb22dced`.
-- [current-0509-build-identity.json](../artifacts/performance/current-0509-build-identity.json) pins four build files verified before and after timing. [analysis-0509.json](../artifacts/performance/analysis-0509.json) retains every metric, delta, request, insight and setting. [verification-0509.json](../artifacts/performance/verification-0509.json) records the baseline and all build/asset/report checks. `0509` identifies the build; measurement occurred at **05:13–05:14 UTC**.
-- **Primary baseline:** [baseline-2026-09-17-0423/](../artifacts/performance/baseline-2026-09-17-0423/), measured **04:23:53.790–04:24:41.703 UTC** on the 04:03 `main-R4RLZPZA.js` / `styles-IJQZ35G4.css` build. Its **13 report hashes, all 17 report/metadata copies and four original build files remain verified**. Summary SHA-256: `67d6ca6940ace70708711188605d2a613ea944a6c9d9c2a9a380483e7c78c363`.
-- Earlier complete passes remain at [03:19](../artifacts/performance/baseline-2026-09-17-0319/), [02:13](../artifacts/performance/baseline-2026-09-17-0213/), [01:21](../artifacts/performance/baseline-2026-09-17-0121/), [00:46](../artifacts/performance/baseline-2026-09-17-0046/), [00:06](../artifacts/performance/baseline-2026-09-17-0006/), [16 September 23:11](../artifacts/performance/baseline-2026-09-16-2311/), [22:36](../artifacts/performance/baseline-2026-09-16-2236/), [22:00](../artifacts/performance/baseline-2026-09-16-2200/), [21:44](../artifacts/performance/baseline-2026-09-16-2144/) and [20:54](../artifacts/performance/baseline-2026-09-16-2054/). The 21:44 archive retains its actual CSP error. Older 19:42/20:19 sets remain archived; the concurrent provisional 20:16 set is excluded.
+- **Current:** six JSON reports, six HTML reports and [summary.json](../artifacts/performance/summary.json), pinned by [current-0731-sha256.json](../artifacts/performance/current-0731-sha256.json). All **13 report hashes are verified**. Summary is **12,707 bytes**, SHA-256 `2a1f0a2e0e899697699785eec61c214cd12e64bab8082525016ff3dc57603fb7`.
+- [current-0731-build-identity.json](../artifacts/performance/current-0731-build-identity.json) pins four build files verified before and after timing. [analysis-0731.json](../artifacts/performance/analysis-0731.json) retains every metric, delta, request, insight and setting; [verification-0731.json](../artifacts/performance/verification-0731.json) records the checks. The [execution log](../artifacts/performance-canonical-0731.log) retains the complete pass. `0731` identifies the build; measurement occurred at **07:44–07:45 UTC**.
+- **Primary baseline:** [baseline-2026-09-17-0641/](../artifacts/performance/baseline-2026-09-17-0641/), measured **06:45:35.192–06:46:19.952 UTC** on `main-XQERADW5.js` / `styles-LJHQOUSH.css`. Its **13 report hashes and all 21 archived entries remain verified**: 13 reports, four metadata files and four exact originals under `build-files/`. The originals are included in 21, not an additional four. Archive and build identities agree. Baseline summary SHA-256: `55a3623b6f4c9b09fec9feb132cab937917087193b640d4538aee8363fb0138b`.
+- The [05:44 build archive](../artifacts/performance/baseline-2026-09-17-0544/), measured **06:01:53.594–06:02:44.386 UTC** on `main-NOO3XGHS.js` / `styles-LJHQOUSH.css`, remains historical. Its summary SHA-256 is `06c72e511e6fa64737bfbdcc8e73b1a5b696dc8ee90ed180a0fdbd5a3e9847b3`. Its complete comparison with 06:41 is preserved below.
+- The preceding [05:13 pass](../artifacts/performance/baseline-2026-09-17-0513/), measured **05:13:25.891–05:14:13.988 UTC** on the 05:09 `main-P6YL7ZPA.js` / `styles-Y3PILGOW.css` build, remains historical. Its summary SHA-256 is `396fbb1518694949288b47fd7424ccaa20a465319b9ab41a380a92f5fb22dced`; its comparison with 05:44 is also retained below.
+- Earlier complete passes remain at [04:23](../artifacts/performance/baseline-2026-09-17-0423/), [03:19](../artifacts/performance/baseline-2026-09-17-0319/), [02:13](../artifacts/performance/baseline-2026-09-17-0213/), [01:21](../artifacts/performance/baseline-2026-09-17-0121/), [00:46](../artifacts/performance/baseline-2026-09-17-0046/), [00:06](../artifacts/performance/baseline-2026-09-17-0006/), [16 September 23:11](../artifacts/performance/baseline-2026-09-16-2311/), [22:36](../artifacts/performance/baseline-2026-09-16-2236/), [22:00](../artifacts/performance/baseline-2026-09-16-2200/), [21:44](../artifacts/performance/baseline-2026-09-16-2144/) and [20:54](../artifacts/performance/baseline-2026-09-16-2054/). The 21:44 archive retains its actual CSP error. Older 19:42/20:19 sets remain archived; the concurrent provisional 20:16 set is excluded.
 
-Earlier analyses and identities remain historical. No canonical measurement ran on intermediate 04:49/04:57 builds; their identities remain preserved, as do the older unmeasured 02:58/03:04 identities. Raw artifacts are local ignored evidence, not public deployment assets.
+Earlier analyses and identities remain historical, including the unmeasured intermediate 07:18 build and **06:34 build** retained under [checkout-storage-0634-build-files](../artifacts/checkout-storage-0634-build-files/), plus intermediate 05:38, 04:49/04:57 and 02:58/03:04 builds. Raw artifacts are local ignored evidence, not public deployment assets. The rejected hydration candidate's historical restoration record is [baseline-restoration-verification.json](../artifacts/home-hydration-diagnostic/baseline-restoration-verification.json): 352 source and 193 compiled files were checked at **06:00:59.462 UTC** before the earlier pass.
 
 ## Conditions and separate functional evidence
 
-- Lighthouse **13.4.1**, **Headless Chrome 152**, Windows; production SSR/CSR preview at `http://127.0.0.1:4300`, isolated API at port 4000. Six sequential signed-out loads use fresh profiles and storage reset. Development port 4200 was stopped; no competing browser/build/test/API job ran during timing. Development restarted only afterward, at **05:15:59.319 UTC**.
-- Mobile: simulated Slow 4G, **150 ms RTT, 1,638.4 Kbit/s, 4× CPU, 412×823 at DPR 1.75**. Playwright separately uses 390×844 at DPR 2. Desktop: simulated Dense 4G, **40 ms RTT, 10,240 Kbit/s, 1× CPU, 1350×940 at DPR 1**. Matching baseline settings were verified unchanged.
+- Lighthouse **13.4.1**, **Headless Chrome 152**, Windows; production SSR/CSR preview at `http://127.0.0.1:4300`, isolated API at port 4000. Six sequential signed-out loads use fresh profiles and storage reset. Development port 4200 was stopped; no competing browser/build/test/API job ran during timing.
+- Mobile: simulated Slow 4G, **150 ms RTT, 1,638.4 Kbit/s, 4× CPU, 412×823 at DPR 1.75**. Playwright separately uses 390×844 at DPR 2. Desktop: simulated Dense 4G, **40 ms RTT, 10,240 Kbit/s, 1× CPU, 1350×940 at DPR 1**. Baseline Lighthouse version and form factor, throttling method, emulated screen, throttling and user-agent settings match.
 - Local HTTP/1.1, API/database/media access and Windows do not represent deployed HTTPS/CDN latency or Egyptian customer devices. Server/OS caches are not forcibly cleared. These are lab results, not field Core Web Vitals.
-- Application behavior changed and disposable APIs were restored between checkpoints. This is **not an isolated A/B timing comparison**. These three public routes do not directly test contact recovery, interactive 3D, checkout or authenticated administration. No timing improvement is attributed to the functional fixes.
+- Application behavior changed and disposable APIs were restored between checkpoints. This is **not an isolated A/B timing comparison**. These three public routes do not directly test private guest tracking, contact recovery, interactive 3D, checkout or authenticated administration. Neither improvements nor regressions are assigned to a single source change.
 
-The final full Angular run passed **239/239 across 39 files in 6.38 seconds**, first attempt; its test bundle completed at **05:09:06.658 UTC** in 8.363 seconds. Backend passed **178/178**. Browser verification is scoped:
+The full Angular suite passed **291/291 across 44 files in 6.21 seconds**, test build **07:30:14.358 UTC / 6.907 seconds**; backend passed **201/201**. The bounds-validation run passed first time. The preceding revision/save-lock suite passed 288 tests after two TS2345 interface/compiler errors were corrected; that first output remains retained. [Product edit safety](admin-product-edit-safety.md) records the exact tests, compiler failure and corrected contracts.
 
-- The 04:49 affected desktop run passed **11/12**, exposing a real dual-alert contact defect. Corrected contact units passed **8/8**; 04:57 desktop contact passed **2/2 in 7.2 seconds**, and mobile affected checks passed **12/12 in 37.5 seconds**. All reports remain under `artifacts/playwright-2026-09-17-followup-{desktop,contact-desktop,mobile}/report`. [Contact recovery](contact-request-recovery.md) records scope and screenshots.
-- A deliberately reproduced old-build failure proved that late tracking response A could replace newer receipt B. The corrected 05:09 build passed **six affected cart cases in 27.3 seconds**, three per device, in `artifacts/playwright-2026-09-17-tracking-race-final/report`. The failure remains at `artifacts/playwright-2026-09-17-tracking-race-reproduction-desktop/report`. The existing recovery scenario now includes a real second checkout: five POST attempts/two orders per device. Contact is unchanged by this race fix.
+The corrected real-browser invocation passed **10/10 distinct device cases in 1.4 minutes** on this build and the actual API validated by 201 backend tests: five administrator/product/manufacturing scenarios on both devices. It includes real delayed-save locking, 31-gallery rejection, stale deletion confirmation, revision conflict review/merge and inactive manufacturing copies. The quota fixture respected a **13-second reset wait with 129 requests remaining**.
 
-This is **not a new complete 70-case browser run**. Earlier 04:03 coverage of all 35 scenarios per device remains historical in [public-page QA](public-pages-qa.md). Final read-only preservation completed at **05:12:30.832 UTC** before timing. Functional checks do not establish performance scores.
+The initial invocation retained **one desktop fixture failure at 12.6 seconds and nine unrun cases**: DELETE returned 200 and the list was empty, but CDP no longer retained the list response body. The correction checks browser GET 200, the visible empty list and a fresh read-only filtered API result. No application change or performance-driven retake followed that failure. Reports remain [initial scope](../artifacts/playwright-2026-09-17-product-edit-safety/report/) and [corrected scope](../artifacts/playwright-2026-09-17-product-edit-corrected/report/). This is the affected ten-case administrator scope, not a complete storefront/project run. [Public-page QA](public-pages-qa.md) preserves earlier storage/skip-link/private-tracking evidence under its dated builds. Functional checks do not establish performance scores.
 
 ## All current samples
 
 | Route / device    | Fetch time, UTC | Performance | Accessibility | Best practices | SEO |
 | ----------------- | --------------- | ----------: | ------------: | -------------: | --: |
-| Home / mobile     | 05:13:25.891    |          89 |           100 |            100 | 100 |
-| Home / desktop    | 05:13:35.524    |          99 |           100 |            100 | 100 |
-| Catalog / mobile  | 05:13:45.350    |          90 |           100 |            100 | 100 |
-| Catalog / desktop | 05:13:55.693    |         100 |           100 |            100 | 100 |
-| Product / mobile  | 05:14:05.217    |          92 |           100 |            100 | 100 |
-| Product / desktop | 05:14:13.988    |         100 |           100 |            100 | 100 |
+| Home / mobile     | 07:44:37.045    |          87 |           100 |            100 | 100 |
+| Home / desktop    | 07:44:48.014    |          99 |           100 |            100 | 100 |
+| Catalog / mobile  | 07:44:57.909    |          90 |           100 |            100 | 100 |
+| Catalog / desktop | 07:45:07.150    |         100 |           100 |            100 | 100 |
+| Product / mobile  | 07:45:16.546    |          91 |           100 |            100 | 100 |
+| Product / desktop | 07:45:24.947    |         100 |           100 |            100 | 100 |
 
 | Route / device    | FCP, ms | LCP, ms | TBT, ms |      CLS | Speed index, ms |
 | ----------------- | ------: | ------: | ------: | -------: | --------------: |
-| Home / mobile     | 2,129.5 | 3,490.2 |    50.0 |        0 |         2,129.5 |
-| Home / desktop    |   538.1 |   828.8 |       0 |        0 |           566.1 |
-| Catalog / mobile  | 2,108.0 | 3,210.1 |   104.0 |        0 |         2,949.7 |
-| Catalog / desktop |   468.4 |   739.3 |     3.0 |        0 |           471.3 |
-| Product / mobile  | 1,932.1 | 3,216.4 |    57.0 |        0 |         1,932.1 |
-| Product / desktop |   516.9 |   721.2 |       0 | 0.000034 |           516.9 |
+| Home / mobile     | 2,142.8 | 3,598.5 |    64.5 |        0 |         3,554.8 |
+| Home / desktop    |   548.1 |   854.0 |     0.5 |        0 |           676.0 |
+| Catalog / mobile  | 2,029.4 | 3,269.9 |   107.0 |        0 |         2,029.4 |
+| Catalog / desktop |   493.9 |   769.2 |       0 |        0 |           493.9 |
+| Product / mobile  | 1,960.7 | 3,219.4 |    74.5 |        0 |         1,960.7 |
+| Product / desktop |   508.1 |   721.0 |       0 | 0.000034 |           547.5 |
 
 FCP is first contentful paint, LCP largest contentful paint, TBT total blocking time and CLS cumulative layout shift. Values are rounded. Automated accessibility/SEO scores of 100 do not establish complete accessibility, indexing or purchase correctness.
 
-All samples have zero `runWarnings`, no `runtimeError`, `errors-in-console` score 1 with no items, and **zero browser `/api/` requests**. Every recorded request returned 200; none is marked failed. This records the console-error audit, not every browser warning. SSR still fetches/transfers public data. Cache/image insights estimate **zero wasted bytes**; render-blocking lists are empty. Five LCP elements pass discovery/eager/high-priority checks; desktop catalog still selects a lazy secondary card image.
+All samples have zero `runWarnings`, no `runtimeError`, `errors-in-console` score 1 with no items, and **zero browser /api/ requests**. Every recorded request returned 200; none is marked failed. This records the console-error audit, not every browser warning. SSR still fetches/transfers public data. Cache/image insights estimate **zero wasted bytes**; render-blocking lists are empty. Five LCP elements pass discovery/eager/high-priority checks; desktop catalog still selects a lazy secondary card image.
 
-## Comparison with the complete 04:23 baseline
+## Comparison with the complete 06:41 baseline
 
-Positive deltas are regressions; negative values are lower times. All six comparisons are retained.
+Positive time deltas are regressions; negative values are lower times. All six comparisons are retained.
 
-| Route / device    | Performance, baseline → current | FCP change, ms | LCP change, ms | TBT change, ms | Speed index change, ms |
-| ----------------- | ------------------------------: | -------------: | -------------: | -------------: | ---------------------: |
-| Home / mobile     |                         88 → 89 |          −19.9 |          −37.2 |          −12.0 |                 −931.0 |
-| Home / desktop    |                         99 → 99 |           −1.3 |      **+19.7** |              0 |                  −28.7 |
-| Catalog / mobile  |                         90 → 90 |     **+145.8** |         −143.5 |      **+52.0** |             **+987.4** |
-| Catalog / desktop |                       100 → 100 |       **+3.8** |          −34.9 |       **+3.0** |                  −53.5 |
-| Product / mobile  |                         91 → 92 |           −5.9 |      **+38.7** |          −69.0 |                   −5.9 |
-| Product / desktop |                       100 → 100 |      **+20.4** |       **+2.8** |              0 |              **+15.8** |
+| Route / device    | Performance, 06:41 → 07:31 | FCP change, ms | LCP change, ms | TBT change, ms | Speed index change, ms | CLS change |
+| ----------------- | -------------------------: | -------------: | -------------: | -------------: | ---------------------: | ---------: |
+| Home / mobile     |                    87 → 87 |          −15.1 |          −23.8 |          −64.5 |           **+1,396.9** |          0 |
+| Home / desktop    |                    99 → 99 |      **+15.2** |       **+9.8** |       **+0.5** |             **+119.0** |          0 |
+| Catalog / mobile  |                    89 → 90 |          −14.9 |         −139.4 |       **+9.5** |                  −14.9 |          0 |
+| Catalog / desktop |                  100 → 100 |          −10.0 |           −8.7 |              0 |                  −52.1 |          0 |
+| Product / mobile  |                    90 → 91 |         −159.7 |          −46.4 |       **+1.5** |                 −159.7 |          0 |
+| Product / desktop |                  100 → 100 |           −6.3 |           −7.5 |              0 |              **+33.0** |          0 |
 
-Catalog mobile's unchanged rounded score conceals FCP **1,962.3→2,108.0 ms**, TBT **52→104 ms** and speed index **1,962.3→2,949.7 ms**. Product mobile's score rises while LCP worsens **3,177.6→3,216.4 ms**. Desktop home LCP, catalog FCP/TBT and product FCP/LCP/speed index also rise. No unfavorable sample was replaced. CLS is unchanged: five zeros and product desktop **0.00003358041533368969**, the existing delivery-note shift beside an icon.
+Home mobile's lower FCP/LCP/TBT coexist with speed index worsening **2,157.9→3,554.8 ms**, despite an unchanged rounded performance score. Home desktop worsens in all four timed metrics. Catalog and product mobile TBT rise **97.5→107.0 ms** and **73.0→74.5 ms**, despite higher scores. Product desktop speed index rises **514.5→547.5 ms**. CLS is unchanged: five zeros and product desktop **0.00003358041533368969**, matching the previously observed delivery-note shift beside an icon. No unfavorable sample was replaced. These observations do not isolate a source change or establish repeatability.
+
+<a id="comparison-with-the-complete-0544-baseline"></a>
+
+## Historical comparison: 06:41 build against the complete 05:44 baseline
+
+This dated comparison covers the **06:45–06:46 measurements of the 06:41 build**, not the current 07:31 build. The complete historical [analysis-0641.json](../artifacts/performance/baseline-2026-09-17-0641/analysis-0641.json) preserves its settings, requests and deltas.
+
+| Route / device    | Performance, 05:44 → 06:41 | FCP change, ms | LCP change, ms | TBT change, ms | Speed index change, ms |
+| ----------------- | -------------------------: | -------------: | -------------: | -------------: | ---------------------: |
+| Home / mobile     |                    86 → 87 |          −70.8 |          −64.6 |           −6.5 |                 −493.0 |
+| Home / desktop    |                    99 → 99 |          −10.5 |      **+37.6** |              0 |                  −99.2 |
+| Catalog / mobile  |                    89 → 89 |          −36.6 |      **+84.3** |           −1.5 |                 −883.0 |
+| Catalog / desktop |                  100 → 100 |      **+28.9** |           −6.6 |           −0.5 |                  −20.8 |
+| Product / mobile  |                    90 → 90 |     **+176.8** |          −42.4 |          −22.0 |                 −911.2 |
+| Product / desktop |                  100 → 100 |      **+10.3** |          −14.9 |              0 |              **+10.3** |
+
+Home mobile improves in all four timed metrics, but its LCP remains 3.62 seconds. Catalog mobile LCP rises **3,325.0→3,409.3 ms** despite lower FCP/TBT/speed index. Product mobile FCP rises **1,943.6→2,120.4 ms**, while LCP and blocking fall. Home desktop LCP, catalog desktop FCP and product desktop FCP/speed index also regress despite unchanged rounded scores. CLS is unchanged: five zeros and product desktop **0.00003358041533368969**, the existing delivery-note shift beside an icon. No unfavorable sample was replaced.
+
+## Historical comparison: 05:44 build against the complete 05:13 pass
+
+This dated comparison remains preserved from the previous audit; its “later” samples are the 06:01–06:02 measurements of the 05:44 build, not the current 07:31 build.
+
+| Route / device    | Performance, 05:13 → 05:44 | FCP change, ms | LCP change, ms | TBT change, ms | Speed index change, ms |
+| ----------------- | -------------------------: | -------------: | -------------: | -------------: | ---------------------: |
+| Home / mobile     |                    89 → 86 |      **+99.2** |     **+196.6** |      **+85.5** |             **+521.4** |
+| Home / desktop    |                    99 → 99 |       **+5.3** |          −22.2 |              0 |              **+90.1** |
+| Catalog / mobile  |                    90 → 89 |          −27.1 |     **+114.9** |           −5.0 |                  −22.3 |
+| Catalog / desktop |                  100 → 100 |       **+6.6** |      **+45.2** |           −2.5 |              **+95.4** |
+| Product / mobile  |                    92 → 90 |      **+11.5** |      **+91.9** |      **+38.0** |           **+1,099.5** |
+| Product / desktop |                  100 → 100 |          −12.7 |      **+22.2** |              0 |                  −12.7 |
+
+In that earlier pass, home mobile regressed in all four timed metrics; TBT rose **50→135.5 ms**. Product mobile also regressed across them, including speed index **1,932.1→3,031.7 ms**. Catalog mobile improved first paint, blocking and speed index while LCP worsened **3,210.1→3,325.0 ms**. Unchanged desktop rounded scores concealed the listed FCP/LCP/speed-index regressions. No unfavorable sample was replaced; CLS was unchanged.
+
+The preceding checkpoint was itself mixed: its archived [analysis-0509.json](../artifacts/performance/baseline-2026-09-17-0513/analysis-0509.json) retains all deltas against 04:23, including catalog mobile **+145.8 ms FCP / +52 ms TBT / +987.4 ms speed index**, product mobile **+38.7 ms LCP**, and desktop regressions. Historical regressions have not been replaced by the new baseline comparison.
 
 ## Full-page and font transfer
 
-Transferred bytes include response overhead and match `total-byte-weight`; they differ from decoded sizes/bundle estimates. `Other` remains 4,976 bytes per page, including favicons.
+This section compares **07:31 with 06:41**. Transferred bytes include response overhead and match `total-byte-weight`; they differ from decoded sizes/bundle estimates. `Other` remains 4,976 bytes per page, including favicons.
 
-| Route / device    | Current HTML | Current scripts | Current images | Full page, baseline → current | Change |
-| ----------------- | -----------: | --------------: | -------------: | ----------------------------: | -----: |
-| Home / mobile     |       21,967 |         162,345 |         54,643 |             362,625 → 362,626 |     +1 |
-| Home / desktop    |       21,967 |         162,345 |         69,735 |             377,717 → 377,718 |     +1 |
-| Catalog / mobile  |       25,180 |         158,868 |         63,034 |             370,752 → 370,753 |     +1 |
-| Catalog / desktop |       25,180 |         158,868 |        102,023 |             409,741 → 409,742 |     +1 |
-| Product / mobile  |       14,499 |         179,656 |         26,167 |             343,991 → 343,993 |     +2 |
-| Product / desktop |       14,499 |         179,656 |         26,167 |             343,991 → 343,993 |     +2 |
+| Route / device    | Current HTML | Current scripts | Current images | Full page, 06:41 → 07:31 | Change |
+| ----------------- | -----------: | --------------: | -------------: | -----------------------: | -----: |
+| Home / mobile     |       21,966 |         167,018 |         54,643 |        367,295 → 367,301 |     +6 |
+| Home / desktop    |       21,966 |         167,018 |         69,735 |        382,387 → 382,393 |     +6 |
+| Catalog / mobile  |       25,165 |         163,693 |         63,034 |        375,570 → 375,566 |     −4 |
+| Catalog / desktop |       25,165 |         163,693 |        102,023 |        414,559 → 414,555 |     −4 |
+| Product / mobile  |       14,332 |         184,318 |         26,167 |        348,494 → 348,491 |     −3 |
+| Product / desktop |       14,332 |         184,318 |         26,167 |        348,494 → 348,491 |     −3 |
 
-Font transfer is unchanged at **104,527 bytes/page**. CSS transfer rises **14,166→14,168 (+2)**; raw CSS rises **72,697→72,714 (+17)**. Scripts transfer two fewer bytes per page; HTML one more on home/catalog and two more on product. Images are unchanged. These byte-level differences do not explain the timing changes.
+Scripts transfer **0 / 2 / 2 fewer bytes** on home/catalog/product respectively. HTML transfers **6 more / 2 fewer / 1 fewer bytes**. CSS remains **14,171 transferred / 72,756 decoded bytes**. Images, font bytes and other transfer are unchanged. These small measured byte differences do not establish the cause of the timing changes.
 
-Every sample requests each font once:
+Historically, **06:41 versus 05:44** increased script transfer **3,194 / 3,353 / 3,189 bytes** and full-page transfer **3,189 / 3,346 / 3,024 bytes** on home/catalog/product. Its decoded scripts grew 3,353 bytes per route, with unchanged CSS/images/fonts. Those older increases remain in the archived 06:41 analysis; they are not current-pass deltas.
+
+Every sample requests exactly the same three fonts once, totaling **104,527 transferred bytes/page**:
 
 | Font                 | Body bytes | Transfer bytes |
 | -------------------- | ---------: | -------------: |
@@ -102,25 +139,29 @@ Every sample requests each font once:
 | Noto Sans Arabic 700 |     46,720 |         47,636 |
 | PrimeIcons subset    |      9,568 |         10,483 |
 
-The subset remains **`/media/primeicons-subset-E2J67QVD.woff2`**, SHA-256 **`a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef`**. All six samples request only this PrimeIcons WOFF2, with no original WOFF2/EOT/WOFF/TTF/SVG fallback request. Original dependency/fallback files remain on disk.
+The subset remains **`/media/primeicons-subset-E2J67QVD.woff2`**, SHA-256 **`a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef`**. All six samples request only this PrimeIcons WOFF2, with no original WOFF2/EOT/WOFF/TTF/SVG fallback request. Original dependency/fallback files remain on disk. Current Noto/hero public and dist hashes, reviewed/emitted icon hashes, font body lengths, status 200 and exact request counts all passed verification.
 
-Historically, subsetting saved **25,580 body bytes (72.78%)** versus the original 35,148-byte WOFF2. The 04:23 pass established a 25,581-byte transfer reduction against 03:19; there is **no additional font saving here**. All 54 required glyphs, outlines/metrics/hints and 22 name-record values remain preserved, though FontTools repacks name-table storage. `npm run icons:verify` runs before normal builds and checks coverage/dynamic bindings/hashes. Visual limits remain in [PrimeIcons maintenance](../scripts/primeicons.md). Noto's older 6,856-byte metadata saving and complete coverage remain documented in [storefront assets](../scripts/storefront-assets.md).
+Historically, subsetting saved **25,580 body bytes (72.78%)** versus the original 35,148-byte WOFF2. The 04:23 pass established a 25,581-byte transfer reduction against 03:19; there is **no additional font saving here**. All 54 required glyphs, outlines/metrics/hints and 22 name-record values remain preserved, though FontTools repacks name-table storage. `npm run icons:verify` checks coverage/dynamic bindings/hashes before normal builds. Visual limits remain in [PrimeIcons maintenance](../scripts/primeicons.md). Noto's older 6,856-byte metadata saving and complete coverage remain documented in [storefront assets](../scripts/storefront-assets.md).
 
 ## HTTP cache verification after timing
 
-At **05:14:49.491–05:14:49.532 UTC**, after Chrome closed, the subset returned **200**, `font/woff2`, exactly **9,568 bytes** and the expected hash, with `Cache-Control: public, max-age=31536000, immutable`. Its ETag request returned **304 with an empty body** and the same policy. The [new HTTP record](../artifacts/primeicons-http-verification-2026-09-17T05-14-49.491Z.json) is separate from timing; no verification requests ran during Lighthouse.
+At **07:45:59.988–07:46:00.039 UTC**, after Chrome closed, the subset returned **200**, `font/woff2`, exactly **9,568 bytes** and the expected hash, with `Cache-Control: public, max-age=31536000, immutable`. Its ETag request returned **304 with an empty body** and the same policy. The [new HTTP record](../artifacts/primeicons-http-verification-2026-09-17T07-45-59.988Z.json) is separate from timing; no verification requests ran during Lighthouse.
 
-The [04:25 subset check](../artifacts/primeicons-http-verification-2026-09-17T04-25-19.059Z.json), [03:20 eight-URL Noto/hero/alias/original-font check](../artifacts/storefront-asset-cache-verification-2026-09-17T03-20-55-919Z.json) and [original record](../artifacts/storefront-asset-cache-verification.json) remain historical. Other URLs were not re-requested in this post-pass check. Current Noto/hero source/dist hashes were verified before and after timing. Local headers do not establish deployed CDN behavior or repeat-visit speed.
+The [06:46 subset check](../artifacts/primeicons-http-verification-2026-09-17T06-46-56.511Z.json), [06:03 subset check](../artifacts/primeicons-http-verification-2026-09-17T06-03-14.258Z.json), [05:14 subset check](../artifacts/primeicons-http-verification-2026-09-17T05-14-49.491Z.json), [04:25 subset check](../artifacts/primeicons-http-verification-2026-09-17T04-25-19.059Z.json), [03:20 eight-URL Noto/hero/alias/original-font check](../artifacts/storefront-asset-cache-verification-2026-09-17T03-20-55-919Z.json) and [original record](../artifacts/storefront-asset-cache-verification.json) remain historical. Other URLs were not re-requested in this post-pass check. Their current source/dist hashes were verified. Local headers do not establish deployed CDN behavior or repeat-visit speed.
 
 ## Remaining bottlenecks and limits
 
-Home mobile retains the slowest LCP, **3,490.2 ms**. The hero is discoverable, eager and high priority. Observed breakdown: **69.1 ms TTFB, 12.5 ms resource delay, 8.4 ms load, 285.6 ms render delay**; prior observed render delay was 1,260.9 ms. Main-thread style/layout is **468.7 ms**, script evaluation **312.0 ms**, versus 579.9/276.2 before. No source-level cause is established. Observed durations and simulated paint metrics use different models and must not be added or treated as identical measurements.
+Home mobile has the slowest simulated LCP, **3,598.5 ms**, and its speed index regressed substantially. The hero remains discoverable, eager and high priority. Its observed LCP breakdown is **333.9 ms TTFB, 13.1 ms resource delay, 10.0 ms load and 1,292.5 ms render delay**, versus **62.2 / 13.7 / 13.5 / 264.8 ms** in the preceding sample. Main-thread style/layout is **530.4 ms** and script evaluation **280.2 ms**, versus **544.4 / 316.3 ms** before. The longer observed render interval does not, by itself, identify its source or explain a repeatable regression. Observed durations and simulated paints use different models and must not be added or treated as identical measurements.
 
-Catalog mobile records **548.9 ms style/layout**, **358.9 ms script evaluation** and **1,186.7 ms observed render delay**, with worse first paint/blocking/speed index despite improved simulated LCP. Desktop catalog selects a secondary lazy phone-stand image with automatic priority: observed discovery delay **174.9 ms**, versus 153.6 before. Earlier eager-loading trials did not establish a consistent benefit.
+Catalog mobile records **498.1 ms style/layout**, **367.6 ms script evaluation** and **183.5 ms observed render delay**, versus **452.0 / 340.2 / 177.6 ms** before. Product mobile records **411.5 / 341.5 / 189.4 ms**, versus **351.0 / 293.5 / 152.1 ms** before. Their simulated LCP improved while these observed durations increased. Desktop catalog still selects a secondary lazy phone-stand image with automatic priority; its observed resource delay is **133.5 ms**, versus 182.0 ms before. Earlier eager-loading trials did not establish a consistent benefit.
 
-Product mobile records **339.7 ms style/layout**, **324.6 ms script evaluation** and **57 ms TBT**. Unattributed forced-reflow rows are 105.1 ms home mobile, 95.0 catalog desktop, 76.2 product mobile and 91.6 product desktop; the other two list none. Unused-JavaScript estimates range **27,803–29,291 bytes**. Font-display estimates are 5 ms home mobile, 10 catalog mobile, 5 catalog desktop and both product samples; home desktop lists none. Estimates are not additive or evidence of safe removal.
+Unused-JavaScript estimates range **28,040–29,532 bytes**. Detailed forced-reflow and other insights remain in the current analysis. These estimates are not additive or proof of safe removal. No source-level cause is established by this one sample per device.
 
-Prior modulepreload, containment, normal-letter-spacing and eager-image trials did not justify adoption; containment introduced incorrect scroll geometry. A larger same-version variable font was rejected. Evidence remains in [performance experiments](performance-experiments.md), [earlier speed-index investigation](performance-investigation-0006.md) and [scrollbar stability](storefront-scrollbars.md). Incremental hydration remains a source-reviewed idea requiring a separate controlled trial and interaction/SSR checks. It is not implemented or measured here. No diagnostic or retake followed this pass.
+The historical home-card incremental-hydration experiment failed first purchase interaction in both candidate timed samples and the separate early click/Enter gates, with mixed cold timing. It was rejected and completely restored before the 05:44 baseline pass. It does not establish a universal Angular limitation. The baseline and candidate each passing the same unit suite did not supersede that browser failure. Exact diagnostic results, gate limitations and restoration evidence remain in [performance experiments](performance-experiments.md#home-card-incremental-hydration--rejected-17-september-05490552-utc).
+
+Retained actual-throttling traces from that earlier control place the first module evaluation after hero LCP, while two large layouts precede it. They support investigating layout/font delivery, not attributing those particular paint delays to module evaluation. The prepared same-Noto inlining candidate was **not run**: offline calculation showed **93,366 extra Brotli HTML bytes on every repeat full-document load**, exceeding the chosen repeat-byte limit. This structural rejection establishes neither a measured timing gain nor a browser failure. [The complete reasoning](performance-experiments.md#same-noto-font-bytes-in-initial-html--rejected-before-browser-execution) preserves the calculation and trace limits.
+
+Prior modulepreload, containment, normal-letter-spacing and eager-image trials did not justify adoption; containment introduced incorrect scroll geometry. A larger same-version variable font was rejected. Evidence remains in [performance experiments](performance-experiments.md), [earlier speed-index investigation](performance-investigation-0006.md) and [scrollbar stability](storefront-scrollbars.md). No diagnostic retake followed this complete canonical pass.
 
 ## Historical cold-font comparison — Tajawal not adopted
 
@@ -130,25 +171,27 @@ A proxy shutdown error interrupted after sample 21; only three unstarted samples
 
 ## Reproduce a subsequent checkpoint
 
-With the isolated API ready, build and start the preview. Normal builds run icon coverage verification first:
+Build and start the preview with the isolated API ready. Normal builds run icon coverage verification first. Release competing jobs, stop development, and archive existing reports and build identities before a new full pass:
 
 ```powershell
 npm run build
 node scripts/serve-production.mjs
 ```
 
-Use a separate shell after preview readiness. Release competing jobs, stop development and archive current reports/build identities before running the full pass once:
+In a separate shell after readiness, run the standard six-sample pass once:
 
 ```powershell
 node scripts/audit-performance.mjs
 ```
 
-Defaults are preview port 4300 and API port 4000. Explicit local overrides are `STORE_AUDIT_BASE_URL`, `STORE_API_ORIGIN`, `STORE_PREVIEW_PORT` and `CHROME_PATH`. Routes are `/`, `/products` and `/products/templar-knight-phone-and-tablet-holder`. Retain all six report pairs and summary. On runtime interruption, preserve the sample and coordinate only unstarted samples; never silently replace failed/slower measurements.
+Defaults are preview port 4300 and API port 4000. Explicit local overrides are `STORE_AUDIT_BASE_URL`, `STORE_API_ORIGIN`, `STORE_PREVIEW_PORT` and `CHROME_PATH`. Routes are `/`, `/products` and `/products/templar-knight-phone-and-tablet-holder`. Retain all six report pairs and summary. On interruption, preserve the sample and coordinate only unstarted samples; never silently replace failed/slower measurements.
 
-Current derived verification is reproducible while this build/report set exists:
+The current analyzer accepts the exact 21-entry archive format. Its read-only preflight can recheck this build without rewriting results:
 
 ```powershell
-node artifacts/performance/analyze-primeicons.mjs --baseline=baseline-2026-09-17-0423 --identity=current-0509-build-identity.json --checkpoint=0509
+node artifacts/performance/analyze-guest-tracking.mjs --baseline=baseline-2026-09-17-0641 --identity=current-0731-build-identity.json --checkpoint=0731 --preflight
 ```
 
-`--preflight` checks disk identities without writing reports. After timing only, `node artifacts/performance/verify-primeicons-http.mjs --verification=artifacts/performance/verification-0509.json` creates a timestamped HTTP record. Production conclusions require the actual HTTPS host, CDN/cache behavior, API latency and field data; this single local pass establishes neither a repeatable timing gain nor a performance target.
+After a newly authorized complete pass, omit `--preflight` and supply that pass's approved identity/checkpoint. Analysis writes `analysis-HHMM.json`, `current-HHMM-sha256.json` and `verification-HHMM.json`; it refuses existing outputs to preserve history. It validates current/baseline identities, exact archive/report counts and hashes, canonical settings/version, summary timestamps, font counts/body sizes and total-byte consistency. After timing only, `node artifacts/performance/verify-primeicons-http.mjs --verification=artifacts/performance/verification-0731.json` produces a separately timestamped HTTP record.
+
+Production conclusions require the actual HTTPS host, CDN/cache behavior, API latency and field data. This single local pass establishes neither a repeatable timing gain nor a performance target.
