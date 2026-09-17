@@ -1,0 +1,35 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.item-configuration {
+  margin-block-start: 0.75rem;
+  font-size: 0.8125rem;
+}
+summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+dl {
+  display: grid;
+  gap: 0.5rem;
+  margin-block-start: 0.75rem;
+}
+dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+dt {
+  color: var(--shop-muted);
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+p {
+  margin-block-start: 0.75rem;
+  line-height: 1.7;
+}

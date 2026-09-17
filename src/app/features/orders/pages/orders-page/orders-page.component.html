@@ -1,45 +1,227 @@
-<main class="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-  <header class="border-b border-neutral-800 pb-6"><a routerLink="/products" class="text-sm text-pink-300">← Back to products</a><h1 class="mt-3 text-3xl font-black text-white">My orders</h1><p class="mt-2 text-sm text-neutral-400">All prices and totals are shown in Egyptian pounds.</p></header>
-
+<div class="orders-page mx-auto max-w-5xl space-y-8 px-4 py-10 sm:px-6 lg:px-8" dir="rtl">
+  <header>
+    <a routerLink="/products" class="text-button inline-flex items-center gap-2 text-sm"
+      ><i class="pi pi-arrow-right" aria-hidden="true"></i> ارجع للمنتجات</a
+    >
+    <h1 class="mt-4 text-3xl font-bold">طلباتي</h1>
+    <p class="muted mt-3">كل طلب ليه حكاية. تابع قطعتك من تأكيد الطلب لحد ما توصلك.</p>
+  </header>
   @if (isLoading()) {
-    <div class="grid gap-4" aria-live="polite">@for (placeholder of loadingSkeletons; track placeholder) { <div class="h-44 animate-pulse rounded-3xl border border-neutral-800 bg-neutral-950"></div> }</div>
+    <div class="grid gap-4" role="status">
+      <span class="sr-only">جاري تحميل الطلبات</span>
+      @for (placeholder of loadingSkeletons; track placeholder) {
+        <div class="skeleton h-44 animate-pulse rounded-3xl"></div>
+      }
+    </div>
   } @else if (hasError()) {
-    <div class="rounded-3xl border border-red-500/30 bg-red-950/20 p-8 text-center" role="alert"><h2 class="text-xl font-bold text-white">{{ isUnauthorized() ? 'Sign in to view your orders' : 'Orders could not be loaded' }}</h2><p class="mt-2 text-sm text-neutral-400">{{ isUnauthorized() ? 'Your session has expired or does not allow this request.' : 'Check your connection and try again.' }}</p><button type="button" (click)="loadOrders(1)" class="mt-5 rounded-xl bg-purple-600 px-5 py-3 font-bold text-white">Try again</button></div>
+    <section class="surface rounded-3xl border p-8 text-center" role="alert">
+      @if (isUnauthorized()) {
+        <h2 class="text-xl font-bold">سجل دخول لمتابعة طلباتك</h2>
+        <p class="muted mt-3">جلسة الدخول انتهت. سجل دخول تاني عشان تظهر طلباتك.</p>
+        <a routerLink="/login" [queryParams]="loginQueryParams" class="primary-button mt-5"
+          >تسجيل الدخول</a
+        >
+      } @else {
+        <h2 class="text-xl font-bold">مش قادرين نحمل الطلبات دلوقتي</h2>
+        <p class="muted mt-3">راجع الاتصال بالإنترنت وحاول تاني.</p>
+        <button type="button" (click)="loadOrders()" class="primary-button mt-5">
+          إعادة المحاولة
+        </button>
+      }
+    </section>
   } @else if (orders().length === 0) {
-    <div class="rounded-3xl border border-neutral-800 bg-neutral-950 p-10 text-center"><i class="pi pi-box text-4xl text-neutral-600"></i><h2 class="mt-4 text-xl font-bold text-white">No orders yet</h2><p class="mt-2 text-sm text-neutral-400">Orders created through your account will appear here.</p><a routerLink="/products" class="mt-6 inline-flex rounded-xl bg-pink-600 px-5 py-3 font-bold text-white">Browse products</a></div>
+    <section class="surface rounded-3xl border px-6 py-14 text-center">
+      <i class="pi pi-box muted text-4xl" aria-hidden="true"></i>
+      @if (meta().totalItems > 0) {
+        <h2 class="mt-5 text-2xl font-bold">{{ pageText.emptyPageTitle }}</h2>
+        <p class="muted mt-3">{{ pageText.emptyPageDescription }}</p>
+        <button type="button" class="primary-button mt-6" (click)="firstPage()">
+          {{ pageText.firstPage }}
+        </button>
+      } @else {
+        <h2 class="mt-5 text-2xl font-bold">أول قطعة لسه مستنياك</h2>
+        <p class="muted mt-3">طلباتك المرتبطة بالحساب هتظهر هنا بعد إتمام الطلب.</p>
+        <a routerLink="/products" class="primary-button mt-6">اكتشف المنتجات</a>
+      }
+    </section>
   } @else {
-    <section aria-label="Order history" class="space-y-5">
+    <section aria-label="سجل الطلبات" class="space-y-5">
       @for (view of orderViews(); track view.order.id) {
-        <article class="rounded-3xl border border-neutral-800 bg-neutral-950 p-6">
-          <div class="flex flex-col justify-between gap-4 border-b border-neutral-800 pb-4 sm:flex-row sm:items-start">
-            <div><p class="text-lg font-black text-white">{{ view.order.orderNumber }}</p><p class="mt-1 text-xs text-neutral-400">{{ view.order.createdAt | date: 'mediumDate' }}</p></div>
-            <span [class]="'self-start rounded-full border px-3 py-1 text-xs font-bold ' + view.status.className">{{ isArabic ? view.status.labelAr : view.status.label }}</span>
+        <article class="surface rounded-3xl border p-5 sm:p-7">
+          <div class="order-divider flex flex-wrap justify-between gap-4 border-b pb-5">
+            <div>
+              <h2 class="text-lg font-bold" dir="ltr">{{ view.order.orderNumber }}</h2>
+              <p class="muted mt-1 text-xs">{{ view.order.createdAt | date: 'dd / MM / yyyy' }}</p>
+            </div>
+            <span class="status-chip self-start">{{ view.status.labelAr }}</span>
           </div>
-          <div class="mt-5 flex flex-col justify-between gap-5 md:flex-row md:items-center">
-            <div class="flex -space-x-2 rtl:space-x-reverse">
+          <p class="muted mt-4 text-sm leading-7">{{ view.status.descriptionAr }}</p>
+          <div class="mt-5 flex flex-wrap items-center justify-between gap-5">
+            <div class="flex flex-wrap gap-2">
               @for (item of view.order.items; track item.productId) {
-                <div class="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl border border-neutral-700 bg-neutral-900"><i class="pi pi-image text-neutral-600"></i>@if (item.image) { <img [src]="item.image" [alt]="item.name" width="48" height="48" loading="lazy" (error)="hideBrokenImage($event)" class="absolute inset-0 h-full w-full object-cover" /> }</div>
+                <div
+                  class="thumbnail relative flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl"
+                >
+                  <i class="pi pi-box muted" aria-hidden="true"></i>
+                  @if (item.image) {
+                    <img
+                      [src]="item.image"
+                      [alt]="item.name"
+                      width="56"
+                      height="56"
+                      loading="lazy"
+                      (error)="hideBrokenImage($event)"
+                      class="absolute inset-0 h-full w-full object-cover"
+                    />
+                  }
+                </div>
               }
             </div>
-            <div class="flex flex-wrap items-center gap-6 text-sm"><div><span class="block text-xs text-neutral-500">Items</span><strong class="text-white">{{ view.itemCount }}</strong></div><div><span class="block text-xs text-neutral-500">Payment method</span><strong class="text-white">{{ view.order.paymentMethod || 'Not specified' }}</strong></div><div><span class="block text-xs text-neutral-500">Total</span><strong class="text-white">{{ view.order.total | currency: 'EGP' }}</strong></div></div>
+            <div class="flex items-center gap-7 text-sm">
+              <div>
+                <span class="muted block text-xs">عدد القطع</span
+                ><strong class="mt-1 block">{{ view.itemCount }}</strong>
+              </div>
+              <div>
+                <span class="muted block text-xs">
+                  @if (view.order.deliveryFeeConfirmed) {
+                    إجمالي الطلب
+                  } @else {
+                    الإجمالي قبل الشحن
+                  }</span
+                ><strong class="mt-1 block text-lg"
+                  >{{ view.order.total | number: '1.0-2' }} ج.م</strong
+                >
+              </div>
+            </div>
           </div>
-          <div class="mt-5 flex flex-col gap-3 sm:flex-row"><button type="button" (click)="showOrderDetails(view.order.id)" class="rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold text-white">View order details</button>@if (view.supportUrl) { <a [href]="view.supportUrl" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-emerald-500/40 px-4 py-2 text-center text-sm font-bold text-emerald-300">Ask about this order on WhatsApp</a> }</div>
+          <div class="mt-6 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              (click)="showOrderDetails(view.order.id)"
+              [attr.aria-expanded]="view.expanded"
+              [attr.aria-controls]="'order-details-' + view.order.id"
+              class="secondary-button"
+            >
+              @if (view.expanded) {
+                إخفاء التفاصيل
+              } @else {
+                تفاصيل الطلب
+              }
+            </button>
+            @if (view.supportUrl) {
+              <a
+                [href]="view.supportUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="primary-button"
+                ><i class="pi pi-whatsapp" aria-hidden="true"></i> استفسر عن الطلب</a
+              >
+            }
+          </div>
+          @if (view.expanded) {
+            <section
+              [id]="'order-details-' + view.order.id"
+              class="order-divider mt-6 space-y-6 border-t pt-6"
+              aria-label="تفاصيل الطلب"
+            >
+              <div class="space-y-4">
+                @for (item of view.order.items; track item.productId) {
+                  <div class="flex items-start justify-between gap-4 text-sm">
+                    <div>
+                      <strong>{{ item.name }}</strong>
+                      <p class="muted mt-1">الكمية: {{ item.quantity }}</p>
+                    </div>
+                    <strong class="shrink-0">{{ item.lineTotal | number: '1.0-2' }} ج.م</strong>
+                  </div>
+                  <app-order-item-configuration [configuration]="item.configuration ?? null" />
+                }
+              </div>
+              <dl class="details-panel space-y-3 rounded-2xl p-5 text-sm">
+                <div class="flex justify-between">
+                  <dt class="muted">إجمالي المنتجات</dt>
+                  <dd>{{ view.order.subtotal | number: '1.0-2' }} ج.م</dd>
+                </div>
+                <div class="flex justify-between gap-4">
+                  <dt class="muted">الشحن</dt>
+                  <dd class="text-end">
+                    @if (view.order.deliveryFeeConfirmed) {
+                      {{ view.order.deliveryFee | number: '1.0-2' }} ج.م
+                    } @else {
+                      يتحدد بعد تأكيد العنوان
+                    }
+                  </dd>
+                </div>
+                @if (view.order.discount > 0) {
+                  <div class="flex justify-between">
+                    <dt class="muted">الخصم</dt>
+                    <dd>−{{ view.order.discount | number: '1.0-2' }} ج.م</dd>
+                  </div>
+                }
+                <div class="order-divider flex justify-between gap-4 border-t pt-3 font-bold">
+                  <dt>
+                    @if (view.order.deliveryFeeConfirmed) {
+                      إجمالي الطلب
+                    } @else {
+                      الإجمالي قبل الشحن
+                    }
+                  </dt>
+                  <dd>{{ view.order.total | number: '1.0-2' }} ج.م</dd>
+                </div>
+              </dl>
+              <app-order-payment-summary [summary]="view.order.paymentSummary ?? null" />
+              @if (view.history.length > 0) {
+                <div>
+                  <h3 class="mb-4 font-bold">{{ historyText.title }}</h3>
+                  <ol class="space-y-4" [attr.aria-label]="historyText.listLabel">
+                    @for (history of view.history; track history.id) {
+                      <li class="history-item border-s-2 ps-4">
+                        <strong class="text-sm">{{ history.label }}</strong>
+                        <p class="muted mt-1 text-xs">
+                          {{ history.createdAt | date: 'dd/MM/yyyy، HH:mm' }}
+                        </p>
+                        @if (history.publicNote) {
+                          <p class="muted mt-2 text-sm leading-6">{{ history.publicNote }}</p>
+                        }
+                      </li>
+                    }
+                  </ol>
+                </div>
+              }
+              <div class="details-panel rounded-2xl p-5 text-sm">
+                <h3 class="font-bold">عنوان التوصيل</h3>
+                <p class="muted mt-2 leading-7">{{ view.order.customer.address }}</p>
+                <p class="muted leading-7">
+                  {{ view.order.customer.city }} · {{ view.order.customer.governorate }}
+                </p>
+                @if (view.order.customer.notes) {
+                  <p class="muted mt-3 leading-7">ملاحظات: {{ view.order.customer.notes }}</p>
+                }
+              </div>
+            </section>
+          }
         </article>
       }
     </section>
-    @if (meta().totalPages > 1) { <nav aria-label="Order pages" class="flex items-center justify-center gap-4"><button type="button" (click)="previousPage()" [disabled]="!meta().hasPreviousPage" class="rounded-xl border border-neutral-800 px-4 py-2 text-white disabled:opacity-40">Previous</button><span class="text-sm text-neutral-400">{{ meta().page }} / {{ meta().totalPages }}</span><button type="button" (click)="nextPage()" [disabled]="!meta().hasNextPage" class="rounded-xl border border-neutral-800 px-4 py-2 text-white disabled:opacity-40">Next</button></nav> }
+    @if (meta().totalPages > 1) {
+      <nav aria-label="صفحات الطلبات" class="flex items-center justify-center gap-4">
+        <button
+          type="button"
+          (click)="previousPage()"
+          [disabled]="!meta().hasPreviousPage"
+          class="secondary-button"
+        >
+          السابق</button
+        ><span class="muted text-sm">{{ meta().page }} / {{ meta().totalPages }}</span
+        ><button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="!meta().hasNextPage"
+          class="secondary-button"
+        >
+          التالي
+        </button>
+      </nav>
+    }
   }
-
-  @if (selectedOrder(); as order) {
-    <section class="rounded-3xl border border-purple-500/30 bg-purple-950/10 p-2" aria-labelledby="order-details-title">
-      <div class="mx-auto max-w-3xl rounded-3xl border border-neutral-700 bg-neutral-950 p-6 sm:p-8">
-        <div class="flex items-start justify-between gap-4"><div><p class="text-xs text-neutral-500">Order details</p><h2 id="order-details-title" class="text-2xl font-black text-white">{{ order.orderNumber }}</h2></div><button type="button" (click)="closeOrderDetails()" aria-label="Close order details" class="h-11 w-11 rounded-xl border border-neutral-800 text-white">×</button></div>
-        @if (selectedStatus(); as status) { <div [class]="'mt-6 rounded-2xl border p-4 ' + status.className"><strong>{{ isArabic ? status.labelAr : status.label }}</strong><p class="mt-1 text-sm opacity-90">{{ isArabic ? status.descriptionAr : status.description }}</p></div> }
-        @if (order.statusHistory && order.statusHistory.length > 0) { <ol class="mt-6 space-y-3" aria-label="Status history">@for (history of order.statusHistory; track history.createdAt) { <li class="border-s-2 border-purple-500 ps-4"><strong class="text-white">{{ history.status }}</strong><p class="text-xs text-neutral-500">{{ history.createdAt | date: 'medium' }}</p>@if (history.publicNote) { <p class="mt-1 text-sm text-neutral-300">{{ history.publicNote }}</p> }</li> }</ol> }
-        <div class="mt-8 space-y-3">@for (item of order.items; track item.productId) { <div class="flex items-center justify-between gap-4 rounded-2xl border border-neutral-800 p-4"><div><strong class="text-white">{{ item.name }}</strong><p class="text-xs text-neutral-500">Quantity: {{ item.quantity }}</p></div><div class="text-end text-sm"><p class="text-neutral-400">Unit: {{ item.unitPrice | currency: 'EGP' }}</p><strong class="text-white">{{ item.lineTotal | currency: 'EGP' }}</strong></div></div> }</div>
-        <dl class="mt-8 space-y-3 rounded-2xl border border-neutral-800 p-5 text-sm"><div class="flex justify-between"><dt class="text-neutral-400">Subtotal</dt><dd class="text-white">{{ order.subtotal | currency: 'EGP' }}</dd></div><div class="flex justify-between"><dt class="text-neutral-400">Delivery fee</dt><dd class="text-white">{{ order.deliveryFee | currency: 'EGP' }}</dd></div>@if (order.discount > 0) { <div class="flex justify-between"><dt class="text-neutral-400">Discount</dt><dd class="text-emerald-300">−{{ order.discount | currency: 'EGP' }}</dd></div> }<div class="flex justify-between border-t border-neutral-800 pt-3 text-base font-black"><dt class="text-white">Total</dt><dd class="text-white">{{ order.total | currency: 'EGP' }}</dd></div></dl>
-        <div class="mt-6 rounded-2xl border border-neutral-800 p-5 text-sm"><h3 class="font-bold text-white">Delivery information</h3><p class="mt-2 text-neutral-300">{{ order.customer.address }}</p>@if (order.customer.city || order.customer.governorate) { <p class="text-neutral-400">{{ order.customer.city || order.customer.governorate }}</p> }@if (order.customer.notes) { <p class="mt-3 text-neutral-400">Note: {{ order.customer.notes }}</p> }</div>
-      </div>
-    </section>
-  }
-</main>
+</div>

@@ -1,0 +1,49 @@
+:host {
+  display: block;
+}
+.payment-summary {
+  padding: 1.25rem;
+  border: 1px solid var(--shop-line, #d8ded3);
+  border-radius: 1rem;
+  background: var(--shop-surface, #fffdf7);
+  color: var(--shop-ink, #243329);
+  overflow-wrap: anywhere;
+}
+.summary-title,
+.summary-state,
+.summary-net {
+  font-weight: 700;
+}
+.summary-state {
+  margin-block-start: 0.6rem;
+  font-size: 0.875rem;
+}
+.summary-message,
+.summary-note {
+  margin-block-start: 0.5rem;
+  color: var(--shop-muted, #596257);
+  font-size: 0.875rem;
+  line-height: 1.9;
+}
+.summary-amounts {
+  display: grid;
+  gap: 0.75rem;
+  margin-block-start: 1rem;
+  font-size: 0.875rem;
+}
+.summary-amounts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.summary-amounts dd {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.summary-net {
+  padding-block-start: 0.75rem;
+  border-block-start: 1px solid var(--shop-line, #d8ded3);
+}
+.summary-note {
+  font-size: 0.75rem;
+}

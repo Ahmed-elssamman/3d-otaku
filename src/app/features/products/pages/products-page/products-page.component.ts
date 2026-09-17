@@ -1,150 +1,169 @@
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, catchError, debounceTime, finalize, of, switchMap } from 'rxjs';
 import { ProductService } from '@core/services/product.service';
 import { SeoService } from '@core/services/seo.service';
-import { ApiMeta, ApiErrorResponse } from '@core/models/api-response.model';
+import { ApiMeta } from '@core/models/api-response.model';
 import { Product } from '@core/models/product.model';
 import { ProductCategory } from '@core/enums/product-category.enum';
 import { ProductCardComponent } from '@shared/components/product-card/product-card.component';
-import { EmptyStateComponent } from '@shared/components/empty-state/empty-state.component';
-import { OtakuLoaderComponent } from '@shared/components/otaku-loader/otaku-loader.component';
-import { SORT_OPTIONS, SortOption } from '../../products.control';
+import { CATEGORY_PRESENTATION } from '@shared/components/product-card/product-card.control';
+import { SORT_OPTIONS, INITIAL_PRODUCT_META } from '../../products.control';
 import { ProductSort } from '../../enums/product-sort.enum';
 import { ProductQuery } from '../../models/product-query.model';
-import { AnalyticsService } from '@core/services/analytics.service';
-import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
 @Component({
   selector: 'app-products-page',
   standalone: true,
-  imports: [ProductCardComponent, EmptyStateComponent, OtakuLoaderComponent],
+  imports: [ProductCardComponent],
   templateUrl: './products-page.component.html',
-  styleUrl: './products-page.component.scss'
+  styleUrl: './products-page.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsPageComponent implements OnInit {
   private productService = inject(ProductService);
   private seoService = inject(SeoService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-  private analytics = inject(AnalyticsService);
-
-  sortOptions: SortOption[] = SORT_OPTIONS;
+  private requests = new Subject<ProductQuery>();
+  private searchChanges = new Subject<string>();
+  sortOptions = SORT_OPTIONS;
   categoryOptions = signal<string[]>([ProductCategory.ALL]);
-  searchTerm = signal<string>('');
+  searchTerm = signal('');
   selectedCategory = signal<string>(ProductCategory.ALL);
-  selectedSort = signal<ProductSort>(ProductSort.FEATURED);
-  isLoading = signal<boolean>(true);
-  hasError = signal<boolean>(false);
-  isUnauthorized = signal<boolean>(false);
+  selectedSort = signal(ProductSort.FEATURED);
+  isLoading = signal(true);
+  hasError = signal(false);
   productsList = signal<Product[]>([]);
-  meta = signal<ApiMeta>({
-    page: 1,
-    limit: 12,
-    totalItems: 0,
-    totalPages: 1,
-    hasNextPage: false,
-    hasPreviousPage: false
-  });
-
-  hasActiveFilters = computed(() => Boolean(this.searchTerm().trim()) || this.selectedCategory() !== ProductCategory.ALL);
-  isGenuinelyEmpty = computed(() => !this.hasActiveFilters() && this.meta().totalItems === 0);
-  hasNoFilterResults = computed(() => this.hasActiveFilters() && this.productsList().length === 0);
+  meta = signal<ApiMeta>({ ...INITIAL_PRODUCT_META });
+  hasActiveFilters = computed(
+    () => Boolean(this.searchTerm().trim()) || this.selectedCategory() !== ProductCategory.ALL,
+  );
+  categoryViews = computed(() =>
+    this.categoryOptions().map((value) => ({
+      value,
+      label: CATEGORY_PRESENTATION.find((category) => category.value === value)?.label ?? value,
+      selected: value === this.selectedCategory(),
+    })),
+  );
 
   ngOnInit(): void {
-    this.seoService.setTitle('Browse models and prices');
-    this.seoService.setMetaDescription('Browse available 3D printed models, compare product details, and review prices before ordering.');
-    this.analytics.track(AnalyticsEventName.VIEW_PRODUCT_LIST);
-    this.loadCategories();
-
-    this.route.queryParams
+    this.seoService.setTitle('تصفح المجسمات والهدايا المطبوعة 3D');
+    this.seoService.setMetaDescription(
+      'اختار مجسمات وهدايا وإكسسوارات مكتب مطبوعة في مصر. قارن المنتجات والخامات والأسعار بالجنيه المصري.',
+    );
+    this.requests
+      .pipe(
+        switchMap((query) => {
+          this.isLoading.set(true);
+          this.hasError.set(false);
+          return this.productService.getProducts(query).pipe(
+            catchError(() => {
+              this.hasError.set(true);
+              this.seoService.setResponseStatus(503);
+              return of(null);
+            }),
+            finalize(() => this.isLoading.set(false)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((response) => {
+        this.productsList.set(response?.data ?? []);
+        if (response) {
+          this.meta.set(response.meta);
+          this.seoService.setResponseStatus(200);
+        }
+      });
+    this.searchChanges
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.updateQuery(1, true));
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.searchTerm.set(params.get('search') ?? '');
+      this.selectedCategory.set(params.get('category') ?? ProductCategory.ALL);
+      const sort =
+        SORT_OPTIONS.find((option) => option.value === params.get('sort'))?.value ??
+        ProductSort.FEATURED;
+      this.selectedSort.set(sort);
+      const page = Number(params.get('page') ?? 1);
+      this.requestProducts(Number.isInteger(page) && page > 0 ? page : 1);
+    });
+    this.productService
+      .getCategories()
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(params => {
-        const category = typeof params['category'] === 'string' ? params['category'] : ProductCategory.ALL;
-        this.selectedCategory.set(category);
-        this.loadProducts(1);
+      .subscribe({
+        next: (response) =>
+          this.categoryOptions.set([
+            ProductCategory.ALL,
+            ...response.data
+              .filter((category) => category.productsCount > 0)
+              .map((category) => category.name),
+          ]),
+        error: () => this.categoryOptions.set([ProductCategory.ALL]),
       });
   }
 
-  loadProducts(page: number = this.meta().page): void {
-    this.isLoading.set(true);
-    this.hasError.set(false);
-    this.isUnauthorized.set(false);
-
-    const query: ProductQuery = {
-      page,
-      limit: this.meta().limit,
-      sort: this.selectedSort()
-    };
-    if (this.searchTerm().trim()) {
-      query.search = this.searchTerm().trim();
-    }
-    if (this.selectedCategory() !== ProductCategory.ALL) {
-      query.category = this.selectedCategory();
-    }
-
-    this.productService.getProducts(query).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: response => {
-        this.productsList.set(response.data ?? []);
-        this.meta.set(response.meta);
-        this.isLoading.set(false);
-      },
-      error: (error: ApiErrorResponse) => {
-        this.productsList.set([]);
-        this.isUnauthorized.set(error.statusCode === 401 || error.statusCode === 403);
-        this.hasError.set(true);
-        this.isLoading.set(false);
-      }
-    });
-  }
-
   onSearchChange(event: Event): void {
-    this.searchTerm.set((event.target as HTMLInputElement).value);
-    this.analytics.track(AnalyticsEventName.SEARCH_PRODUCTS, { has_query: Boolean(this.searchTerm().trim()) });
-    this.loadProducts(1);
+    if (event.target instanceof HTMLInputElement) {
+      this.searchTerm.set(event.target.value);
+      this.searchChanges.next(event.target.value);
+    }
   }
-
   onCategorySelect(category: string): void {
     this.selectedCategory.set(category);
-    this.analytics.track(AnalyticsEventName.FILTER_PRODUCTS, { category });
-    this.loadProducts(1);
+    this.updateQuery(1);
   }
-
   onSortSelect(event: Event): void {
-    this.selectedSort.set((event.target as HTMLSelectElement).value as ProductSort);
-    this.loadProducts(1);
+    if (event.target instanceof HTMLSelectElement) {
+      const selected = SORT_OPTIONS.find(
+        (option) => option.value === (event.target as HTMLSelectElement).value,
+      );
+      this.selectedSort.set(selected?.value ?? ProductSort.FEATURED);
+      this.updateQuery(1);
+    }
   }
-
   goToPreviousPage(): void {
-    if (this.meta().hasPreviousPage) {
-      this.loadProducts(this.meta().page - 1);
-    }
+    if (this.meta().hasPreviousPage) this.updateQuery(this.meta().page - 1);
   }
-
   goToNextPage(): void {
-    if (this.meta().hasNextPage) {
-      this.loadProducts(this.meta().page + 1);
-    }
+    if (this.meta().hasNextPage) this.updateQuery(this.meta().page + 1);
   }
-
+  retry(): void {
+    this.requestProducts(this.meta().page);
+  }
   resetFilters(): void {
     this.searchTerm.set('');
     this.selectedCategory.set(ProductCategory.ALL);
     this.selectedSort.set(ProductSort.FEATURED);
-    this.loadProducts(1);
+    this.updateQuery(1);
   }
-
-  private loadCategories(): void {
-    this.productService.getCategories()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: response => {
-          const activeCategories = (response.data ?? [])
-            .filter(category => category.productsCount > 0)
-            .map(category => category.name);
-          this.categoryOptions.set([ProductCategory.ALL, ...activeCategories]);
-        },
-        error: () => this.categoryOptions.set([ProductCategory.ALL])
-      });
+  private updateQuery(page: number, replaceUrl = false): void {
+    const queryParams = {
+      search: this.searchTerm().trim() || null,
+      category: this.selectedCategory() === ProductCategory.ALL ? null : this.selectedCategory(),
+      sort: this.selectedSort() === ProductSort.FEATURED ? null : this.selectedSort(),
+      page: page > 1 ? page : null,
+    };
+    void this.router.navigate([], { relativeTo: this.route, queryParams, replaceUrl });
+  }
+  private requestProducts(page: number): void {
+    const query: ProductQuery = {
+      page,
+      limit: INITIAL_PRODUCT_META.limit,
+      sort: this.selectedSort(),
+    };
+    if (this.searchTerm().trim()) query.search = this.searchTerm().trim();
+    if (this.selectedCategory() !== ProductCategory.ALL) query.category = this.selectedCategory();
+    this.requests.next(query);
   }
 }

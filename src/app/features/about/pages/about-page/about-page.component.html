@@ -1,54 +1,66 @@
-<main class="mx-auto max-w-7xl space-y-20 px-4 py-14 sm:px-6 lg:px-8">
-  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 text-center lg:p-14">
-    <span class="vt-badge vt-badge-pink">About {{ settings().brandName || '3D Otaku' }}</span>
-    <h1 class="mx-auto mt-4 max-w-4xl text-4xl font-black text-white sm:text-6xl">
-      {{ settings().heroTitle || 'Anime-inspired pieces with clear product information' }}
-    </h1>
-    <p class="mx-auto mt-5 max-w-3xl text-neutral-300">
-      {{ settings().slogan || 'The storefront is built to help customers compare what is available, understand product-specific materials and dimensions, and request a custom feasibility review when needed.' }}
-    </p>
-  </header>
+<div class="about-page" dir="rtl">
+  <section class="shop-container about-intro" aria-labelledby="about-title">
+    <div>
+      <p class="eyebrow"><span class="status-dot" aria-hidden="true"></span> عن 3D Otaku</p>
+      <h1 id="about-title">أفكار تأخذ شكلًا،<br /><span>وتجد مكانًا عندك.</span></h1>
+      <p class="about-lead">
+        قطعة ترتّب مكتبك، تفصيلة تغيّر ركنًا في البيت، أو هدية تشبه صاحبها. هنا تختار منتجات ملموسة
+        مصنوعة بالطباعة ثلاثية الأبعاد.
+      </p>
+      <div class="about-actions">
+        <a routerLink="/products" class="shop-button shop-button-primary"
+          >اكتشف المنتجات <i class="pi pi-arrow-left" aria-hidden="true"></i
+        ></a>
+        <a routerLink="/contact" class="shop-button shop-button-secondary">تواصل معنا</a>
+      </div>
+    </div>
+    <aside class="about-note" aria-labelledby="about-note-title">
+      <span class="about-note-icon" aria-hidden="true"><i class="pi pi-map-marker"></i></span>
+      <h2 id="about-note-title">لبيتك ومكتبك، داخل مصر.</h2>
+      <p>نستقبل الطلبات للتوصيل داخل مصر فقط. الأسعار بالجنيه المصري، وسعر المنتج لا يشمل الشحن.</p>
+      <p>
+        الطباعة تبني القطعة طبقة بعد طبقة؛ قد تظهر خطوط الطبقات ويختلف اللون قليلًا بين الشاشة
+        والقطعة الفعلية.
+      </p>
+    </aside>
+  </section>
 
-  <section aria-labelledby="principles-title">
-    <h2 id="principles-title" class="mb-8 text-3xl font-black text-white">How the store helps you decide</h2>
-    <div class="grid gap-5 md:grid-cols-3">
-      @for (principle of servicePrinciples; track principle.id) {
-        <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6">
-          <i [class]="principle.icon" class="text-2xl text-pink-400"></i>
-          <h3 class="mt-4 font-bold text-white">{{ principle.title }}</h3>
-          <p class="mt-2 text-sm leading-relaxed text-neutral-400">{{ principle.description }}</p>
-        </article>
-      }
+  <section class="about-principles" aria-labelledby="about-products-title">
+    <div class="shop-container">
+      <p class="eyebrow">قبل أن تختار</p>
+      <h2 id="about-products-title" class="about-section-title">تفاصيل تساعدك على قرار واضح.</h2>
+      <div class="about-card-grid">
+        @for (principle of servicePrinciples; track principle.id) {
+          <article class="about-card">
+            <i [class]="principle.icon" aria-hidden="true"></i>
+            <h3>{{ principle.title }}</h3>
+            <p>{{ principle.description }}</p>
+          </article>
+        }
+      </div>
     </div>
   </section>
 
-  <section aria-labelledby="process-title" class="rounded-3xl border border-neutral-800 bg-neutral-950 p-8 lg:p-12">
-    <h2 id="process-title" class="text-3xl font-black text-white">From selection to delivery preparation</h2>
-    <div class="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+  <section class="shop-container about-process" aria-labelledby="about-process-title">
+    <p class="eyebrow">من الاختيار إلى الطلب</p>
+    <h2 id="about-process-title" class="about-section-title">خطوات بسيطة لقطعتك القادمة.</h2>
+    <ol class="about-steps">
       @for (step of workflowSteps; track step.id) {
-        <article class="rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5">
-          <i [class]="step.icon" class="text-purple-400"></i>
-          <h3 class="mt-4 font-bold text-white">{{ step.title }}</h3>
-          <p class="mt-2 text-sm text-neutral-400">{{ step.description }}</p>
-        </article>
+        <li>
+          <span class="about-step-number" aria-hidden="true">{{ step.stepNumber }}</span>
+          <h3>{{ step.title }}</h3>
+          <p>{{ step.description }}</p>
+        </li>
       }
+    </ol>
+    <div class="about-contact">
+      <div>
+        <h2>عندك سؤال عن قطعة أو فكرة خاصة؟</h2>
+        <p>أرسل لنا التفاصيل أو صورة مرجعية لنناقش إمكانية التنفيذ.</p>
+      </div>
+      <a routerLink="/contact" class="shop-button shop-button-primary"
+        >خلّينا نتكلم <i class="pi pi-arrow-left" aria-hidden="true"></i
+      ></a>
     </div>
   </section>
-
-  <section class="rounded-3xl border border-pink-500/30 bg-pink-950/15 p-8 text-center">
-    <h2 class="text-2xl font-black text-white">Start with a product or connect directly</h2>
-    <p class="mx-auto mt-3 max-w-2xl text-neutral-300">
-      Browse the live catalog for product-specific information, or reach out to our team directly.
-    </p>
-    <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-      <a routerLink="/products" class="rounded-xl bg-pink-600 px-6 py-3 font-bold text-white">Browse products</a>
-      @if (whatsappUrl()) {
-        <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" class="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white flex items-center justify-center gap-2">
-          <i class="pi pi-whatsapp"></i>
-          <span>Direct WhatsApp</span>
-        </a>
-      }
-      <a routerLink="/contact" class="rounded-xl border border-neutral-700 px-6 py-3 font-bold text-white">Contact & Custom Review</a>
-    </div>
-  </section>
-</main>
+</div>

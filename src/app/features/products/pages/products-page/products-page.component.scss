@@ -1,1 +1,130 @@
-/* Styled exclusively using Tailwind CSS & PrimeNG */
+:host {
+  display: block;
+  color: var(--shop-ink);
+  background: var(--shop-bg);
+}
+.catalog-page {
+  padding-block: 3rem 5rem;
+}
+.catalog-heading h1 {
+  font-size: clamp(1.8rem, 3.5vw, 3rem);
+  font-weight: 750;
+  line-height: 1.6;
+  margin-block: 0.5rem;
+}
+.catalog-heading p {
+  color: var(--shop-muted);
+  font-size: 0.92rem;
+  line-height: 1.9;
+}
+.catalog-filters {
+  margin-block: 2rem;
+}
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-end: 1.3rem;
+}
+.category-tabs button {
+  min-height: 2.75rem;
+  border: 1px solid var(--shop-line);
+  border-radius: 2rem;
+  background: #fff;
+  color: var(--shop-muted);
+  font-size: 0.78rem;
+  padding: 0.55rem 1rem;
+  cursor: pointer;
+}
+.category-tabs button.selected {
+  background: var(--shop-primary);
+  color: #fff;
+  border-color: var(--shop-primary);
+}
+.filter-fields {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-block: 1px solid var(--shop-line);
+  padding-block: 1.25rem;
+}
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--shop-line);
+  background: #fff;
+  padding-inline: 1rem;
+  border-radius: 0.6rem;
+  flex: 1;
+}
+.search-field > i {
+  color: var(--shop-muted);
+  font-size: 0.9rem;
+}
+input {
+  width: 100%;
+  min-width: 0;
+  padding-block: 0.8rem;
+  font-size: 0.83rem;
+}
+.sort-field {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.78rem;
+  color: var(--shop-muted);
+}
+select {
+  border: 1px solid var(--shop-line);
+  padding: 0.8rem;
+  border-radius: 0.6rem;
+  background: #fff;
+  color: var(--shop-ink);
+}
+.reset-button {
+  font-size: 0.75rem;
+  color: var(--shop-primary);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+.catalog-result-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--shop-muted);
+  margin-block-end: 1.25rem;
+}
+.catalog-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-block-start: 2rem;
+  font-size: 0.8rem;
+}
+.loading-state {
+  min-height: 28rem;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  .catalog-page {
+    padding-block: 2rem 3rem;
+  }
+  .filter-fields {
+    flex-wrap: wrap;
+  }
+  .search-field {
+    flex-basis: 100%;
+  }
+  .sort-field {
+    flex: 1;
+  }
+  .sort-field select {
+    flex: 1;
+  }
+  .catalog-result-note {
+    font-size: 0.66rem;
+  }
+}

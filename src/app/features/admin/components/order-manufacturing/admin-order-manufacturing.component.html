@@ -1,0 +1,17 @@
+<details class="manufacturing-snapshot">
+  <summary>{{ text.title }}</summary>
+  <p class="snapshot-hint">{{ text.hint }}</p>
+  @if (message()) {
+    <p class="snapshot-state" role="status">{{ message() }}</p>
+  }
+  @if (rows().length) {
+    <dl class="snapshot-fields">
+      @for (row of rows(); track row.id) {
+        <div>
+          <dt>{{ row.label }}</dt>
+          <dd dir="auto">{{ row.value }}</dd>
+        </div>
+      }
+    </dl>
+  }
+</details>

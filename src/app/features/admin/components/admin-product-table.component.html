@@ -1,55 +1,97 @@
 <p-table
-  [value]="pagedProducts()"
+  [value]="tableRows()"
+  [lazy]="true"
+  [lazyLoadOnInit]="false"
   [paginator]="true"
   [rows]="rows()"
   [first]="first()"
   [totalRecords]="totalRecords()"
-  [rowsPerPageOptions]="[5, 10, 20]"
+  [rowsPerPageOptions]="pageSizes"
   [showCurrentPageReport]="true"
-  currentPageReportTemplate="Showing {first} to {last} of {totalRecords} products"
-  (onPage)="pageChange.emit({ first: $event.first, rows: $event.rows })"
+  currentPageReportTemplate="عرض {first}–{last} من {totalRecords} منتج"
+  (onPage)="onPageChange($event)"
   styleClass="admin-table"
 >
-  <ng-template #header>
-    <tr>
-      <th>Product</th>
-      <th>Category</th>
-      <th>Price</th>
-      <th>Status</th>
-      <th>Featured</th>
-      <th>Updated</th>
-      <th>Actions</th>
-    </tr>
-  </ng-template>
-
-  <ng-template #body let-product>
-    <tr>
-      <td>
-        <div class="flex items-center gap-3">
-          <img [src]="product.image" [alt]="product.name" class="h-14 w-14 rounded-2xl object-cover" />
+  <ng-template #header
+    ><tr>
+      <th>المنتج</th>
+      <th>التصنيف</th>
+      <th>السعر</th>
+      <th>النشر</th>
+      <th>التمييز</th>
+      <th>آخر تحديث</th>
+      <th>الإجراءات</th>
+    </tr></ng-template
+  >
+  <ng-template #body let-product
+    ><tr>
+      <td class="product-cell">
+        <div class="product-identity">
+          @if (product.image) {
+            <img [src]="product.image" [alt]="product.name" width="56" height="56" loading="lazy" />
+          } @else {
+            <span class="image-placeholder" aria-hidden="true"><i class="pi pi-image"></i></span>
+          }
           <div>
-            <div class="font-semibold text-white">{{ product.name }}</div>
-            <div class="text-xs text-neutral-500">{{ product.slug }}</div>
+            <strong>{{ product.name }}</strong
+            ><span class="product-slug" dir="auto">{{ product.slug }}</span>
           </div>
         </div>
       </td>
-      <td>{{ product.category }}</td>
-      <td>{{ product.price | currency: 'EGP' }}</td>
-      <td>
-        <p-tag [severity]="product.isActive ? 'success' : 'contrast'" [value]="product.isActive ? 'Active' : 'Hidden'" />
+      <td data-label="التصنيف">{{ product.categoryLabel }}</td>
+      <td data-label="السعر" class="price-cell">
+        {{ product.price | currency: 'EGP' : 'ج.م' : '1.0-2' }}
       </td>
-      <td>
-        <p-tag [severity]="product.isFeatured ? 'info' : 'secondary'" [value]="product.isFeatured ? 'Featured' : 'Standard'" />
+      <td data-label="النشر">
+        <span class="status-badge" [class.status-published]="product.isActive">{{
+          product.statusLabel
+        }}</span>
       </td>
-      <td>{{ product.updatedAt | date: 'MMM d, y' }}</td>
-      <td>
-        <div class="flex flex-wrap gap-2">
-          <p-button label="View" size="small" severity="contrast" variant="outlined" (onClick)="preview.emit(product.id)" />
-          <p-button label="Edit" size="small" severity="info" variant="outlined" (onClick)="edit.emit(product.id)" />
-          <p-button label="Copy" size="small" severity="help" variant="outlined" (onClick)="duplicate.emit(product.id)" />
-          <p-button label="Delete" size="small" severity="danger" variant="outlined" (onClick)="delete.emit(product.id)" />
+      <td data-label="التمييز">{{ product.featuredLabel }}</td>
+      <td data-label="آخر تحديث">{{ product.updatedAt | date: 'dd/MM/yyyy' }}</td>
+      <td class="actions-cell">
+        <div class="row-actions">
+          <p-button
+            label="معاينة"
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            (onClick)="previewProduct(product.id)"
+          />
+          <p-button
+            label="تعديل"
+            size="small"
+            variant="outlined"
+            [disabled]="product.busy"
+            (onClick)="editProduct(product.id)"
+          />
+          <p-button
+            label="نسخ كمسودة"
+            size="small"
+            severity="secondary"
+            variant="outlined"
+            [disabled]="product.busy"
+            (onClick)="duplicateProduct(product.id)"
+          />
+          <p-button
+            label="حذف"
+            size="small"
+            severity="danger"
+            variant="outlined"
+            [disabled]="product.busy"
+            (onClick)="deleteProduct(product.id)"
+          />
+        </div>
+      </td></tr
+  ></ng-template>
+  <ng-template #emptymessage
+    ><tr>
+      <td colspan="7">
+        <div class="empty-products">
+          <i class="pi pi-box" aria-hidden="true"></i><strong>لا توجد منتجات مطابقة</strong>
+          <p>جرّب تغيير البحث أو التصنيف، أو أضف منتجًا جديدًا.</p>
         </div>
       </td>
-    </tr>
-  </ng-template>
+    </tr></ng-template
+  >
 </p-table>

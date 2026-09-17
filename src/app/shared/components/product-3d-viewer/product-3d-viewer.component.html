@@ -3,160 +3,165 @@
   class="viewer-shell"
   [class.viewer-compact]="compact()"
   [class.viewer-fullscreen]="isFullscreen()"
-  [attr.aria-label]="resolvedModelName() + ' interactive 3D viewer'"
+  [attr.aria-label]="viewerLabel()"
 >
-  <div class="aura aura-crimson" aria-hidden="true"></div>
-  <div class="aura aura-violet" aria-hidden="true"></div>
-  <div class="flame-corner flame-corner-start" aria-hidden="true"></div>
-  <div class="flame-corner flame-corner-end" aria-hidden="true"></div>
-  <div class="speed-lines" aria-hidden="true"></div>
-
   <canvas
     #threeCanvas
     class="viewer-canvas"
-    [attr.aria-label]="resolvedModelName() + ' 3D scene'"
+    [attr.aria-label]="sceneLabel()"
     (webglcontextlost)="onWebglContextLost($event)"
     (webglcontextrestored)="onWebglContextRestored()"
   ></canvas>
-
-  <header class="viewer-hud viewer-hud-top">
-    <div class="engine-badge">
-      <span class="engine-badge-dot"></span>
-      <span class="engine-badge-label">INTERACTIVE PRODUCT VIEW</span>
-      <span class="engine-badge-format">{{ detectedFormat() }}</span>
-    </div>
-
-    <div class="viewer-actions">
-      <button
-        type="button"
-        class="viewer-action"
-        [attr.aria-label]="rotationActionLabel()"
-        [attr.title]="rotationActionLabel()"
-        (click)="toggleAutoRotate()"
-      >
-        <i class="pi" [class.pi-pause]="isAutoRotating()" [class.pi-play]="!isAutoRotating()"></i>
-      </button>
-      <button
-        type="button"
-        class="viewer-action"
-        aria-label="Rotate / Flip upright"
-        title="Flip / Rotate upright"
-        (click)="rotateModelX()"
-      >
-        <i class="pi pi-sync"></i>
-      </button>
-      <button
-        type="button"
-        class="viewer-action"
-        aria-label="Zoom in"
-        title="Zoom in"
-        (click)="zoomIn()"
-      >
-        <i class="pi pi-search-plus"></i>
-      </button>
-      <button
-        type="button"
-        class="viewer-action"
-        aria-label="Zoom out"
-        title="Zoom out"
-        (click)="zoomOut()"
-      >
-        <i class="pi pi-search-minus"></i>
-      </button>
-      <button
-        type="button"
-        class="viewer-action"
-        aria-label="Reset camera"
-        title="Reset camera"
-        (click)="resetCamera()"
-      >
-        <i class="pi pi-refresh"></i>
-      </button>
-      <button
-        type="button"
-        class="viewer-action"
-        aria-label="Toggle fullscreen"
-        title="Toggle fullscreen"
-        (click)="toggleFullscreen()"
-      >
-        <i class="pi" [class.pi-window-maximize]="!isFullscreen()" [class.pi-window-minimize]="isFullscreen()"></i>
-      </button>
-    </div>
+  <header class="viewer-header">
+    <span class="viewer-title"
+      ><i class="pi pi-box" aria-hidden="true"></i> شوف القطعة من كل زاوية</span
+    >
+    @if (canInteract()) {
+      <div class="viewer-actions" role="group" aria-label="التحكم في معاينة المجسم">
+        <button
+          type="button"
+          class="viewer-action"
+          [attr.aria-label]="rotationActionLabel()"
+          [attr.title]="rotationActionLabel()"
+          [attr.aria-pressed]="isAutoRotating()"
+          (click)="toggleAutoRotate()"
+        >
+          <i
+            class="pi"
+            [class.pi-pause]="isAutoRotating()"
+            [class.pi-play]="!isAutoRotating()"
+            aria-hidden="true"
+          ></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          aria-label="تدوير المجسم ربع لفة"
+          title="تدوير المجسم ربع لفة"
+          (click)="rotateModelY()"
+        >
+          <i class="pi pi-replay" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          aria-label="تغيير اتجاه المجسم"
+          title="تغيير اتجاه المجسم"
+          (click)="rotateModelX()"
+        >
+          <i class="pi pi-sync" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          aria-label="تكبير المجسم"
+          title="تكبير المجسم"
+          (click)="zoomIn()"
+        >
+          <i class="pi pi-search-plus" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          aria-label="تصغير المجسم"
+          title="تصغير المجسم"
+          (click)="zoomOut()"
+        >
+          <i class="pi pi-search-minus" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          aria-label="إعادة ضبط العرض"
+          title="إعادة ضبط العرض"
+          (click)="resetCamera()"
+        >
+          <i class="pi pi-refresh" aria-hidden="true"></i>
+        </button>
+        <button
+          type="button"
+          class="viewer-action"
+          [attr.aria-label]="fullscreenActionLabel()"
+          [attr.title]="fullscreenActionLabel()"
+          (click)="toggleFullscreen()"
+        >
+          <i
+            class="pi"
+            [class.pi-window-maximize]="!isFullscreen()"
+            [class.pi-window-minimize]="isFullscreen()"
+            aria-hidden="true"
+          ></i>
+        </button>
+      </div>
+    }
   </header>
 
   @if (!isLoaded()) {
     <div class="viewer-overlay">
-      @if (posterImage() || product()?.posterImage || product()?.image) {
-        <img
-          class="viewer-poster"
-          [src]="posterImage() || product()?.posterImage || product()?.image"
-          [alt]="resolvedModelName()"
-        />
+      @if (resolvedPoster()) {
+        <img class="viewer-poster" [src]="resolvedPoster()" [alt]="resolvedModelName()" />
       }
-      <div class="viewer-overlay-shade"></div>
-      <div class="forge-loader" aria-hidden="true">
-        <span class="forge-loader-ring"></span>
-        <i class="pi pi-bolt"></i>
+      <div class="loading-content" role="status">
+        <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <p>{{ loadingLabel() }}</p>
+        <div class="loading-track" aria-hidden="true">
+          <span [style.width.%]="loadProgress()"></span>
+        </div>
       </div>
-      <p class="loading-title" role="status">{{ loadingLabel() }}</p>
-      <div class="loading-track">
-        <span class="loading-progress" [style.width.%]="loadProgress()"></span>
-      </div>
-      <p class="loading-format">{{ detectedFormat() }} model</p>
     </div>
   }
-
   @if (hasError()) {
     <div class="viewer-overlay viewer-error" role="alert">
-      <div class="error-icon"><i class="pi pi-exclamation-triangle"></i></div>
-      <h3>Interactive model unavailable</h3>
+      <i class="pi pi-image" aria-hidden="true"></i>
+      <h3>المعاينة التفاعلية مش متاحة</h3>
       <p>{{ errorMessage() }}</p>
-      <button type="button" class="retry-button" (click)="retryModel()">
-        <i class="pi pi-refresh"></i>
-        Try again
+      <button type="button" class="shop-button shop-button-secondary" (click)="retryModel()">
+        حاول مرة تانية
       </button>
-    </div>
-  }
-
-  <!-- Color Selector HUD -->
-  @if (isLoaded()) {
-    <div class="viewer-color-bar" role="toolbar" aria-label="3D Model Color Palette">
-      <span class="color-bar-label">
-        <i class="pi pi-palette"></i>
-        <span>Color:</span>
-      </span>
-      <div class="color-bar-swatches">
-        @for (color of colorOptions; track color.hex) {
-          <button
-            type="button"
-            class="color-bar-btn"
-            [class.active]="selectedColor() === color.hex"
-            [style.background-color]="color.hex"
-            [attr.title]="color.name"
-            [attr.aria-label]="color.name"
-            (click)="setModelColor(color.hex)"
-          >
-            @if (selectedColor() === color.hex) {
-              <i class="pi pi-check color-check" [class.color-check--light]="color.hex === '#18181b'"></i>
-            }
-          </button>
-        }
-      </div>
-    </div>
-  }
-
-  <footer class="viewer-hud viewer-hud-bottom">
-    <div class="viewer-features">
-      @for (feature of viewerFeatures; track feature.label) {
-        <span class="feature-chip">
-          <i [class]="feature.icon"></i>
-          {{ feature.label }}
-        </span>
+      @if (isFullscreen()) {
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          (click)="toggleFullscreen()"
+        >
+          الخروج من ملء الشاشة
+        </button>
       }
     </div>
-    <p class="viewer-hint">
-      <i class="pi pi-arrows-alt"></i>
-      Drag to orbit <span>•</span> Scroll to zoom
-    </p>
-  </footer>
+  }
+  @if (canInteract()) {
+    <div class="viewer-bottom">
+      <p class="viewer-hint">اسحب لتدوير المجسم، أو استخدم أزرار التحكم.</p>
+      <div class="viewer-color-bar" role="group" aria-label="ألوان المجسم للمعاينة">
+        <span class="color-bar-label">جرّب لون</span>
+        <div class="color-bar-swatches">
+          @for (color of colorOptions; track color.hex) {
+            <button
+              type="button"
+              class="color-bar-btn"
+              [class.active]="selectedColor() === color.hex"
+              [attr.aria-pressed]="selectedColor() === color.hex"
+              [attr.title]="color.name"
+              [attr.aria-label]="color.name"
+              (click)="setModelColor(color.hex)"
+            >
+              <span class="color-swatch" [style.background-color]="color.hex">
+                @if (selectedColor() === color.hex) {
+                  <i
+                    class="pi pi-check"
+                    [class.color-check--light]="color.lightCheck"
+                    aria-hidden="true"
+                  ></i>
+                }
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+      <p class="color-note">الألوان للتجربة في المعاينة فقط، ومش بتغيّر تفاصيل طلبك.</p>
+    </div>
+  }
+  @if (viewerNotice()) {
+    <p class="viewer-notice" role="status">{{ viewerNotice() }}</p>
+  }
 </section>

@@ -1,3 +1,99 @@
 :host {
   display: block;
+  min-width: 0;
+}
+.products-page {
+  display: grid;
+  gap: 1.5rem;
+}
+.products-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+.eyebrow {
+  color: var(--shop-primary, #355e4b);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+h2 {
+  margin: 0.35rem 0;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+  color: var(--shop-ink, #24372f);
+}
+p {
+  margin: 0.3rem 0;
+  color: var(--shop-muted, #626e66);
+  line-height: 1.8;
+}
+.product-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.25rem;
+  background: white;
+  border: 1px solid var(--shop-line, #dce2d9);
+  border-radius: 1rem;
+}
+.product-filters label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.product-filters input,
+:host ::ng-deep .product-filters .p-select {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+}
+.product-table-panel {
+  min-width: 0;
+  border: 1px solid var(--shop-line, #dce2d9);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: white;
+}
+.product-notice {
+  padding: 1.5rem;
+  border: 1px solid var(--shop-line, #dce2d9);
+  border-radius: 1rem;
+  background: white;
+}
+.product-error {
+  border-color: #e6c9c3;
+  color: #8a382d;
+}
+.product-notice button {
+  margin-top: 1rem;
+}
+.preview-details {
+  display: grid;
+  gap: 1rem;
+  direction: rtl;
+}
+.preview-details h3 {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--shop-ink, #24372f);
+}
+@media (max-width: 1050px) {
+  .product-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .products-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .product-filters {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+  .products-header a {
+    width: 100%;
+  }
 }

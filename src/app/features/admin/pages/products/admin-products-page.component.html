@@ -1,68 +1,125 @@
-<section class="space-y-6">
-  <p-toolbar styleClass="admin-card border-0">
-    <ng-template #start>
-      <div>
-        <h2 class="text-2xl font-black text-white">Catalog Manager</h2>
-        <p class="text-sm text-neutral-400">Search, filter, duplicate, and remove products with local persistence.</p>
-      </div>
-    </ng-template>
-    <ng-template #end>
-      <a routerLink="/admin/products/new" class="admin-action-button">Add Product</a>
-    </ng-template>
-  </p-toolbar>
-
-  <div class="grid gap-4 xl:grid-cols-4">
-    <div class="admin-card p-4">
-      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Search</label>
-      <input pInputText [ngModel]="searchTerm()" (ngModelChange)="onSearchTermChange($event)" class="w-full" placeholder="Search by product name" />
+<section class="products-page" dir="rtl" aria-labelledby="products-heading">
+  <header class="products-header">
+    <div>
+      <span class="eyebrow">كتالوج المتجر</span>
+      <h2 id="products-heading">إدارة المنتجات</h2>
+      <p>راجع المنتجات المنشورة والمسودات، وعدّل البيانات والصور والأسعار.</p>
     </div>
-    <div class="admin-card p-4">
-      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Category</label>
-      <p-select [options]="categoryOptions" optionLabel="label" optionValue="value" [ngModel]="selectedCategory()" (ngModelChange)="onCategoryChange($event)" appendTo="body" class="w-full" />
+    <a routerLink="/admin/products/new" class="shop-button shop-button-primary">إضافة منتج</a>
+  </header>
+  <div class="product-filters">
+    <div>
+      <label for="admin-product-search">البحث</label
+      ><input
+        pInputText
+        id="admin-product-search"
+        [ngModel]="searchTerm()"
+        (ngModelChange)="onSearchTermChange($event)"
+        placeholder="اسم المنتج أو رابطه"
+        maxlength="120"
+      />
     </div>
-    <div class="admin-card p-4">
-      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Featured</label>
-      <p-select [options]="featuredFilterOptions" optionLabel="label" optionValue="value" [ngModel]="selectedFeaturedFilter()" (ngModelChange)="onFeaturedFilterChange($event)" appendTo="body" class="w-full" />
+    <div>
+      <label for="admin-product-category">التصنيف</label
+      ><p-select
+        inputId="admin-product-category"
+        [options]="categoryOptions()"
+        [loading]="categoriesLoading()"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedCategory()"
+        (ngModelChange)="onCategoryChange($event)"
+        appendTo="body"
+      />
     </div>
-    <div class="admin-card p-4">
-      <label class="mb-2 block text-xs uppercase tracking-[0.25em] text-neutral-500">Sort</label>
-      <p-select [options]="sortOptions" optionLabel="label" optionValue="value" [ngModel]="selectedSort()" (ngModelChange)="onSortChange($event)" appendTo="body" class="w-full" />
+    <div>
+      <label for="admin-product-featured">المنتجات المميزة</label
+      ><p-select
+        inputId="admin-product-featured"
+        [options]="featuredFilterOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedFeaturedFilter()"
+        (ngModelChange)="onFeaturedFilterChange($event)"
+        appendTo="body"
+      />
+    </div>
+    <div>
+      <label for="admin-product-sort">الترتيب</label
+      ><p-select
+        inputId="admin-product-sort"
+        [options]="sortOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="selectedSort()"
+        (ngModelChange)="onSortChange($event)"
+        appendTo="body"
+      />
     </div>
   </div>
-
+  @if (categoriesLoading()) {
+    <p class="product-notice" role="status">{{ categoryText.loading }}</p>
+  }
+  @if (categoryLoadError()) {
+    <div class="product-notice product-error" role="alert">
+      <p>{{ categoryLoadError() }}</p>
+      <button type="button" class="shop-button shop-button-secondary" (click)="loadCategories()">
+        {{ categoryText.retry }}
+      </button>
+    </div>
+  }
   @if (isLoading()) {
-    <div class="grid gap-4 md:grid-cols-2">
-      <p-skeleton height="18rem" borderRadius="1.5rem" />
-      <p-skeleton height="18rem" borderRadius="1.5rem" />
+    <div class="product-notice" role="status">جارٍ تحميل المنتجات…</div>
+  } @else if (loadError()) {
+    <div class="product-notice product-error" role="alert">
+      <p>{{ loadError() }}</p>
+      <button type="button" class="shop-button shop-button-secondary" (click)="loadProducts()">
+        إعادة المحاولة
+      </button>
     </div>
   } @else {
-    <app-admin-product-table
-      [products]="filteredProducts()"
-      [totalRecords]="filteredProducts().length"
-      [first]="first()"
-      [rows]="rows()"
-      (pageChange)="onPageChange($event)"
-      (edit)="editProduct($event)"
-      (duplicate)="duplicateProduct($event)"
-      (delete)="deleteProduct($event)"
-      (preview)="openPreview($event)"
-    />
+    <div class="product-table-panel">
+      <app-admin-product-table
+        [products]="productsList()"
+        [totalRecords]="totalRecords()"
+        [first]="first()"
+        [rows]="rows()"
+        [busyProductId]="busyProductId()"
+        (pageChange)="onPageChange($event)"
+        (edit)="editProduct($event)"
+        (duplicate)="duplicateProduct($event)"
+        (delete)="deleteProduct($event)"
+        (preview)="openPreview($event)"
+      />
+    </div>
   }
-
   <p-dialog
-    header="Product Preview"
+    header="معاينة المنتج"
     [modal]="true"
     [visible]="previewVisible()"
-    [style]="{ width: 'min(1100px, 95vw)' }"
-    (visibleChange)="previewVisible.set($event)"
+    [style]="previewStyle"
+    (visibleChange)="onPreviewVisibleChange($event)"
   >
-    @if (selectedPreviewProduct(); as product) {
-      <div class="space-y-4">
-        <div>
-          <h3 class="text-xl font-bold text-white">{{ product.name }}</h3>
-          <p class="text-sm text-neutral-400">{{ product.shortDescription }}</p>
-        </div>
-        <app-admin-file-preview [imageUrl]="product.image" [modelUrl]="product.modelUrl ?? null" [posterImage]="product.posterImage ?? null" [productName]="product.name" />
+    @if (previewLoading()) {
+      <p class="product-notice" role="status">جارٍ تحميل بيانات المعاينة…</p>
+    } @else if (previewError()) {
+      <div class="product-notice product-error" role="alert">
+        <p>{{ previewError() }}</p>
+        <button type="button" class="shop-button shop-button-secondary" (click)="retryPreview()">
+          إعادة المحاولة
+        </button>
+      </div>
+    } @else if (selectedPreviewProduct(); as product) {
+      <div class="preview-details">
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.shortDescription }}</p>
+        <app-admin-file-preview
+          [imageUrl]="product.image"
+          [modelUrl]="product.modelUrl ?? null"
+          [modelType]="previewModelType()"
+          [posterImage]="product.posterImage ?? null"
+          [productName]="product.name"
+        />
       </div>
     }
   </p-dialog>

@@ -17,7 +17,7 @@ describe('WhatsApp message privacy', () => {
       colorFinish: 'Blue',
       quantity: 1,
       details: 'Private notes',
-      rightsConfirmed: true
+      rightsConfirmed: true,
     };
     const message = buildCustomRequestMessage(request, 'REQ-10');
     expect(message).toContain('REQ-10');
@@ -30,14 +30,24 @@ describe('WhatsApp message privacy', () => {
 
   it('includes only safe order support context', () => {
     const order: Order = {
-      id: 'internal-id', orderNumber: 'ORD-10', items: [],
+      id: 'internal-id',
+      orderNumber: 'ORD-10',
+      items: [],
       customer: { fullName: 'Private Name', phone: '01000000000', address: 'Private address' },
-      subtotal: 10, deliveryFee: 2, discount: 0, total: 12, currency: 'SAR',
-      status: OrderStatus.PENDING, paymentMethod: 'whatsapp', createdAt: '2026-08-11T00:00:00Z', updatedAt: '2026-08-11T00:00:00Z'
+      subtotal: 10,
+      deliveryFee: 2,
+      discount: 0,
+      total: 12,
+      currency: 'SAR',
+      status: OrderStatus.PENDING,
+      paymentMethod: 'whatsapp',
+      createdAt: '2026-08-11T00:00:00Z',
+      updatedAt: '2026-08-11T00:00:00Z',
     };
-    const message = buildOrderSupportMessage(order);
+    const message = buildOrderSupportMessage(order, 'قيد المراجعة');
     expect(message).toContain('ORD-10');
-    expect(message).toContain('pending');
+    expect(message).toContain('الحالة الحالية: قيد المراجعة');
+    expect(message).not.toContain('pending');
     expect(message).not.toContain(order.customer.fullName);
     expect(message).not.toContain(order.customer.phone);
     expect(message).not.toContain(order.customer.address);

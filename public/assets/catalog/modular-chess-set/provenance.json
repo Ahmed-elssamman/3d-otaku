@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "slug": "modular-chess-set",
+  "verifiedDate": "2026-09-16",
+  "sourceRepository": "https://github.com/vector76/gridfinity_openscad",
+  "sourceRevision": "0e7308cd8fc7fb4191aa69d81175a90d10de751c",
+  "author": "Jamie / vector76",
+  "license": "MIT",
+  "scale": 0.75,
+  "parts": [
+    {
+      "file": "tile.stl",
+      "quantity": 64
+    },
+    {
+      "file": "pawn.stl",
+      "quantity": 16
+    },
+    {
+      "file": "rook.stl",
+      "quantity": 4
+    },
+    {
+      "file": "knight.stl",
+      "quantity": 4
+    },
+    {
+      "file": "bishop.stl",
+      "quantity": 4
+    },
+    {
+      "file": "queen.stl",
+      "quantity": 2
+    },
+    {
+      "file": "king.stl",
+      "quantity": 2
+    }
+  ],
+  "notes": [
+    "All parts uniformly scaled to 75%. Board arranged at 31.5 mm pitch.",
+    "Knight STL contains an upstream sacrificial support requiring removal after printing. Source-mesh preview retains it.",
+    "Pieces and tiles are separate. No continuous board, magnets or carry case included."
+  ],
+  "sourceUnit": "millimeter",
+  "previewModelUnit": "meter",
+  "previewCoordinateOrder": "width-height-depth (Y up)",
+  "previewKind": "source-mesh-render",
+  "previewIsPhotograph": false,
+  "manufacturingVerified": false,
+  "saleReady": false,
+  "previewGeometryDimensionsMm": [
+    251.63,
+    44.66,
+    251.63
+  ],
+  "meshMeasurements": [
+    {
+      "file": "bishop.stl",
+      "sha256": "0e635de5c2b2a8659c32577205e7799c2a8044c87e0c09eee9a571322b9e7344",
+      "bytes": 238084,
+      "triangleCount": 4760,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        43.498
+      ]
+    },
+    {
+      "file": "king.stl",
+      "sha256": "62ef36f275e3ae9edaf53e2680cff1c12c0d6bc3591ef8237668fa7c718034de",
+      "bytes": 79884,
+      "triangleCount": 1596,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        56
+      ]
+    },
+    {
+      "file": "knight.stl",
+      "sha256": "42c11abdd0e99a8f499e78ac6c7e79cddbf696006ee3536a9d9a5259787b1629",
+      "bytes": 53084,
+      "triangleCount": 1060,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        37
+      ]
+    },
+    {
+      "file": "pawn.stl",
+      "sha256": "a839bd5fce6b6a9181be165f569083b0577be8e4c519d47ba97668defd7b7749",
+      "bytes": 213484,
+      "triangleCount": 4268,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        30.492
+      ]
+    },
+    {
+      "file": "queen.stl",
+      "sha256": "9ac7437f5fff6426824b037a632d5f8eb22fc1f53e32ca90bbf69d7df1fc3767",
+      "bytes": 140384,
+      "triangleCount": 2806,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        53
+      ]
+    },
+    {
+      "file": "rook.stl",
+      "sha256": "eef33778798166922db5079d9bba4adf03b717591297b177ee627919efdf53e1",
+      "bytes": 80684,
+      "triangleCount": 1612,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        39
+      ]
+    },
+    {
+      "file": "tile.stl",
+      "sha256": "14439034168740dab424aa1e97ac2ae26c47f210a6ac5130331d034e43642ed8",
+      "bytes": 45484,
+      "triangleCount": 908,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        7.25
+      ]
+    }
+  ],
+  "downloads": [
+    {
+      "file": "LICENSE",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/LICENSE",
+      "bytes": 1062,
+      "sha256": "1290f78547e35d9ddce10442c3d5961ffc2f91a5c8a40fff1cf2be749054b7aa"
+    },
+    {
+      "file": "bishop.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/bishop.stl",
+      "bytes": 238084,
+      "sha256": "0e635de5c2b2a8659c32577205e7799c2a8044c87e0c09eee9a571322b9e7344"
+    },
+    {
+      "file": "king.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/king.stl",
+      "bytes": 79884,
+      "sha256": "62ef36f275e3ae9edaf53e2680cff1c12c0d6bc3591ef8237668fa7c718034de"
+    },
+    {
+      "file": "knight.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/knight.stl",
+      "bytes": 53084,
+      "sha256": "42c11abdd0e99a8f499e78ac6c7e79cddbf696006ee3536a9d9a5259787b1629"
+    },
+    {
+      "file": "pawn.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/pawn.stl",
+      "bytes": 213484,
+      "sha256": "a839bd5fce6b6a9181be165f569083b0577be8e4c519d47ba97668defd7b7749"
+    },
+    {
+      "file": "queen.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/queen.stl",
+      "bytes": 140384,
+      "sha256": "9ac7437f5fff6426824b037a632d5f8eb22fc1f53e32ca90bbf69d7df1fc3767"
+    },
+    {
+      "file": "rook.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/rook.stl",
+      "bytes": 80684,
+      "sha256": "eef33778798166922db5079d9bba4adf03b717591297b177ee627919efdf53e1"
+    },
+    {
+      "file": "tile.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/chess/tile.stl",
+      "bytes": 45484,
+      "sha256": "14439034168740dab424aa1e97ac2ae26c47f210a6ac5130331d034e43642ed8"
+    },
+    {
+      "file": "gridfinity_chess.scad",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/gridfinity_chess.scad",
+      "bytes": 3590,
+      "sha256": "cfa84c8f990b98981396afb5cfc0020359dd53d8c74364e7f88e6e78de73ca0d"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "model.glb",
+      "bytes": 961092,
+      "sha256": "78d3d4b6b126442bc5f6d3f7e39990b1728d51e2e7b92679e731097ea962159f"
+    },
+    {
+      "file": "preview.webp",
+      "bytes": 47822,
+      "sha256": "5327712cd4512a774acd6d9aa94a76f9a65422090312b23bd4c7e677921e9ee2"
+    }
+  ],
+  "rendering": {
+    "engine": "Three.js 0.185.1",
+    "browser": "Google Chrome via Playwright",
+    "resolution": [
+      960,
+      960
+    ],
+    "imageFormat": "WebP",
+    "meshOptimization": "Shared geometry per source mesh; merge duplicate vertices with tolerance 0.00001 mm. No mesh simplification or image generation."
+  }
+}

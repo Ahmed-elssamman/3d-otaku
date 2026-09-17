@@ -1,23 +1,30 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TokenStorageService } from '../services/token-storage.service';
-import { environment } from '../../../environments/environment';
+import { isApiUrl, isCredentialUrl, isPublicCatalogUrl } from '../utils/api-url.util';
+import { GUEST_ORDER_TRACKING } from '../api/guest-order-tracking.context';
 
 export const authTokenInterceptor: HttpInterceptorFn = (req, next) => {
-  const tokenStorage = inject(TokenStorageService);
-  const token = tokenStorage.getAccessToken();
-
-  // Attach token only if sending requests to our apiBaseUrl
-  const isApiRequest = req.url.startsWith(environment.apiBaseUrl);
-
-  if (token && isApiRequest) {
-    const authReq = req.clone({
-      setHeaders: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return next(authReq);
+  if (req.context.get(GUEST_ORDER_TRACKING)) {
+    return next(
+      req.clone({
+        headers: req.headers.delete('Authorization'),
+        withCredentials: false,
+        credentials: 'omit',
+      }),
+    );
   }
-
+  const storage = inject(TokenStorageService);
+  const origin = inject(DOCUMENT).location.origin;
+  const token = storage.getAccessToken();
+  if (
+    token &&
+    isApiUrl(req.url, origin) &&
+    !isCredentialUrl(req.url, origin) &&
+    !isPublicCatalogUrl(req.url)
+  ) {
+    return next(req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }));
+  }
   return next(req);
 };

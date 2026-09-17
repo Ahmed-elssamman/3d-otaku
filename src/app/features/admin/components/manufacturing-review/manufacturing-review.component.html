@@ -1,0 +1,301 @@
+<section
+  class="manufacturing-panel"
+  dir="rtl"
+  aria-labelledby="manufacturing-review-title"
+  [attr.aria-busy]="busy()"
+>
+  <header class="panel-header">
+    <div>
+      <span class="eyebrow">قبل إتاحة التصنيع والبيع</span>
+      <h3 id="manufacturing-review-title">مراجعة التصنيع والتكلفة</h3>
+    </div>
+    <span class="review-status" [class.approved]="approved()"
+      >{{ statusLabel() }} · نسخة {{ revision() }}</span
+    >
+  </header>
+  <p class="help">
+    القياسات والتكلفة والمراجع هنا خاصة بالإدارة. احفظ المدخلات، واحسب التسعير من الخادم، ثم اعتمد
+    المراجعة بإقرارات مستقلة. الخانة الفارغة تعني أن القيمة غير متوفرة؛ أدخل صفرًا فقط إذا كانت
+    التكلفة فعلًا صفرًا.
+  </p>
+  @if (product().isActive) {
+    <p class="notice">
+      المنتج منشور. ألغِ نشره واحفظ المنتج أولًا قبل تغيير المراجعة أو السعر أو المواصفات أو ملفات
+      النموذج والصور.
+    </p>
+    <button
+      class="shop-button shop-button-secondary"
+      type="button"
+      [disabled]="!canUnpublish()"
+      (click)="unpublishProduct()"
+    >
+      إلغاء نشر المنتج لبدء المراجعة
+    </button>
+  }
+  @if (productEditorDirty()) {
+    <p class="notice">
+      هناك تعديلات غير محفوظة في محرر المنتج. احفظها أو أعد تحميل الصفحة قبل حساب التسعير أو حفظ
+      المراجعة واعتمادها.
+    </p>
+  }
+  @if (dirty()) {
+    <p class="notice" role="status">
+      تعديلات المراجعة غير محفوظة. التسعير السابق لا يشملها؛ احفظ المراجعة أولًا.
+    </p>
+  }
+  @if (approved()) {
+    <p class="success">
+      اعتمد الخادم هذه المراجعة
+      @if (review()?.approvedAt) {
+        بتاريخ {{ review()?.approvedAt | date: 'yyyy/MM/dd HH:mm' }}
+      }
+      . الاعتماد لا يغيّر السعر ولا ينشر المنتج.
+    </p>
+  }
+  @if (errorMessage()) {
+    <div class="error" role="alert">
+      <p>{{ errorMessage() }}</p>
+      @if (fieldErrors().length) {
+        <ul>
+          @for (field of fieldErrors(); track field) {
+            <li>{{ field }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+  @if (successMessage()) {
+    <p class="success" role="status">{{ successMessage() }}</p>
+  }
+  @if (localErrors().length) {
+    <ul class="error" role="alert">
+      @for (message of localErrors(); track message) {
+        <li>{{ message }}</li>
+      }
+    </ul>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="saveReview()">
+    <fieldset [disabled]="locked()">
+      <legend>١. القياسات المتحققة</legend>
+      <div class="field-grid">
+        @for (field of measurementFields; track field.key) {
+          <div class="review-field">
+            <label [for]="'review-' + field.key">{{ field.label }}</label
+            ><input
+              pInputText
+              type="number"
+              inputmode="decimal"
+              min="0.001"
+              step="0.001"
+              [id]="'review-' + field.key"
+              [formControlName]="field.key"
+              [attr.aria-describedby]="'hint-' + field.key"
+            /><small [id]="'hint-' + field.key">{{ field.hint }}</small>
+          </div>
+        }
+      </div>
+    </fieldset>
+    <fieldset formGroupName="costing" [disabled]="locked()">
+      <legend>٢. مدخلات التكلفة والتسعير</legend>
+      <p class="help">
+        تكاليف القطعة بالجنيه المصري. النسب تُكتب كنسبة مئوية، مثل 10 لتعني 10%. يلزم اختيار جميع
+        البنود لحساب التسعير.
+      </p>
+      <div class="field-grid">
+        <div class="review-field">
+          <label for="review-material">خامة التسعير</label
+          ><select id="review-material" formControlName="material">
+            <option [ngValue]="null">لم تُحدد</option>
+            @for (option of materialOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }</select
+          ><small>يجب أن تطابق خامة المنتج عند الاعتماد.</small>
+        </div>
+        <div class="review-field">
+          <label for="review-consumption">هل الاستهلاك يشمل الدعامات والهدر؟</label
+          ><select id="review-consumption" formControlName="consumptionIncludesSupportAndWaste">
+            <option [ngValue]="null">لم يُتحقق بعد</option>
+            @for (option of consumptionOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+        @for (field of costFields; track field.key) {
+          <div class="review-field">
+            <label [for]="'review-' + field.key">{{ field.label }}</label
+            ><input
+              pInputText
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.01"
+              [id]="'review-' + field.key"
+              [formControlName]="field.key"
+            />
+          </div>
+        }
+        <div class="review-field">
+          <label for="review-rounding">تقريب سعر البيع</label
+          ><select id="review-rounding" formControlName="retailRounding">
+            <option [ngValue]="null">لم يُحدد</option>
+            @for (option of roundingOptions; track option.value) {
+              <option [ngValue]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </fieldset>
+    <fieldset [disabled]="locked()">
+      <legend>٣. مراجع القياس والعينة والحقوق</legend>
+      <div class="reference-grid">
+        @for (field of referenceFields; track field.key) {
+          <div class="review-field">
+            <label [for]="'review-' + field.key">{{ field.label }}</label
+            ><textarea
+              pTextarea
+              rows="3"
+              maxlength="1000"
+              dir="auto"
+              [id]="'review-' + field.key"
+              [formControlName]="field.key"
+              [attr.aria-describedby]="'hint-' + field.key"
+            ></textarea
+            ><small [id]="'hint-' + field.key">{{ field.hint }}</small>
+          </div>
+        }
+      </div>
+    </fieldset>
+    <div class="panel-actions">
+      <button class="shop-button" type="submit" [disabled]="!canSave()">حفظ بيانات المراجعة</button>
+      <button
+        class="shop-button shop-button-secondary"
+        type="button"
+        [disabled]="!canQuote()"
+        (click)="calculateQuote()"
+      >
+        حساب التسعير من الخادم
+      </button>
+      @if (dirty()) {
+        <button
+          class="text-button"
+          type="button"
+          [disabled]="busy() || productEditorBusy()"
+          (click)="discardLocalChanges()"
+        >
+          تجاهل تعديلات المراجعة المحلية
+        </button>
+      }
+      <button
+        class="text-button"
+        type="button"
+        [disabled]="busy() || productEditorBusy() || productEditorDirty()"
+        (click)="reloadProduct()"
+      >
+        تجاهل تعديلات المراجعة وإعادة تحميل المنتج
+      </button>
+    </div>
+    <p class="help">
+      حفظ المدخلات يعيد المراجعة إلى «قيد المراجعة» ويلغي الاعتماد السابق. لا يحفظ هذا الزر حقول
+      محرر المنتج.
+    </p>
+  </form>
+  @if (busy()) {
+    <p class="help" role="status">جارٍ تنفيذ العملية على الخادم…</p>
+  }
+
+  @if (quote(); as result) {
+    <section class="quote-section" aria-labelledby="manufacturing-quote-title">
+      <h4 id="manufacturing-quote-title">تسعير النسخة المحفوظة {{ result.revision }}</h4>
+      <div class="quote-summary">
+        <div>
+          <span>السعر المستهدف من الحساب</span
+          ><strong>{{ result.quote.retailPriceEgp | currency: 'EGP' : 'ج.م' : '1.2-2' }}</strong>
+        </div>
+        <div>
+          <span>سعر البيع الفعلي الحالي</span
+          ><strong>{{ result.effectiveSellingPriceEgp | currency: 'EGP' : 'ج.م' : '1.2-2' }}</strong
+          ><small>سعر الخصم إن وُجد، وإلا السعر الأساسي.</small>
+        </div>
+      </div>
+      <p class="help">
+        سعر خامة {{ result.quote.material }} في حساب الخادم:
+        {{ materialPrice() | currency: 'EGP' : 'ج.م' : '1.2-2' }} للجرام. الهامش المستهدف
+        {{ targetMargin() | number: '1.0-2' }}%، والهامش المحقق عند السعر المحسوب
+        {{ achievedMargin() | number: '1.0-2' }}%.
+      </p>
+      <dl class="breakdown">
+        @for (row of breakdownRows(); track row.key) {
+          <div [class.total-row]="row.total">
+            <dt>{{ row.label }}</dt>
+            <dd>{{ row.amountEgp | currency: 'EGP' : 'ج.م' : '1.2-2' }}</dd>
+          </div>
+        }
+      </dl>
+      <p class="help">
+        صفوف الإجمالي توضح مراحل الحساب ولا تُضاف مرة أخرى إلى البنود. التسعير لا يمثل اعتمادًا
+        للتصنيع.
+      </p>
+      <p class="notice">
+        بنود خارج هذا الحساب:
+        @for (cost of excludedCosts(); track cost; let last = $last) {
+          {{ cost }}
+          @if (!last) {
+            ،
+          }
+        }
+        . تكاليف الشحن غير مشمولة والضرائب غير محسوبة.
+      </p>
+      @if (!result.meetsQuoteTarget) {
+        <p class="notice" role="status">
+          سعر البيع الحالي أقل من السعر المستهدف. اختر السعر بنفسك في محرر المنتج، واحفظه مع بقاء
+          المنتج غير منشور، ثم احسب تسعيرًا جديدًا. لا يُطبَّق السعر تلقائيًا.
+        </p>
+      }
+      @if (!materialMatches()) {
+        <p class="notice">
+          خامة التسعير تختلف عن خامة المنتج. صحح الاختيار أو خامة المنتج واحفظ التغيير، ثم أعد
+          الحساب قبل الاعتماد.
+        </p>
+      }
+      @if (!referencesComplete()) {
+        <p class="notice">أكمل المراجع الثلاثة واحفظ المراجعة قبل اعتمادها.</p>
+      }
+      @if (!approved()) {
+        <form [formGroup]="attestations" (ngSubmit)="approveReview()">
+          <fieldset class="attestations" [disabled]="!canQuote()">
+            <legend>٤. إقرارات المسؤول قبل الاعتماد</legend>
+            <label
+              ><input type="checkbox" formControlName="sampleApproved" />فحصت العينة الفعلية وأوافق
+              على جودتها وقياساتها.</label
+            >
+            <label
+              ><input type="checkbox" formControlName="rightsReviewed" />راجعت حقوق النموذج والصور
+              والاستخدام التجاري وفق المرجع المسجل.</label
+            >
+            <label
+              ><input type="checkbox" formControlName="pricingApproved" />راجعت التكاليف
+              والاستثناءات وسعر البيع الحالي وأوافق على التسعير.</label
+            >
+          </fieldset>
+          <button class="shop-button" type="submit" [disabled]="!canApprove()">
+            اعتماد مراجعة التصنيع
+          </button>
+        </form>
+      }
+    </section>
+  }
+  @if (historyRows().length) {
+    <details class="review-history">
+      <summary>سجل المراجعة</summary>
+      <ol>
+        @for (entry of historyRows(); track entry.key) {
+          <li>
+            <span>{{ entry.label }} · نسخة {{ entry.revision }}</span
+            ><time>{{ entry.createdAt | date: 'yyyy/MM/dd HH:mm' }}</time>
+          </li>
+        }
+      </ol>
+    </details>
+  }
+</section>

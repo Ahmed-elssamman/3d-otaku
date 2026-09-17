@@ -1,0 +1,309 @@
+@if (snapshot(); as saved) {
+  <section
+    class="payment-editor"
+    aria-labelledby="order-payments-title"
+    [attr.aria-busy]="isBusy()"
+  >
+    <h4 id="order-payments-title">سجل التحصيل ورد المبالغ</h4>
+    <p class="muted">
+      سجّل فقط تحصيلًا أو رد مبلغ تم بالفعل وتحققت منه. هذه الشاشة لا تنفّذ تحويلًا بنكيًا أو دفعًا
+      أو رد أموال، ولا تغيّر حالة التنفيذ أو الشحن.
+    </p>
+    <app-order-payment-summary [summary]="saved.summary" />
+    @if (error()) {
+      <p class="error-state" role="alert">{{ error() }}</p>
+    }
+    @if (message()) {
+      <p class="notice" role="status">{{ message() }}</p>
+    }
+    @if (storageNotice()) {
+      <p class="error-state" role="alert">{{ storageNotice() }}</p>
+    }
+    @if (isUncertain()) {
+      <p class="notice">
+        هذه محاولة لم تُحسم بعد. نحتفظ ببياناتها الأصلية حتى التحقق؛ تعديلها أو بدء عملية أخرى قد
+        يسجّل حركة أموال مرتين.
+      </p>
+    }
+    @if (!ledgerAvailable()) {
+      <p class="notice">سجل الطلب غير متاح لحساب مالي موثوق. راجع التفاصيل قبل التسجيل.</p>
+    }
+
+    @if (isCorrection()) {
+      <form [formGroup]="correctionForm" (ngSubmit)="requestReview()">
+        <h5>تصحيح خطأ إداري في قيد سابق</h5>
+        <p class="muted">
+          يظل القيد الأصلي محفوظًا ويُستبعد من الإجماليات بعد التصحيح. هذا ليس رد أموال ولا يسجّل
+          قيدًا بديلًا تلقائيًا. لا تستخدمه إن كانت هناك حركة أموال فعلية يجب تسجيلها.
+        </p>
+        @if (targetEntry(); as target) {
+          <p>
+            مبلغ القيد المحدد: <strong>{{ target.amount | number: '1.0-2' }} ج.م</strong>
+          </p>
+        } @else {
+          <p class="error-state">
+            القيد المحدد غير متاح للتصحيح الآن. راجع السجل أو تجاهل المسودة.
+          </p>
+        }
+        <fieldset [disabled]="fieldsDisabled()">
+          <label for="order-payment-correction-note"
+            >سبب التصحيح — للإدارة فقط
+            <textarea
+              id="order-payment-correction-note"
+              rows="3"
+              formControlName="reason"
+              [maxLength]="limits.note"
+            ></textarea>
+          </label>
+          <p class="muted">اكتب سببًا واضحًا من ٣ إلى ١٠٠٠ حرف.</p>
+          <label class="attestation" for="order-payment-correction-confirmed">
+            <input
+              id="order-payment-correction-confirmed"
+              type="checkbox"
+              formControlName="confirmed"
+            />
+            <span
+              >أؤكد أن القيد المحدد يحتوي على خطأ إداري ويجب استبعاده من الإجماليات مع حفظ
+              أصله.</span
+            >
+          </label>
+          <label class="attestation" for="order-payment-no-money-moved">
+            <input
+              id="order-payment-no-money-moved"
+              type="checkbox"
+              formControlName="noMoneyMoved"
+            />
+            <span>أؤكد أن هذا التصحيح لا يمثل تحصيلًا أو رد أموال ولا يصاحبه نقل أموال.</span>
+          </label>
+        </fieldset>
+        <button type="submit" class="shop-button shop-button-primary" [disabled]="!canReview()">
+          {{ reviewLabel() }}
+        </button>
+      </form>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="requestReview()">
+        <fieldset [disabled]="fieldsDisabled()">
+          <div class="payment-fields">
+            <label for="order-payment-kind"
+              >نوع العملية التي تمت
+              <select id="order-payment-kind" formControlName="kind">
+                <option [ngValue]="null">اختر نوع العملية</option>
+                @for (option of kinds; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            <label for="order-payment-amount"
+              >المبلغ بالجنيه المصري
+              <input
+                id="order-payment-amount"
+                type="number"
+                min="0.01"
+                [max]="limits.amount"
+                step="0.01"
+                inputmode="decimal"
+                formControlName="amount"
+                [attr.aria-invalid]="amountError()"
+              />
+            </label>
+            <label for="order-payment-method"
+              >طريقة العملية الفعلية
+              <select id="order-payment-method" formControlName="method">
+                <option [ngValue]="null">اختر طريقة العملية</option>
+                @for (option of methods; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </label>
+            <label for="order-payment-reference"
+              >مرجع العملية — للإدارة فقط
+              <input
+                id="order-payment-reference"
+                type="text"
+                formControlName="reference"
+                [maxLength]="limits.reference"
+                [attr.aria-invalid]="referenceError()"
+                aria-describedby="order-payment-reference-hint"
+              />
+            </label>
+          </div>
+          @if (amountError()) {
+            <p class="field-error">
+              أدخل مبلغًا أكبر من صفر، بحد أقصى ١٠٬٠٠٠٬٠٠٠ ومنزلتين عشريتين.
+            </p>
+          }
+          @if (refundError()) {
+            <p class="field-error">لا يمكن أن يتجاوز رد المبلغ صافي الأموال المسجّلة حاليًا.</p>
+          }
+          <p id="order-payment-reference-hint" class="muted">
+            المرجع إلزامي للعمليات غير النقدية: من ٣ إلى ٢٠٠ حرف. لا يظهر للعميل؛ تجنّب إدخال كلمات
+            مرور أو رموز تحقق.
+          </p>
+          @if (referenceError()) {
+            <p class="field-error">راجع طول مرجع العملية؛ يلزم مرجع واضح للطريقة غير النقدية.</p>
+          }
+          <label for="order-payment-note"
+            >ملاحظة للإدارة فقط (اختياري)
+            <textarea
+              id="order-payment-note"
+              rows="3"
+              formControlName="note"
+              [maxLength]="limits.note"
+            ></textarea>
+          </label>
+          <label class="attestation" for="order-payment-completed">
+            <input id="order-payment-completed" type="checkbox" formControlName="completed" />
+            <span
+              >أؤكد أن هذه العملية تمت بالفعل وتحققت من المبلغ والطريقة والمرجع. التسجيل هنا لا
+              ينفّذ حركة أموال.</span
+            >
+          </label>
+        </fieldset>
+        <button type="submit" class="shop-button shop-button-primary" [disabled]="!canReview()">
+          {{ reviewLabel() }}
+        </button>
+      </form>
+    }
+
+    @if (review(); as confirmed) {
+      <section class="payment-review" role="group" [attr.aria-label]="confirmationLabel()">
+        <h5>راجع القيد قبل التسجيل</h5>
+        <dl>
+          <div>
+            <dt>العملية</dt>
+            <dd>{{ confirmed.actionLabel }}</dd>
+          </div>
+          <div>
+            <dt>المبلغ</dt>
+            <dd>{{ confirmed.amount | number: '1.0-2' }} ج.م</dd>
+          </div>
+          <div>
+            <dt>الطريقة المسجّلة</dt>
+            <dd>{{ confirmed.methodLabel }}</dd>
+          </div>
+          @if (confirmed.reference) {
+            <div>
+              <dt>المرجع الخاص</dt>
+              <dd dir="auto">{{ confirmed.reference }}</dd>
+            </div>
+          }
+          @if (confirmed.note) {
+            <div>
+              <dt>الملاحظة الخاصة</dt>
+              <dd>{{ confirmed.note }}</dd>
+            </div>
+          }
+          <div>
+            <dt>إجمالي الفاتورة الحالي</dt>
+            <dd>{{ saved.total | number: '1.0-2' }} ج.م</dd>
+          </div>
+        </dl>
+        @if (!saved.deliveryFeeConfirmed) {
+          <p class="muted">الشحن غير مؤكد؛ إجمالي الفاتورة والرصيد النهائي لم يُحسما بعد.</p>
+        }
+        <p class="muted">
+          يعيد الخادم حساب الملخص من السجل. لا يمثل هذا الإجراء تنفيذ دفع خارجيًا أو تأكيدًا من جهة
+          دفع.
+        </p>
+        <div class="payment-actions">
+          <button
+            type="button"
+            class="shop-button shop-button-primary"
+            [disabled]="!canSave()"
+            (click)="savePayment()"
+          >
+            {{ saveLabel() }}
+          </button>
+          <button
+            type="button"
+            class="shop-button shop-button-secondary"
+            [disabled]="isBusy()"
+            (click)="cancelReview()"
+          >
+            الرجوع للمراجعة
+          </button>
+        </div>
+      </section>
+    }
+
+    <div class="payment-actions">
+      @if (hasRecovery()) {
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          [disabled]="!canRecover()"
+          (click)="recoverAttempt()"
+        >
+          التحقق من المحاولة السابقة
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          [disabled]="!canRead()"
+          (click)="reloadOrder()"
+        >
+          تحميل أحدث سجل الأموال
+        </button>
+      }
+      @if (canRetry()) {
+        <button type="button" class="shop-button shop-button-secondary" (click)="retryAttempt()">
+          إعادة نفس المحاولة المحفوظة
+        </button>
+      }
+      @if (isDirty()) {
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          [disabled]="!canDiscard()"
+          (click)="discardDraft()"
+        >
+          تجاهل المسودة غير المسجّلة
+        </button>
+      }
+    </div>
+    @if (isSaving()) {
+      <p role="status">جارٍ تسجيل القيد…</p>
+    }
+    @if (isLoading()) {
+      <p role="status">جارٍ التحقق من السجل…</p>
+    }
+
+    <section class="payment-history" aria-labelledby="order-payment-history-title">
+      <h5 id="order-payment-history-title">سجل العمليات والتصحيحات — للإدارة فقط</h5>
+      @if (history().length === 0) {
+        <p class="muted">لا توجد قيود مالية مسجّلة. هذا لا يثبت أن طلبًا قديمًا غير مدفوع.</p>
+      }
+      <ol>
+        @for (entry of history(); track entry.id) {
+          <li [attr.data-entry-id]="entry.id">
+            <strong>{{ entry.kindLabel }} · {{ entry.amount | number: '1.0-2' }} ج.م</strong>
+            <p>{{ entry.methodLabel }}</p>
+            <time [attr.datetime]="entry.createdAt">{{
+              entry.createdAt | date: 'dd/MM/yyyy HH:mm'
+            }}</time>
+            @if (entry.isCorrected) {
+              <p class="notice">صُحّح هذا القيد واستُبعد من الإجماليات؛ يظل أصله محفوظًا.</p>
+            }
+            @if (entry.reference) {
+              <p class="private-text" dir="auto">المرجع الخاص: {{ entry.reference }}</p>
+            }
+            @if (entry.note) {
+              <p class="private-text">ملاحظة خاصة: {{ entry.note }}</p>
+            }
+            @if (entry.correctionAvailable) {
+              <button
+                type="button"
+                class="shop-button shop-button-secondary"
+                [disabled]="!canStartCorrection()"
+                (click)="startCorrection(entry.id)"
+              >
+                تصحيح هذا القيد
+              </button>
+            }
+          </li>
+        }
+      </ol>
+    </section>
+  </section>
+}

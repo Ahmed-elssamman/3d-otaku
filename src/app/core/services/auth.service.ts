@@ -1,145 +1,140 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, of, tap, catchError, map } from 'rxjs';
-import { User, AuthResponseData, LoginRequest, RegisterRequest } from '../models/user.model';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  Observable,
+  of,
+  tap,
+  catchError,
+  map,
+  throwError,
+  finalize,
+  shareReplay,
+  switchMap,
+} from 'rxjs';
+import {
+  User,
+  AuthResponseData,
+  LoginRequest,
+  RegisterRequest,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
+} from '../models/user.model';
 import { UserRole } from '../enums/user-role.enum';
 import { ApiService } from '../api/api.service';
 import { API_ENDPOINTS } from '../api/api-endpoints';
 import { TokenStorageService } from './token-storage.service';
-import { environment } from '../../../environments/environment';
-import { APP_CONSTANTS } from '../constants/app.constants';
+import { ApiErrorResponse } from '../models/api-response.model';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
   private api = inject(ApiService);
   private tokenStorage = inject(TokenStorageService);
+  private destroyRef = inject(DestroyRef);
 
   private currentUserSignal = signal<User | null>(this.tokenStorage.getUser());
+  private refreshRequest: Observable<string> | null = null;
+  private sessionRequest: Observable<User | null> | null = null;
+  private sessionVersion = 0;
 
-  currentUser = computed(() => this.tokenStorage.accessToken() ? this.currentUserSignal() : null);
+  currentUser = computed(() => (this.tokenStorage.accessToken() ? this.currentUserSignal() : null));
   isAuthenticated = computed(() => this.currentUser() !== null);
   isAdmin = computed(() => this.currentUser()?.role === UserRole.ADMIN);
 
   register(payload: RegisterRequest): Observable<AuthResponseData> {
-    if (environment.useMockApi) {
-      const now = new Date().toISOString();
-      const mockUser: User = {
-        id: `usr-${Date.now()}`,
-        fullName: payload.fullName,
-        email: payload.email,
-        role: UserRole.CUSTOMER,
-        avatarUrl: 'assets/images/avatar-otaku.svg',
-        createdAt: now
-      };
-      const mockResponse: AuthResponseData = {
-        user: mockUser,
-        accessToken: `mock_access_${Date.now()}`,
-        refreshToken: `mock_refresh_${Date.now()}`
-      };
-      this.handleAuthSuccess(mockResponse);
-      return of(mockResponse);
-    }
-
-    return this.api.post<AuthResponseData>(API_ENDPOINTS.auth.register, payload).pipe(
-      map(res => res.data),
-      tap(data => this.handleAuthSuccess(data))
-    );
+    return this.api
+      .post<AuthResponseData, RegisterRequest>(API_ENDPOINTS.auth.register, payload)
+      .pipe(
+        map((res) => res.data),
+        tap((data) => this.handleAuthSuccess(data)),
+      );
   }
 
   login(payload: LoginRequest): Observable<AuthResponseData> {
-    if (environment.useMockApi) {
-      const normalizedEmail = payload.email.trim().toLowerCase();
-      const now = new Date().toISOString();
-      const isAdminLogin =
-        normalizedEmail === APP_CONSTANTS.ADMIN_CREDENTIALS.EMAIL.toLowerCase() &&
-        payload.password === APP_CONSTANTS.ADMIN_CREDENTIALS.PASSWORD;
-
-      const mockUser: User = isAdminLogin
-        ? {
-            id: 'usr-admin-001',
-            fullName: '3D Otaku Admin',
-            email: APP_CONSTANTS.ADMIN_CREDENTIALS.EMAIL,
-            role: UserRole.ADMIN,
-            avatarUrl: 'assets/images/avatar-otaku.svg',
-            createdAt: now
-          }
-        : {
-            id: `usr-${Date.now()}`,
-            fullName: normalizedEmail.split('@')[0].replace(/[._-]/g, ' '),
-            email: normalizedEmail,
-            role: UserRole.CUSTOMER,
-            avatarUrl: 'assets/images/avatar-otaku.svg',
-            createdAt: now
-          };
-
-      const mockResponse: AuthResponseData = {
-        user: mockUser,
-        accessToken: `mock_access_${Date.now()}`,
-        refreshToken: `mock_refresh_${Date.now()}`
-      };
-      this.handleAuthSuccess(mockResponse);
-      return of(mockResponse);
-    }
-
-    return this.api.post<AuthResponseData>(API_ENDPOINTS.auth.login, payload).pipe(
-      map(res => res.data),
-      tap(data => this.handleAuthSuccess(data))
+    return this.api.post<AuthResponseData, LoginRequest>(API_ENDPOINTS.auth.login, payload).pipe(
+      map((res) => res.data),
+      tap((data) => this.handleAuthSuccess(data)),
     );
   }
 
   loadCurrentUser(): Observable<User | null> {
-    if (environment.useMockApi || !this.tokenStorage.getAccessToken()) {
-      return of(this.currentUserSignal());
-    }
-
-    return this.api.get<User>(API_ENDPOINTS.auth.me).pipe(
-      map(res => res.data),
-      tap(user => {
-        this.currentUserSignal.set(user);
-        this.tokenStorage.saveUser(user);
+    this.tokenStorage.initialize();
+    this.currentUserSignal.set(this.tokenStorage.getUser());
+    if (this.sessionRequest) return this.sessionRequest;
+    const accessToken = this.tokenStorage.getAccessToken();
+    if (!accessToken && !this.tokenStorage.getRefreshToken()) return of(null);
+    const version = this.sessionVersion;
+    const tokenRequest = accessToken ? of(accessToken) : this.refreshToken();
+    this.sessionRequest = tokenRequest.pipe(
+      switchMap(() => this.api.get<User>(API_ENDPOINTS.auth.me)),
+      map((res) => {
+        if (version !== this.sessionVersion) return null;
+        this.currentUserSignal.set(res.data);
+        this.tokenStorage.saveUser(res.data);
+        return res.data;
       }),
-      catchError(() => {
-        this.tokenStorage.clearStorage();
-        this.currentUserSignal.set(null);
-        return of(null);
-      })
+      catchError((error: ApiErrorResponse) => {
+        if (error.statusCode === 401 || error.statusCode === 403) this.clearAuth();
+        return of(this.currentUser());
+      }),
+      finalize(() => (this.sessionRequest = null)),
+      shareReplay({ bufferSize: 1, refCount: false }),
     );
+    return this.sessionRequest;
   }
 
   refreshToken(): Observable<string> {
+    if (this.refreshRequest) return this.refreshRequest;
     const refreshToken = this.tokenStorage.getRefreshToken();
-    if (!refreshToken || environment.useMockApi) {
-      return of('mock_refreshed_token');
-    }
+    if (!refreshToken) return throwError(() => new Error('No refresh token is available.'));
 
-    return this.api.post<{ accessToken: string }>(API_ENDPOINTS.auth.refreshToken, { refreshToken }).pipe(
-      map(res => {
-        this.tokenStorage.saveAccessToken(res.data.accessToken);
-        return res.data.accessToken;
+    const version = this.sessionVersion;
+    this.refreshRequest = this.api
+      .post<RefreshTokenResponse, RefreshTokenRequest>(API_ENDPOINTS.auth.refreshToken, {
+        refreshToken,
       })
-    );
+      .pipe(
+        map((res) => {
+          if (version !== this.sessionVersion)
+            throw new Error('The session changed during refresh.');
+          this.tokenStorage.saveAccessToken(res.data.accessToken);
+          this.tokenStorage.saveRefreshToken(res.data.refreshToken);
+          return res.data.accessToken;
+        }),
+        finalize(() => (this.refreshRequest = null)),
+        shareReplay({ bufferSize: 1, refCount: false }),
+      );
+    return this.refreshRequest;
   }
 
-  logout(): Observable<void> {
+  logout(): Observable<null> {
     const refreshToken = this.tokenStorage.getRefreshToken();
 
-    if (!environment.useMockApi && refreshToken) {
-      this.api.post(API_ENDPOINTS.auth.logout, { refreshToken }).pipe(catchError(() => of(null))).subscribe();
+    if (refreshToken) {
+      this.api
+        .post(API_ENDPOINTS.auth.logout, { refreshToken })
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          catchError(() => of(null)),
+        )
+        .subscribe();
     }
 
     this.clearAuth();
-    return of(undefined);
+    return of(null);
   }
 
   private handleAuthSuccess(data: AuthResponseData): void {
+    this.sessionVersion += 1;
     this.tokenStorage.saveAccessToken(data.accessToken);
     this.tokenStorage.saveRefreshToken(data.refreshToken);
     this.tokenStorage.saveUser(data.user);
     this.currentUserSignal.set(data.user);
   }
 
-  private clearAuth(): void {
+  clearAuth(): void {
+    this.sessionVersion += 1;
     this.tokenStorage.clearStorage();
     this.currentUserSignal.set(null);
   }

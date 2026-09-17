@@ -1,18 +1,16 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router, UrlTree } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
+import { map } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { UserRole } from '../enums/user-role.enum';
 
-export const adminGuard: CanActivateFn = (_route, state): boolean | UrlTree => {
-  const authService = inject(AuthService);
+export const adminGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
   const router = inject(Router);
-
-  if (!authService.isAuthenticated()) {
-    return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
-  }
-
-  if (!authService.isAdmin()) {
-    return router.createUrlTree(['/products']);
-  }
-
-  return true;
+  return auth.loadCurrentUser().pipe(
+    map((user) => {
+      if (!user) return router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+      return user.role === UserRole.ADMIN ? true : router.createUrlTree(['/products']);
+    }),
+  );
 };

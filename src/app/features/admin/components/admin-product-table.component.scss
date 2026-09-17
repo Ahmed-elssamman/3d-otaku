@@ -1,3 +1,133 @@
 :host {
   display: block;
+  min-width: 0;
+  --p-button-outlined-primary-color: #355e4b;
+  --p-button-outlined-primary-border-color: #7b9787;
+  --p-button-outlined-secondary-color: #24372f;
+  --p-button-outlined-secondary-border-color: #7b8780;
+  --p-button-outlined-danger-color: #a13732;
+  --p-button-outlined-danger-border-color: #ad615d;
+}
+.product-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 13rem;
+}
+.product-identity img,
+.image-placeholder {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 0.7rem;
+  object-fit: cover;
+  background: var(--shop-background, #f6f5f0);
+}
+.image-placeholder {
+  display: grid;
+  place-items: center;
+  color: var(--shop-muted, #626e66);
+}
+.product-identity strong {
+  display: block;
+  color: var(--shop-ink, #24372f);
+}
+.product-slug {
+  display: block;
+  max-width: 15rem;
+  overflow-wrap: anywhere;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--shop-muted, #626e66);
+}
+.price-cell {
+  white-space: nowrap;
+}
+.status-badge {
+  display: inline-flex;
+  border-radius: 2rem;
+  background: #edf0ec;
+  padding: 0.25rem 0.65rem;
+  color: #59635c;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.status-published {
+  background: #e6f0e9;
+  color: #28553b;
+}
+.row-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(5rem, 1fr));
+  gap: 0.45rem;
+}
+.empty-products {
+  display: grid;
+  gap: 0.65rem;
+  padding: 2rem;
+  text-align: center;
+  color: var(--shop-muted, #626e66);
+}
+.empty-products i {
+  font-size: 1.5rem;
+}
+:host ::ng-deep .p-datatable-header-cell,
+:host ::ng-deep .p-datatable-tbody > tr > td {
+  text-align: start;
+}
+:host ::ng-deep .p-button {
+  min-height: 40px;
+  width: 100%;
+  white-space: nowrap;
+}
+:host ::ng-deep .p-paginator {
+  gap: 0.3rem;
+  padding: 1rem 0.4rem;
+}
+@media (max-width: 900px) {
+  :host ::ng-deep .p-datatable-table,
+  :host ::ng-deep .p-datatable-tbody {
+    display: block;
+    width: 100%;
+  }
+  :host ::ng-deep .p-datatable-thead {
+    display: none;
+  }
+  :host ::ng-deep .p-datatable-tbody > tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    border-bottom: 1px solid var(--shop-line, #dce2d9);
+    padding: 0.75rem;
+  }
+  :host ::ng-deep .p-datatable-tbody > tr > td {
+    display: block;
+    border: 0;
+    padding: 0.5rem;
+  }
+  :host ::ng-deep .p-datatable-tbody > tr > td.product-cell,
+  :host ::ng-deep .p-datatable-tbody > tr > td.actions-cell,
+  :host ::ng-deep .p-datatable-tbody > tr > td[colspan] {
+    grid-column: 1/-1;
+  }
+  td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    margin-bottom: 0.2rem;
+    color: var(--shop-muted, #626e66);
+  }
+  .product-identity {
+    min-width: 0;
+  }
+  .product-slug {
+    max-width: 100%;
+  }
+  .row-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 500px) {
+  .row-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

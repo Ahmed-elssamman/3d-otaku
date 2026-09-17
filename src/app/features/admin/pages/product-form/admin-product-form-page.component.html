@@ -1,474 +1,572 @@
-<section class="space-y-6">
-  <div class="admin-card flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+<section class="product-form-page" dir="rtl" aria-labelledby="product-form-title">
+  <header class="editor-header">
     <div>
-      <h2 class="text-2xl font-black text-white">{{ isEditMode() ? 'Edit Product' : 'Add Product' }}</h2>
-      <p class="text-sm text-neutral-400">Create rich catalog entries with 3D preview, SEO metadata, and production specifications.</p>
+      <span class="eyebrow">كتالوج المتجر</span>
+      <h2 id="product-form-title">{{ pageTitle() }}</h2>
+      <p>{{ reviewText.introduction }}</p>
     </div>
-    <div class="flex flex-wrap gap-3">
-      <p-button label="Save Product" [loading]="isSubmitting()" [disabled]="isSubmitting()" (onClick)="saveProduct(false)" />
-      <p-button label="Save and Continue Editing" [loading]="isSubmitting()" [disabled]="isSubmitting()" severity="secondary" variant="outlined" (onClick)="saveProduct(true)" />
-      <p-button label="Preview Product" severity="contrast" variant="outlined" (onClick)="previewProduct()" />
-      <p-button label="Cancel" severity="danger" variant="text" (onClick)="cancel()" />
+    <div class="editor-actions">
+      <p-button
+        label="حفظ المنتج"
+        [loading]="isSubmitting()"
+        [disabled]="!canSaveProduct()"
+        (onClick)="saveProduct(false)"
+      />
+      <p-button
+        label="حفظ ومتابعة التعديل"
+        severity="secondary"
+        variant="outlined"
+        [loading]="isSubmitting()"
+        [disabled]="!canSaveProduct()"
+        (onClick)="saveProduct(true)"
+      />
+      @if (canPreviewLive()) {
+        <p-button
+          label="عرض المنتج المنشور"
+          severity="secondary"
+          variant="outlined"
+          (onClick)="previewProduct()"
+        />
+      }
+      <p-button label="العودة للمنتجات" severity="secondary" variant="text" (onClick)="cancel()" />
     </div>
-  </div>
-
-  <!-- Top Alert Banner When Form Has Errors on Submit -->
-  @if (attemptedSubmit() && validationErrors().length > 0) {
-    <div class="validation-top-banner" role="alert">
-      <div class="validation-top-banner-header">
-        <div class="validation-top-icon">
-          <i class="pi pi-exclamation-triangle"></i>
-        </div>
-        <div class="flex-1">
-          <h3 class="text-base font-black text-rose-300">
-            Form Incomplete — {{ validationErrors().length }} Required Field{{ validationErrors().length > 1 ? 's' : '' }} Need Attention
-          </h3>
-          <p class="mt-0.5 text-xs text-rose-200/80">
-            Please fill in the required fields marked below. Click any item to jump directly to it:
-          </p>
-        </div>
-      </div>
-      <div class="validation-error-chips mt-3">
-        @for (err of validationErrors(); track err.id) {
-          <button type="button" class="validation-chip" (click)="scrollToField(err.id)">
-            <span class="validation-chip-badge">{{ err.category }}</span>
-            <strong class="validation-chip-title">{{ err.field }}</strong>
-            <span class="validation-chip-desc">{{ err.message }}</span>
-            <i class="pi pi-arrow-down-right"></i>
-          </button>
-        }
-      </div>
-    </div>
+  </header>
+  @if (reviewUnsaved() || reviewBusy()) {
+    <p class="review-notice">
+      أكمل حفظ مراجعة التصنيع أو تجاهل تعديلاتها المحلية قبل حفظ حقول المنتج؛ لكل منهما عملية حفظ
+      مستقلة.
+    </p>
   }
-
-  <form [formGroup]="productForm" class="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-    <div class="space-y-6">
-      <div class="admin-card p-5">
-        <h3 class="admin-section-title">Basic Info</h3>
-        <div class="admin-form-grid mt-4">
-
-          <div id="field-name" class="admin-field" [class.has-error]="productForm.controls.name.invalid && (productForm.controls.name.touched || attemptedSubmit())">
-            <label class="admin-label">Product Name <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="name" class="w-full" placeholder="e.g. Roronoa Zoro Enma Katana" />
-            @if (productForm.controls.name.invalid && (productForm.controls.name.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Product name is required.</small>
-            }
-          </div>
-
-          <div id="field-slug" class="admin-field" [class.has-error]="productForm.controls.slug.invalid && (productForm.controls.slug.touched || attemptedSubmit())">
-            <label class="admin-label">Slug <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="slug" class="w-full" (input)="onSlugChange()" placeholder="e.g. zoro-enma-katana" />
-            @if (productForm.controls.slug.invalid && (productForm.controls.slug.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Valid slug is required (lowercase letters, numbers, and hyphens).</small>
-            }
-          </div>
-
-          <div id="field-category" class="admin-field" [class.has-error]="productForm.controls.category.invalid && (productForm.controls.category.touched || attemptedSubmit())">
-            <label class="admin-label">Category <span class="font-bold text-rose-400">*</span></label>
-            <p-select [options]="categoryOptions" optionLabel="label" optionValue="value" formControlName="category" appendTo="body" class="w-full" />
-            @if (productForm.controls.category.invalid && (productForm.controls.category.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Category is required.</small>
-            }
-          </div>
-
-          <div id="field-badge" class="admin-field">
-            <label class="admin-label">Badge <span class="font-bold text-rose-400">*</span></label>
-            <p-select [options]="badgeOptions" optionLabel="label" optionValue="value" formControlName="badge" appendTo="body" class="w-full" />
-          </div>
-
-          <div id="field-short-description" class="admin-field xl:col-span-2" [class.has-error]="productForm.controls.shortDescription.invalid && (productForm.controls.shortDescription.touched || attemptedSubmit())">
-            <label class="admin-label">Short Description <span class="font-bold text-rose-400">*</span></label>
-            <textarea pTextarea formControlName="shortDescription" rows="2" class="w-full" placeholder="Brief summary of the product for cards and previews"></textarea>
-            @if (productForm.controls.shortDescription.invalid && (productForm.controls.shortDescription.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Short description is required.</small>
-            }
-          </div>
-
-          <div id="field-description" class="admin-field xl:col-span-2" [class.has-error]="productForm.controls.description.invalid && (productForm.controls.description.touched || attemptedSubmit())">
-            <label class="admin-label">Full Description <span class="font-bold text-rose-400">*</span></label>
-            <textarea pTextarea formControlName="description" rows="5" class="w-full" placeholder="Detailed product specifications, anime lore, and print details"></textarea>
-            @if (productForm.controls.description.invalid && (productForm.controls.description.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Full description is required.</small>
-            }
-          </div>
-
-          <div id="field-price" class="admin-field" [class.has-error]="productForm.controls.price.invalid && (productForm.controls.price.touched || attemptedSubmit())">
-            <label class="admin-label">Regular Price (EGP) <span class="font-bold text-rose-400">*</span></label>
-            <p-inputnumber formControlName="price" [min]="0" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" placeholder="0.00" />
-            <small class="text-neutral-500">Storefront preview: {{ productForm.controls.price.value | currency: 'EGP' }}</small>
-            @if (productForm.controls.price.invalid && (productForm.controls.price.touched || attemptedSubmit())) {
-              <small class="field-error-msg block"><i class="pi pi-exclamation-circle"></i> Price must be greater than 0 EGP.</small>
-            }
-          </div>
-
-          <div id="field-discount" class="admin-field" [class.has-error]="productForm.hasError('invalidDiscount')">
-            <label class="admin-label">Discount Price (EGP) <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <p-inputnumber formControlName="discountPrice" [min]="0" [minFractionDigits]="0" [maxFractionDigits]="2" class="w-full" placeholder="Leave empty if no discount" />
-            @if (productForm.hasError('invalidDiscount')) {
-              <small class="field-error-msg block"><i class="pi pi-exclamation-circle"></i> Discount must be lower than regular price ({{ productForm.controls.price.value }} EGP).</small>
-            }
-          </div>
-
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Tags <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="tags" class="w-full" placeholder="katana, one-piece, zoro, cosplay (separate with commas)" />
-          </div>
-
-          <div class="grid gap-4 md:grid-cols-2 xl:col-span-2">
-            <div class="admin-card flex items-center justify-between p-4">
-              <div>
-                <label class="admin-label">Featured Product</label>
-                <p class="text-sm text-neutral-500">Highlight on storefront homepage sections.</p>
-              </div>
-              <p-toggleswitch formControlName="isFeatured" />
-            </div>
-            <div class="admin-card flex items-center justify-between p-4">
-              <div>
-                <label class="admin-label">Active / Published</label>
-                <p class="text-sm text-neutral-500">Show product on the public website catalog.</p>
-              </div>
-              <p-toggleswitch formControlName="isActive" />
-            </div>
-          </div>
-
+  @if (isLoadingProduct()) {
+    <p class="editor-card" role="status">جارٍ تحميل بيانات المنتج…</p>
+  } @else if (productLoadError()) {
+    <div class="editor-card error-notice" role="alert">
+      <p>{{ productLoadError() }}</p>
+      <button class="shop-button shop-button-secondary" type="button" (click)="retryLoadProduct()">
+        إعادة تحميل المنتج
+      </button>
+    </div>
+  } @else {
+    @if (attemptedSubmit() && validationErrors().length) {
+      <div class="validation-notice" role="alert">
+        <h3>راجع {{ validationErrors().length }} من بيانات المنتج</h3>
+        <p>اختر الحقل للانتقال إليه.</p>
+        <div class="validation-links">
+          @for (error of validationErrors(); track error.id) {
+            <button type="button" (click)="scrollToField(error.id)">
+              {{ error.field }}: {{ error.message }}
+            </button>
+          }
         </div>
       </div>
-
-      <div class="admin-card p-5">
-        <h3 class="admin-section-title">Product Media</h3>
-        <div class="admin-form-grid mt-4">
-
-          <!-- Main Image Upload -->
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Main Product Image <span class="text-xs font-normal text-neutral-500">(Upload or enter URL)</span></label>
-            <label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingImage()">
-              <input
-                type="file"
-                class="sr-only"
-                accept="image/jpeg,image/png,image/webp"
-                [disabled]="isUploadingImage()"
-                (change)="onMainImageFileSelected($event)"
+    }
+    <form [formGroup]="productForm" class="product-editor" (ngSubmit)="saveProduct(false)">
+      <div class="editor-fields">
+        <section class="editor-card" aria-labelledby="basic-title">
+          <h3 id="basic-title">البيانات الأساسية والتسعير</h3>
+          <div class="editor-grid">
+            <div
+              class="admin-field"
+              id="field-name"
+              [class.has-error]="fieldErrors()['field-name']"
+            >
+              <label for="product-name">اسم المنتج *</label
+              ><input
+                pInputText
+                id="product-name"
+                formControlName="name"
+                maxlength="200"
+                [attr.aria-invalid]="fieldErrors()['field-name']"
               />
-              @if (previewImage()) {
-                <img [src]="previewImage()" alt="Main image" class="media-upload-thumb" />
-              } @else {
-                <span class="media-upload-icon">
-                  <i class="pi" [class.pi-image]="!isUploadingImage()" [class.pi-spin]="isUploadingImage()" [class.pi-spinner]="isUploadingImage()"></i>
-                </span>
+              @if (fieldErrors()['field-name']) {
+                <small class="field-error-msg">اكتب اسم المنتج بحد أقصى 200 حرف.</small>
               }
-              <span class="min-w-0 flex-1">
-                <strong class="block truncate text-sm text-white">
-                  {{ isUploadingImage() ? 'Uploading image...' : (previewImage() ? 'Change main image' : 'Upload main product image') }}
-                </strong>
-                <small class="mt-1 block text-xs text-neutral-500">JPEG, PNG, WebP • Max 10 MB</small>
-              </span>
-              <span class="media-upload-action">Browse</span>
-            </label>
-            <div class="mt-2 flex items-center gap-2">
-              <span class="text-xs text-neutral-600">or enter URL:</span>
-              <input pInputText formControlName="mainImage" class="w-full text-xs" placeholder="https://..." />
+            </div>
+            <div
+              class="admin-field"
+              id="field-slug"
+              [class.has-error]="fieldErrors()['field-slug']"
+            >
+              <label for="product-slug">رابط المنتج *</label
+              ><input
+                pInputText
+                id="product-slug"
+                formControlName="slug"
+                maxlength="160"
+                dir="auto"
+                (input)="onSlugChange()"
+                [attr.aria-invalid]="fieldErrors()['field-slug']"
+              /><small>حروف وأرقام وشرطات. يُحافظ على الرابط عند تعديل الاسم.</small>
+              @if (fieldErrors()['field-slug']) {
+                <small class="field-error-msg">أدخل رابطًا صالحًا بحد أقصى 160 حرفًا.</small>
+              }
+            </div>
+            <div
+              class="admin-field"
+              id="field-category"
+              [class.has-error]="fieldErrors()['field-category']"
+            >
+              <label for="product-category">التصنيف *</label
+              ><p-select
+                inputId="product-category"
+                [options]="categoryOptions()"
+                [loading]="categoriesLoading()"
+                [editable]="true"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="category"
+                placeholder="اختر التصنيف"
+                appendTo="body"
+              />
+              @if (fieldErrors()['field-category']) {
+                <small class="field-error-msg">اختر تصنيف المنتج.</small>
+              }
+              @if (categoriesLoading()) {
+                <small role="status">{{ categoryText.loading }}</small>
+              }
+              @if (categoryLoadError()) {
+                <small class="field-error-msg" role="alert">{{ categoryLoadError() }}</small>
+                <button
+                  type="button"
+                  class="shop-button shop-button-secondary"
+                  (click)="loadCategories()"
+                >
+                  {{ categoryText.retry }}
+                </button>
+              }
+            </div>
+            <div class="admin-field">
+              <label for="product-badge">شارة المنتج</label
+              ><p-select
+                inputId="product-badge"
+                [options]="badgeOptions"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="badge"
+                appendTo="body"
+              />
+            </div>
+            <div
+              class="admin-field field-wide"
+              id="field-short-description"
+              [class.has-error]="fieldErrors()['field-short-description']"
+            >
+              <label for="product-shortDescription">الوصف المختصر</label
+              ><textarea
+                pTextarea
+                id="product-shortDescription"
+                formControlName="shortDescription"
+                rows="2"
+              ></textarea
+              ><small>يظهر في بطاقات المنتجات، ومطلوب عند النشر.</small>
+              @if (fieldErrors()['field-short-description']) {
+                <small class="field-error-msg">اكتب وصفًا مختصرًا قبل النشر.</small>
+              }
+            </div>
+            <div
+              class="admin-field field-wide"
+              id="field-description"
+              [class.has-error]="fieldErrors()['field-description']"
+            >
+              <label for="product-description">وصف المنتج</label
+              ><textarea
+                pTextarea
+                id="product-description"
+                formControlName="description"
+                rows="4"
+              ></textarea>
+              @if (fieldErrors()['field-description']) {
+                <small class="field-error-msg">وصف المنتج مطلوب عند النشر.</small>
+              }
+            </div>
+            <div
+              class="admin-field"
+              id="field-price"
+              [class.has-error]="fieldErrors()['field-price']"
+            >
+              <label for="product-price">السعر الأساسي (ج.م) *</label
+              ><p-inputnumber
+                inputId="product-price"
+                formControlName="price"
+                [min]="0"
+                [maxFractionDigits]="2"
+              /><small>يمكن حفظ صفر للمسودة غير المسعّرة. يلزم سعر أكبر من صفر عند النشر.</small>
+              @if (fieldErrors()['field-price']) {
+                <small class="field-error-msg">أدخل سعرًا صالحًا وفق حالة النشر.</small>
+              }
+            </div>
+            <div class="admin-field" id="field-discount" [class.has-error]="hasPricingError()">
+              <label for="product-discountPrice">السعر بعد الخصم (اختياري)</label
+              ><p-inputnumber
+                inputId="product-discountPrice"
+                formControlName="discountPrice"
+                [min]="0"
+                [maxFractionDigits]="2"
+              /><small>اتركه فارغًا عند عدم وجود خصم.</small>
+              @if (hasPricingError()) {
+                <small class="field-error-msg"
+                  >سعر الخصم يجب أن يكون أقل من السعر الأساسي وغير سالب.</small
+                >
+              }
+            </div>
+            <div class="toggle-field field-wide">
+              <div>
+                <label for="product-isFeatured">منتج مميز</label
+                ><small>يظهر ضمن اختيارات المتجر إذا كان منشورًا.</small>
+              </div>
+              <p-toggleswitch inputId="product-isFeatured" formControlName="isFeatured" />
+            </div>
+            <div class="toggle-field field-wide">
+              <div>
+                <label for="product-isActive">نشر المنتج في المتجر</label
+                ><small>المنتج غير المنشور مسودة لا تظهر للعملاء.</small>
+              </div>
+              <p-toggleswitch inputId="product-isActive" formControlName="isActive" />
+            </div>
+            @if (publicationBlocked()) {
+              <p class="review-notice field-wide">
+                {{ publicationGuidance() }}
+              </p>
+            }
+          </div>
+        </section>
+
+        <section class="editor-card" aria-labelledby="media-title">
+          <h3 id="media-title">صور المنتج وملف المجسم</h3>
+          <p class="section-hint">
+            رفع الملف لا يحفظ بيانات المنتج تلقائيًا. راجع المعاينة ثم احفظ التعديلات.
+          </p>
+          <div class="editor-grid">
+            <div class="admin-field field-wide">
+              <label for="product-mainImage">الصورة الرئيسية</label
+              ><label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingImage()"
+                ><input
+                  type="file"
+                  class="sr-only"
+                  [accept]="imageAccept"
+                  [disabled]="isUploadingImage()"
+                  (change)="onMainImageFileSelected($event)"
+                />
+                @if (previewImage()) {
+                  <img
+                    [src]="previewImage()"
+                    alt="الصورة الرئيسية المختارة"
+                    class="media-upload-thumb"
+                  />
+                } @else {
+                  <i class="pi pi-image" aria-hidden="true"></i>
+                }
+                <span
+                  ><strong>{{ mainUploadLabel() }}</strong
+                  ><small>JPEG · PNG · WebP — حتى 10 MB</small></span
+                ></label
+              ><input
+                pInputText
+                id="product-mainImage"
+                formControlName="mainImage"
+                dir="ltr"
+                placeholder="أو أدخل رابط الصورة"
+              />
+            </div>
+            <div class="admin-field field-wide">
+              <label for="product-galleryImages">صور إضافية (اختيارية)</label
+              ><label
+                class="media-upload-zone"
+                [class.media-upload-zone-busy]="isUploadingGallery()"
+                ><input
+                  type="file"
+                  class="sr-only"
+                  [accept]="imageAccept"
+                  multiple
+                  [disabled]="isUploadingGallery()"
+                  (change)="onGalleryImagesSelected($event)"
+                /><i class="pi pi-images" aria-hidden="true"></i
+                ><span
+                  ><strong>{{ galleryUploadLabel() }}</strong
+                  ><small>يمكن اختيار أكثر من صورة، حتى 10 MB للصورة.</small></span
+                ></label
+              >
+              @if (galleryPreviewUrls().length) {
+                <div class="gallery-thumbs-grid">
+                  @for (url of galleryPreviewUrls(); track url; let index = $index) {
+                    <div class="gallery-thumb-item">
+                      <img [src]="url" alt="صورة إضافية للمنتج" /><button
+                        type="button"
+                        class="gallery-thumb-remove"
+                        [attr.aria-label]="'إزالة الصورة ' + (index + 1)"
+                        (click)="removeGalleryImage(index)"
+                      >
+                        <i class="pi pi-times" aria-hidden="true"></i>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+              <input
+                pInputText
+                id="product-galleryImages"
+                formControlName="galleryImages"
+                dir="ltr"
+                placeholder="أو أدخل الروابط مفصولة بفاصلة"
+              />
+            </div>
+            <div class="admin-field field-wide">
+              <label for="product-modelUrl">ملف المجسم (اختياري)</label
+              ><label
+                class="media-upload-zone media-upload-zone--model"
+                [class.media-upload-zone-busy]="isUploadingModel()"
+                ><input
+                  type="file"
+                  class="sr-only"
+                  [accept]="modelFileAccept"
+                  [disabled]="isUploadingModel()"
+                  (change)="onModelFileSelected($event)"
+                /><i class="pi pi-box" aria-hidden="true"></i
+                ><span
+                  ><strong>{{ modelUploadLabel() }}</strong
+                  ><small>{{ modelUploadHelpText }}</small></span
+                ></label
+              ><input
+                pInputText
+                id="product-modelUrl"
+                formControlName="modelUrl"
+                dir="ltr"
+                placeholder="أو أدخل رابط ملف المجسم"
+              />
+            </div>
+            <div class="admin-field">
+              <label for="product-modelType">صيغة ملف المجسم</label
+              ><p-select
+                inputId="product-modelType"
+                [options]="modelTypeOptions"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="modelType"
+                appendTo="body"
+              /><small>تُحدد تلقائيًا عند رفع ملف. تحقق منها عند إدخال رابط.</small>
+            </div>
+            <div class="admin-field">
+              <label for="product-imageAlt">وصف الصورة لقارئ الشاشة (اختياري)</label
+              ><input pInputText id="product-imageAlt" formControlName="imageAlt" />
+            </div>
+            <div class="admin-field">
+              <label for="product-posterImage">غلاف معاينة المجسم (اختياري)</label
+              ><label
+                class="media-upload-zone media-upload-zone--compact"
+                [class.media-upload-zone-busy]="isUploadingPoster()"
+                ><input
+                  type="file"
+                  class="sr-only"
+                  [accept]="imageAccept"
+                  [disabled]="isUploadingPoster()"
+                  (change)="onPosterImageSelected($event)"
+                /><i class="pi pi-image" aria-hidden="true"></i
+                ><strong>{{ posterUploadLabel() }}</strong></label
+              ><input
+                pInputText
+                id="product-posterImage"
+                formControlName="posterImage"
+                dir="ltr"
+                placeholder="أو أدخل رابط الصورة"
+              />
+            </div>
+            <div class="admin-field">
+              <label for="product-socialImage">صورة مشاركة الرابط (اختيارية)</label
+              ><label
+                class="media-upload-zone media-upload-zone--compact"
+                [class.media-upload-zone-busy]="isUploadingSocial()"
+                ><input
+                  type="file"
+                  class="sr-only"
+                  [accept]="imageAccept"
+                  [disabled]="isUploadingSocial()"
+                  (change)="onSocialImageSelected($event)"
+                /><i class="pi pi-share-alt" aria-hidden="true"></i
+                ><strong>{{ socialUploadLabel() }}</strong></label
+              ><input
+                pInputText
+                id="product-socialImage"
+                formControlName="socialImage"
+                dir="ltr"
+                placeholder="أو أدخل رابط الصورة"
+              />
             </div>
           </div>
+        </section>
 
-          <!-- Gallery Images Upload -->
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Gallery Images <span class="text-xs font-normal text-neutral-500">(Optional, multiple upload supported)</span></label>
-            <label class="media-upload-zone" [class.media-upload-zone-busy]="isUploadingGallery()">
-              <input
-                type="file"
-                class="sr-only"
-                accept="image/jpeg,image/png,image/webp"
-                multiple
-                [disabled]="isUploadingGallery()"
-                (change)="onGalleryImagesSelected($event)"
+        <section class="editor-card" aria-labelledby="specifications-title">
+          <h3 id="specifications-title">الخامة والمواصفات والتصنيع</h3>
+          <p class="section-hint">
+            اختر الخامة المقصودة. يمكن استكمال القياسات بعد حفظ المسودة؛ بيانات المواصفات مطلوبة قبل
+            النشر.
+          </p>
+          <div class="editor-grid">
+            <div
+              class="admin-field"
+              id="field-material"
+              [class.has-error]="fieldErrors()['field-material']"
+            >
+              <label for="product-material">الخامة *</label
+              ><p-select
+                inputId="product-material"
+                [options]="materialOptions"
+                optionLabel="label"
+                optionValue="value"
+                formControlName="material"
+                placeholder="اختر الخامة"
+                appendTo="body"
               />
-              <span class="media-upload-icon">
-                <i class="pi" [class.pi-images]="!isUploadingGallery()" [class.pi-spin]="isUploadingGallery()" [class.pi-spinner]="isUploadingGallery()"></i>
-              </span>
-              <span class="min-w-0 flex-1">
-                <strong class="block truncate text-sm text-white">
-                  {{ isUploadingGallery() ? ('Uploading ' + galleryUploadProgress() + '...') : 'Add gallery images' }}
-                </strong>
-                <small class="mt-1 block text-xs text-neutral-500">Select multiple images • JPEG, PNG, WebP • Max 10 MB each</small>
-              </span>
-              <span class="media-upload-action">Browse</span>
-            </label>
-            @if (galleryPreviewUrls().length) {
-              <div class="gallery-thumbs-grid mt-3">
-                @for (url of galleryPreviewUrls(); track url; let i = $index) {
-                  <div class="gallery-thumb-item">
-                    <img [src]="url" alt="Gallery image" class="gallery-thumb-img" />
-                    <button type="button" class="gallery-thumb-remove" (click)="removeGalleryImage(i)" title="Remove image">
-                      <i class="pi pi-times"></i>
-                    </button>
-                  </div>
+              @if (fieldErrors()['field-material']) {
+                <small class="field-error-msg">اختر الخامة المقصودة للقطعة.</small>
+              }
+            </div>
+            @for (field of specFields(); track field.key) {
+              <div class="admin-field" [id]="field.id" [class.has-error]="field.invalid">
+                <label [for]="'product-' + field.key">{{ field.label }}</label
+                ><input
+                  pInputText
+                  [id]="'product-' + field.key"
+                  [formControlName]="field.key"
+                  [attr.aria-invalid]="field.invalid"
+                />
+                @if (field.hint) {
+                  <small>{{ field.hint }}</small>
+                }
+                @if (field.invalid) {
+                  <small class="field-error-msg">هذه البيانات مطلوبة عند النشر.</small>
                 }
               </div>
             }
-            <div class="mt-2 flex items-center gap-2">
-              <span class="text-xs text-neutral-600">or enter URLs:</span>
-              <input pInputText formControlName="galleryImages" class="w-full text-xs" placeholder="Separate multiple URLs with commas" />
-            </div>
-          </div>
-
-          <!-- 3D Model Upload -->
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">3D Model File <span class="text-xs font-normal text-neutral-500">(Optional, .glb, .gltf, .stl)</span></label>
-            <label class="media-upload-zone media-upload-zone--model" [class.media-upload-zone-busy]="isUploadingModel()">
-              <input
-                type="file"
-                class="sr-only"
-                [accept]="modelFileAccept"
-                [disabled]="isUploadingModel()"
-                (change)="onModelFileSelected($event)"
-              />
-              <span class="media-upload-icon media-upload-icon--model">
-                <i class="pi" [class.pi-cloud-upload]="!isUploadingModel()" [class.pi-spin]="isUploadingModel()" [class.pi-spinner]="isUploadingModel()"></i>
-              </span>
-              <span class="min-w-0 flex-1">
-                <strong class="block truncate text-sm text-white">
-                  {{ selectedModelFileName() || (isUploadingModel() ? 'Uploading model...' : 'Drop or choose your 3D file') }}
-                </strong>
-                <small class="mt-1 block text-xs text-neutral-500">{{ modelUploadHelpText }}</small>
-              </span>
-              <span class="media-upload-action">Browse</span>
-            </label>
-            <div class="mt-2 flex items-center gap-2">
-              <span class="text-xs text-neutral-600">or enter URL:</span>
-              <input pInputText formControlName="modelUrl" class="w-full text-xs" placeholder="https://..." />
-            </div>
-          </div>
-
-          <div id="field-model-type" class="admin-field">
-            <label class="admin-label">Model Type <span class="font-bold text-rose-400">*</span></label>
-            <p-select [options]="modelTypeOptions" optionLabel="label" optionValue="value" formControlName="modelType" appendTo="body" class="w-full" />
-          </div>
-
-          <!-- Poster Image Upload -->
-          <div class="admin-field">
-            <label class="admin-label">Poster Image <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <label class="media-upload-zone media-upload-zone--compact" [class.media-upload-zone-busy]="isUploadingPoster()">
-              <input
-                type="file"
-                class="sr-only"
-                accept="image/jpeg,image/png,image/webp"
-                [disabled]="isUploadingPoster()"
-                (change)="onPosterImageSelected($event)"
-              />
-              @if (productForm.controls.posterImage.value) {
-                <img [src]="productForm.controls.posterImage.value" alt="Poster" class="media-upload-thumb media-upload-thumb--sm" />
-              } @else {
-                <span class="media-upload-icon media-upload-icon--sm">
-                  <i class="pi" [class.pi-image]="!isUploadingPoster()" [class.pi-spin]="isUploadingPoster()" [class.pi-spinner]="isUploadingPoster()"></i>
-                </span>
-              }
-              <span class="min-w-0 flex-1">
-                <strong class="block truncate text-xs text-white">
-                  {{ isUploadingPoster() ? 'Uploading...' : (productForm.controls.posterImage.value ? 'Change' : 'Upload poster') }}
-                </strong>
-              </span>
-            </label>
-            <input pInputText formControlName="posterImage" class="mt-1 w-full text-xs" placeholder="or enter URL" />
-          </div>
-
-          <div class="admin-field">
-            <label class="admin-label">Main Image Alt Text <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="imageAlt" class="w-full" placeholder="Accessible description of main image" />
-          </div>
-
-          <!-- Social Sharing Image Upload -->
-          <div class="admin-field">
-            <label class="admin-label">Social Sharing Image <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <label class="media-upload-zone media-upload-zone--compact" [class.media-upload-zone-busy]="isUploadingSocial()">
-              <input
-                type="file"
-                class="sr-only"
-                accept="image/jpeg,image/png,image/webp"
-                [disabled]="isUploadingSocial()"
-                (change)="onSocialImageSelected($event)"
-              />
-              @if (productForm.controls.socialImage.value) {
-                <img [src]="productForm.controls.socialImage.value" alt="Social" class="media-upload-thumb media-upload-thumb--sm" />
-              } @else {
-                <span class="media-upload-icon media-upload-icon--sm">
-                  <i class="pi" [class.pi-image]="!isUploadingSocial()" [class.pi-spin]="isUploadingSocial()" [class.pi-spinner]="isUploadingSocial()"></i>
-                </span>
-              }
-              <span class="min-w-0 flex-1">
-                <strong class="block truncate text-xs text-white">
-                  {{ isUploadingSocial() ? 'Uploading...' : (productForm.controls.socialImage.value ? 'Change' : 'Upload social image') }}
-                </strong>
-              </span>
-            </label>
-            <input pInputText formControlName="socialImage" class="mt-1 w-full text-xs" placeholder="or enter URL" />
-          </div>
-
-        </div>
-      </div>
-
-      <div class="admin-card p-5">
-        <h3 class="admin-section-title">Specifications</h3>
-        <div class="admin-form-grid mt-4">
-
-          <div id="field-material" class="admin-field" [class.has-error]="productForm.controls.material.invalid && (productForm.controls.material.touched || attemptedSubmit())">
-            <label class="admin-label">Material <span class="font-bold text-rose-400">*</span></label>
-            <p-select [options]="materialOptions" optionLabel="label" optionValue="value" formControlName="material" appendTo="body" class="w-full" />
-            @if (productForm.controls.material.invalid && (productForm.controls.material.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Material is required.</small>
-            }
-          </div>
-
-          <div id="field-finish" class="admin-field" [class.has-error]="productForm.controls.finish.invalid && (productForm.controls.finish.touched || attemptedSubmit())">
-            <label class="admin-label">Finish <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="finish" class="w-full" placeholder="e.g. Matte, Glossy, Hand-painted" />
-            @if (productForm.controls.finish.invalid && (productForm.controls.finish.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Finish is required.</small>
-            }
-          </div>
-
-          <div id="field-color" class="admin-field" [class.has-error]="productForm.controls.color.invalid && (productForm.controls.color.touched || attemptedSubmit())">
-            <label class="admin-label">Color <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="color" class="w-full" placeholder="e.g. Black / Gold / Purple" />
-            @if (productForm.controls.color.invalid && (productForm.controls.color.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Color is required.</small>
-            }
-          </div>
-
-          <div id="field-size" class="admin-field" [class.has-error]="productForm.controls.size.invalid && (productForm.controls.size.touched || attemptedSubmit())">
-            <label class="admin-label">Size / Dimensions <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="size" class="w-full" placeholder="e.g. 104 cm (Life Size) or 25 x 10 x 5 cm" />
-            @if (productForm.controls.size.invalid && (productForm.controls.size.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Size / dimensions is required.</small>
-            }
-          </div>
-
-          <div id="field-weight" class="admin-field" [class.has-error]="productForm.controls.weight.invalid && (productForm.controls.weight.touched || attemptedSubmit())">
-            <label class="admin-label">Weight <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="weight" class="w-full" placeholder="e.g. 450 g or 1.2 kg" />
-            @if (productForm.controls.weight.invalid && (productForm.controls.weight.touched || attemptedSubmit())) {
-              <small class="field-error-msg"><i class="pi pi-exclamation-circle"></i> Weight is required.</small>
-            }
-          </div>
-
-          <div id="field-print-time" class="admin-field" [class.has-error]="productForm.controls.printTime.invalid && (productForm.controls.printTime.touched || attemptedSubmit())">
-            <label class="admin-label">Print Time <span class="font-bold text-rose-400">*</span></label>
-            <input pInputText formControlName="printTime" class="w-full" placeholder="e.g. 18 hours or 2 days" />
-            <small class="text-neutral-500">Internal print estimate; not a delivery promise.</small>
-            @if (productForm.controls.printTime.invalid && (productForm.controls.printTime.touched || attemptedSubmit())) {
-              <small class="field-error-msg block"><i class="pi pi-exclamation-circle"></i> Print time is required.</small>
-            }
-          </div>
-
-          <div class="admin-field">
-            <label class="admin-label">Layer Height <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="layerHeight" class="w-full" placeholder="e.g. 0.16 mm (Fine)" />
-          </div>
-
-          <div class="admin-field">
-            <label class="admin-label">Infill <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="infill" class="w-full" placeholder="e.g. 20% Gyroid" />
-          </div>
-
-          <div class="admin-card flex items-center justify-between p-4 xl:col-span-2">
-            <div>
-              <label class="admin-label">Made to Order</label>
-              <p class="text-sm text-neutral-500">Show that production starts after customer order confirmation.</p>
-            </div>
-            <p-toggleswitch formControlName="isMadeToOrder" />
-          </div>
-
-          @if (productForm.controls.isMadeToOrder.value) {
-            <div id="field-production-time" class="xl:col-span-2 grid gap-4 md:grid-cols-3" [class.has-error]="productForm.hasError('invalidProductionRange')">
-              <div class="admin-field">
-                <label class="admin-label">Production Time Min <span class="font-bold text-rose-400">*</span></label>
-                <p-inputnumber formControlName="productionTimeMin" [min]="1" class="w-full" placeholder="e.g. 2" />
+            <div class="toggle-field field-wide">
+              <div>
+                <label for="product-isMadeToOrder">تصنيع حسب الطلب</label
+                ><small>فعّل الخيار إذا كان التصنيع يبدأ بعد تأكيد العميل.</small>
               </div>
-              <div class="admin-field">
-                <label class="admin-label">Production Time Max <span class="font-bold text-rose-400">*</span></label>
-                <p-inputnumber formControlName="productionTimeMax" [min]="1" class="w-full" placeholder="e.g. 5" />
-              </div>
-              <div class="admin-field">
-                <label class="admin-label">Unit <span class="font-bold text-rose-400">*</span></label>
-                <p-select [options]="productionTimeUnitOptions" optionLabel="label" optionValue="value" formControlName="productionTimeUnit" appendTo="body" class="w-full" />
-              </div>
-              @if (productForm.hasError('invalidProductionRange')) {
-                <div class="md:col-span-3">
-                  <small class="field-error-msg block"><i class="pi pi-exclamation-circle"></i> Maximum production time must be greater than or equal to minimum.</small>
-                </div>
-              }
+              <p-toggleswitch inputId="product-isMadeToOrder" formControlName="isMadeToOrder" />
             </div>
-          }
-
-        </div>
-      </div>
-
-      <div class="admin-card p-5">
-        <h3 class="admin-section-title">SEO and Safety</h3>
-        <div class="admin-form-grid mt-4">
-          <div class="admin-field">
-            <label class="admin-label">Meta Title <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="metaTitle" class="w-full" placeholder="Custom SEO title" />
-          </div>
-          <div class="admin-field">
-            <label class="admin-label">Keywords <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <input pInputText formControlName="keywords" class="w-full" placeholder="katana, anime prop, cosplay" />
-          </div>
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Meta Description <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <textarea pTextarea formControlName="metaDescription" rows="3" class="w-full" placeholder="Search engine description preview"></textarea>
-          </div>
-          <div class="admin-field xl:col-span-2">
-            <label class="admin-label">Safety Note <span class="text-xs font-normal text-neutral-500">(Optional)</span></label>
-            <textarea pTextarea formControlName="safetyNote" rows="3" class="w-full" placeholder="e.g. Cosplay prop only, blunt edge, keep away from high heat."></textarea>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="space-y-6">
-      <app-admin-file-preview
-        [imageUrl]="previewImage()"
-        [modelUrl]="previewModel()"
-        [modelType]="previewModelType()"
-        [posterImage]="previewPoster()"
-        [productName]="previewProductName()"
-      />
-
-      <!-- Interactive Validation Card in Sidebar -->
-      @if (validationErrors().length > 0 && (productForm.touched || attemptedSubmit())) {
-        <div class="admin-card border-rose-500/40 bg-gradient-to-b from-rose-950/30 to-neutral-950 p-5 shadow-2xl">
-          <div class="flex items-center justify-between border-b border-rose-500/20 pb-3">
-            <div class="flex items-center gap-2">
-              <span class="flex h-6 w-6 items-center justify-center rounded-full bg-rose-500/20 text-xs font-black text-rose-400">
-                {{ validationErrors().length }}
-              </span>
-              <h3 class="text-sm font-black text-white">Required Fields Remaining</h3>
-            </div>
-            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400">Click to jump</span>
-          </div>
-
-          <div class="mt-3 space-y-2 max-h-80 overflow-y-auto pr-1">
-            @for (err of validationErrors(); track err.id) {
-              <button
-                type="button"
-                class="flex w-full items-start justify-between gap-3 rounded-xl border border-rose-500/20 bg-rose-950/20 p-2.5 text-start transition hover:border-rose-400 hover:bg-rose-900/30"
-                (click)="scrollToField(err.id)"
+            @if (madeToOrder()) {
+              <div
+                id="field-production-time"
+                class="production-fields field-wide"
+                [class.has-error]="hasProductionRangeError()"
               >
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[10px] font-bold uppercase tracking-wider text-neutral-400">{{ err.category }}</span>
-                    <span class="text-neutral-600">•</span>
-                    <strong class="truncate text-xs font-bold text-white">{{ err.field }}</strong>
-                  </div>
-                  <p class="mt-0.5 text-[11px] text-rose-300/90">{{ err.message }}</p>
+                <div class="admin-field">
+                  <label for="product-productionTimeMin">أقل مدة تصنيع</label
+                  ><p-inputnumber
+                    inputId="product-productionTimeMin"
+                    formControlName="productionTimeMin"
+                    [min]="1"
+                  />
                 </div>
-                <i class="pi pi-arrow-right mt-1 text-xs text-rose-400"></i>
-              </button>
+                <div class="admin-field">
+                  <label for="product-productionTimeMax">أقصى مدة تصنيع</label
+                  ><p-inputnumber
+                    inputId="product-productionTimeMax"
+                    formControlName="productionTimeMax"
+                    [min]="1"
+                  />
+                </div>
+                <div class="admin-field">
+                  <label for="product-productionTimeUnit">وحدة المدة</label
+                  ><p-select
+                    inputId="product-productionTimeUnit"
+                    [options]="productionTimeUnitOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    formControlName="productionTimeUnit"
+                    placeholder="اختر الوحدة"
+                    appendTo="body"
+                  />
+                </div>
+                @if (hasProductionRangeError()) {
+                  <small class="field-error-msg field-wide"
+                    >حدد مدة موجبة ووحدتها، والحد الأقصى لا يقل عن الحد الأدنى.</small
+                  >
+                }
+              </div>
             }
           </div>
-        </div>
+        </section>
+        <section class="editor-card" aria-labelledby="meta-title">
+          <h3 id="meta-title">بيانات البحث والعناية</h3>
+          <div class="editor-grid">
+            @for (field of metaFields; track field.key) {
+              <div class="admin-field" [id]="field.id" [class.field-wide]="field.wide">
+                <label [for]="'product-' + field.key">{{ field.label }}</label>
+                @if (field.multiline) {
+                  <textarea
+                    pTextarea
+                    [id]="'product-' + field.key"
+                    [formControlName]="field.key"
+                    rows="3"
+                  ></textarea>
+                } @else {
+                  <input pInputText [id]="'product-' + field.key" [formControlName]="field.key" />
+                }
+                @if (field.hint) {
+                  <small>{{ field.hint }}</small>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+      <aside class="editor-preview" aria-label="معاينة الملفات">
+        <app-admin-file-preview
+          [imageUrl]="previewImage()"
+          [modelUrl]="previewModel()"
+          [modelType]="previewModelType()"
+          [posterImage]="previewPoster()"
+          [productName]="previewProductName()"
+        />
+        <p class="section-hint">
+          هذه معاينة الملفات الحالية في النموذج. احفظ المنتج لتثبيت التعديلات.
+        </p>
+      </aside>
+    </form>
+    @if (existingProduct(); as product) {
+      @if (product.requiresManufacturingReview) {
+        <app-manufacturing-review
+          [product]="product"
+          [productEditorDirty]="productEditorDirty()"
+          [productEditorBusy]="productEditorBusy()"
+          (productUpdated)="onManufacturingProductUpdated($event)"
+          (dirtyChanged)="onReviewDirtyChanged($event)"
+          (busyChanged)="onReviewBusyChanged($event)"
+        />
+      } @else {
+        <section class="editor-card review-entry" aria-labelledby="review-entry-title">
+          <h3 id="review-entry-title">مراجعة التصنيع والتكلفة</h3>
+          <p class="section-hint">
+            سجّل القياسات الفعلية ومراجع العينة والحقوق، واحسب تكلفة خامة PLA أو PLA+ قبل اعتماد
+            السعر. بعد بدء المراجعة، يلزم إكمالها واعتمادها قبل نشر المنتج.
+          </p>
+          @if (product.isActive) {
+            <p class="review-notice">ألغِ نشر المنتج واحفظه أولًا، ثم ابدأ مراجعة التصنيع.</p>
+          } @else if (productEditorDirty()) {
+            <p class="review-notice">
+              احفظ تعديلات المنتج أولًا لتبدأ المراجعة من النسخة المحفوظة.
+            </p>
+          }
+          @if (reviewStartError()) {
+            <p class="error-notice" role="alert">{{ reviewStartError() }}</p>
+            <button
+              class="shop-button shop-button-secondary"
+              type="button"
+              [disabled]="productEditorBusy()"
+              (click)="reloadManufacturingProduct()"
+            >
+              تجاهل التعديلات وإعادة تحميل المنتج
+            </button>
+          }
+          <p-button
+            label="بدء مراجعة التصنيع"
+            [loading]="isStartingReview()"
+            [disabled]="!canStartReview()"
+            (onClick)="startManufacturingReview()"
+          />
+        </section>
       }
-    </div>
-  </form>
+    }
+  }
 </section>

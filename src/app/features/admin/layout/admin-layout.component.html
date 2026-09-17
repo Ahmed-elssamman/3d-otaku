@@ -1,14 +1,23 @@
-<div class="min-h-screen bg-[radial-gradient(circle_at_top,#2c0b44_0%,#0b0715_35%,#05050a_100%)] text-white">
-  <p-toast position="top-right" />
+<div class="min-h-screen bg-[var(--shop-bg)] text-[var(--shop-ink)]" dir="rtl">
+  <p-toast position="top-right" [breakpoints]="toastBreakpoints" />
   <app-admin-confirm-dialog />
 
-  <div class="fixed inset-0 z-30 bg-black/60 lg:hidden" [class.hidden]="!sidebarOpen()" (click)="closeSidebar()"></div>
+  <div
+    class="fixed inset-0 z-30 bg-black/60 lg:hidden"
+    [class.hidden]="!sidebarOpen()"
+    (click)="closeSidebar()"
+  ></div>
 
   <app-admin-sidebar [isOpen]="sidebarOpen()" (logout)="logout()" (closeMobile)="closeSidebar()" />
 
   <div class="min-h-screen ps-0 lg:ps-72">
     <div class="p-4 lg:p-6">
-      <app-admin-topbar [pageTitle]="pageTitle()" [adminName]="adminName()" (toggleSidebar)="toggleSidebar()" />
+      <app-admin-topbar
+        [pageTitle]="pageTitle()"
+        [adminName]="adminName()"
+        [sidebarOpen]="sidebarOpen()"
+        (toggleSidebar)="toggleSidebar()"
+      />
       <main class="pt-6">
         <router-outlet />
       </main>

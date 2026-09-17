@@ -1,0 +1,366 @@
+<section class="operations-page" dir="rtl" aria-labelledby="operations-title">
+  <header class="operations-heading">
+    <span class="eyebrow">متابعة المتجر</span>
+    <h2 id="operations-title">{{ config.title }}</h2>
+    <p>{{ config.description }}</p>
+  </header>
+
+  <form class="operations-filters" [formGroup]="filtersForm" (ngSubmit)="applyFilters()">
+    <label class="search-field" for="operation-search"
+      >{{ config.searchLabel }}
+      <input id="operation-search" type="search" maxlength="120" [formControl]="searchControl" />
+    </label>
+    <label for="operation-filter"
+      >الحالة
+      <select id="operation-filter" [formControl]="filterControl">
+        <option [ngValue]="null">كل الحالات</option>
+        @for (option of config.statuses; track option.value) {
+          <option [ngValue]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    <label for="operation-sort"
+      >الترتيب
+      <select id="operation-sort" [formControl]="sortControl">
+        @for (option of sortOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    <label for="operation-limit"
+      >لكل صفحة
+      <select id="operation-limit" [formControl]="limitControl">
+        @for (size of pageSizes; track size) {
+          <option [ngValue]="size">{{ size }}</option>
+        }
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button type="submit" class="shop-button shop-button-primary" [disabled]="navigationLocked()">
+        تطبيق البحث
+      </button>
+      <button
+        type="button"
+        class="shop-button shop-button-secondary"
+        (click)="resetFilters()"
+        [disabled]="navigationLocked()"
+      >
+        مسح
+      </button>
+    </div>
+  </form>
+
+  <div class="operations-content" [attr.aria-busy]="isLoading()">
+    @if (isLoading()) {
+      <p class="operations-state" role="status">جارٍ تحميل البيانات…</p>
+    } @else if (loadError()) {
+      <div class="operations-state error-state" role="alert">
+        <p>{{ loadError() }}</p>
+        <button type="button" class="shop-button shop-button-secondary" (click)="retryList()">
+          إعادة المحاولة
+        </button>
+      </div>
+    } @else if (records().length === 0) {
+      <p class="operations-state">{{ config.emptyText }}</p>
+    } @else {
+      <p class="result-count" role="status">{{ meta().totalItems }} نتيجة</p>
+      <ul class="operation-list">
+        @for (record of records(); track record.id) {
+          <li class="operation-row" [class.selected-row]="selectedId() === record.id">
+            <div class="record-identity">
+              <strong dir="auto">{{ record.reference }}</strong
+              ><span>{{ record.customerName }}</span>
+              <p>{{ record.summary }}</p>
+            </div>
+            <span class="operation-status">{{ record.statusLabel }}</span>
+            <time [attr.datetime]="record.createdAt">{{
+              record.createdAt | date: 'dd/MM/yyyy HH:mm'
+            }}</time>
+            <button
+              type="button"
+              [id]="'operation-' + record.id"
+              class="shop-button shop-button-secondary"
+              [disabled]="navigationLocked()"
+              (click)="openDetail(record.id)"
+              [attr.aria-label]="'عرض تفاصيل ' + record.reference"
+            >
+              عرض التفاصيل
+            </button>
+          </li>
+        }
+      </ul>
+    }
+    <nav class="operations-pagination" aria-label="صفحات النتائج">
+      <button
+        type="button"
+        class="shop-button shop-button-secondary"
+        [disabled]="!canPrevious()"
+        (click)="previousPage()"
+      >
+        الصفحة السابقة
+      </button>
+      <span>صفحة {{ meta().page }} من {{ pageCount() }}</span>
+      <button
+        type="button"
+        class="shop-button shop-button-secondary"
+        [disabled]="!canNext()"
+        (click)="nextPage()"
+      >
+        الصفحة التالية
+      </button>
+    </nav>
+  </div>
+
+  @if (selectedId()) {
+    <section
+      class="operation-detail"
+      aria-labelledby="operation-detail-title"
+      [attr.aria-busy]="isLoadingDetail()"
+    >
+      <div class="detail-heading">
+        <h3 id="operation-detail-title" tabindex="-1">تفاصيل السجل</h3>
+        <button
+          class="shop-button shop-button-secondary"
+          type="button"
+          (click)="closeDetail()"
+          [disabled]="navigationLocked()"
+        >
+          إغلاق التفاصيل
+        </button>
+      </div>
+      @if (isLoadingDetail()) {
+        <p role="status">جارٍ تحميل التفاصيل…</p>
+      } @else if (detailError()) {
+        <div role="alert">
+          <p>{{ detailError() }}</p>
+          <button class="shop-button shop-button-secondary" type="button" (click)="retryDetail()">
+            إعادة تحميل التفاصيل
+          </button>
+        </div>
+      } @else if (selected(); as detail) {
+        <div class="detail-reference">
+          <strong dir="auto">{{ detail.reference }}</strong
+          ><span class="operation-status">{{ detail.statusLabel }}</span>
+        </div>
+        <dl class="detail-fields">
+          @for (field of detail.fields; track field.label) {
+            <div>
+              <dt>{{ field.label }}</dt>
+              <dd [attr.dir]="field.ltr ? 'ltr' : 'auto'">{{ field.value }}</dd>
+            </div>
+          }
+        </dl>
+        @if (detail.referenceUrl) {
+          <a
+            class="text-link"
+            [href]="detail.referenceUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            >فتح مرجع العميل في نافذة جديدة <i class="pi pi-external-link" aria-hidden="true"></i
+          ></a>
+        }
+        @if (detail.items.length) {
+          <h4>المنتجات المطلوبة</h4>
+          <ul class="order-items">
+            @for (item of detail.items; track item.productId) {
+              <li>
+                <div class="order-item-line">
+                  <strong>{{ item.name }}</strong
+                  ><span
+                    >{{ item.quantity }} ×
+                    {{ item.discountPrice ?? item.unitPrice | number: '1.0-2' }} ج.م</span
+                  ><b>{{ item.lineTotal | number: '1.0-2' }} ج.م</b>
+                </div>
+                <app-order-item-configuration [configuration]="item.configuration" />
+                <app-admin-order-manufacturing
+                  [snapshot]="item.manufacturingSnapshot"
+                  [state]="item.manufacturingSnapshotState"
+                />
+              </li>
+            }
+          </ul>
+        }
+        @if (detail.totals; as totals) {
+          <dl class="order-totals">
+            <div>
+              <dt>قيمة المنتجات</dt>
+              <dd>{{ totals.subtotal | number: '1.0-2' }} ج.م</dd>
+            </div>
+            @if (totals.discount) {
+              <div>
+                <dt>الخصم</dt>
+                <dd>{{ totals.discount | number: '1.0-2' }} ج.م</dd>
+              </div>
+            }
+            <div>
+              <dt>التوصيل</dt>
+              <dd>
+                @if (totals.deliveryFeeConfirmed) {
+                  {{ totals.deliveryFee | number: '1.0-2' }} ج.م
+                } @else {
+                  يُحدد بعد التواصل
+                }
+              </dd>
+            </div>
+            <div class="total-line">
+              <dt>الإجمالي المسجل</dt>
+              <dd>{{ totals.total | number: '1.0-2' }} ج.م</dd>
+            </div>
+          </dl>
+          <p class="detail-hint">
+            حالة الطلب لا تُعد إثباتًا لتحصيل الدفع.
+            @if (!totals.deliveryFeeConfirmed) {
+              الإجمالي لا يشمل رسوم توصيل مؤكدة.
+            }
+          </p>
+        }
+
+        @if (detail.shipping; as shipping) {
+          <app-admin-order-shipping
+            [order]="shipping"
+            [disabled]="shippingDisabled()"
+            [recoveryDisabled]="shippingRecoveryDisabled()"
+            (updated)="orderUpdated($event)"
+            (busyChange)="shippingBusyChanged($event)"
+            (dirtyChange)="shippingDraftChanged($event)"
+            (staleChange)="shippingStaleChanged($event)"
+          />
+        }
+        @if (hasShippingDraft()) {
+          <p class="detail-hint" role="status">
+            راجع مسودة الشحن أو تجاهلها قبل تغيير الحالة أو فتح طلب آخر.
+          </p>
+        }
+
+        @if (detail.payments; as payments) {
+          <app-admin-order-payments
+            [order]="payments"
+            [disabled]="paymentDisabled()"
+            [recoveryDisabled]="paymentRecoveryDisabled()"
+            (updated)="orderUpdated($event)"
+            (busyChange)="paymentBusyChanged($event)"
+            (dirtyChange)="paymentDraftChanged($event)"
+            (staleChange)="paymentStaleChanged($event)"
+          />
+        }
+        @if (hasPaymentDraft()) {
+          <p class="detail-hint" role="status">
+            راجع مسودة القيد المالي أو تحقّق من المحاولة السابقة قبل تغيير الشحن أو الحالة أو فتح
+            طلب آخر.
+          </p>
+        }
+
+        <div class="status-editor">
+          <h4>تحديث الحالة</h4>
+          @if (successMessage()) {
+            <p class="success-state" role="status">{{ successMessage() }}</p>
+          }
+          @if (actionError()) {
+            <div class="error-state" role="alert">
+              <p>{{ actionError() }}</p>
+              <button
+                type="button"
+                class="shop-button shop-button-secondary"
+                (click)="retryDetail()"
+                [disabled]="navigationLocked()"
+              >
+                إعادة تحميل التفاصيل
+              </button>
+            </div>
+          }
+          @if (detail.nextStatuses.length) {
+            <form [formGroup]="statusForm" (ngSubmit)="requestConfirmation()">
+              <fieldset [disabled]="statusLocked()">
+                <label for="operation-next-status"
+                  >الحالة الجديدة<select
+                    id="operation-next-status"
+                    [formControl]="nextStatusControl"
+                  >
+                    <option [ngValue]="null">اختر الحالة</option>
+                    @for (option of detail.nextStatuses; track option.value) {
+                      <option [ngValue]="option.value">{{ option.label }}</option>
+                    }
+                  </select></label
+                >
+                @if (hasNote) {
+                  <label for="operation-note"
+                    >{{ config.noteLabel
+                    }}<textarea
+                      id="operation-note"
+                      rows="3"
+                      maxlength="1000"
+                      [formControl]="noteControl"
+                      aria-describedby="operation-note-hint"
+                    ></textarea>
+                  </label>
+                  <p id="operation-note-hint" class="detail-hint">{{ config.noteHint }}</p>
+                }
+                @if (!confirmRequested()) {
+                  <button
+                    type="submit"
+                    class="shop-button shop-button-primary"
+                    [disabled]="!canSave()"
+                  >
+                    مراجعة التغيير
+                  </button>
+                }
+              </fieldset>
+            </form>
+            @if (confirmRequested()) {
+              <div class="confirm-change" role="group" aria-label="تأكيد تغيير الحالة">
+                <p>
+                  تغيير الحالة من <strong>{{ detail.statusLabel }}</strong> إلى
+                  <strong>{{ selectedStatusLabel() }}</strong
+                  >؟
+                </p>
+                <div class="filter-actions">
+                  <button
+                    type="button"
+                    class="shop-button shop-button-primary"
+                    (click)="saveStatus()"
+                    [disabled]="!canSave()"
+                  >
+                    @if (isSaving()) {
+                      جارٍ الحفظ…
+                    } @else {
+                      تأكيد وحفظ الحالة
+                    }</button
+                  ><button
+                    type="button"
+                    class="shop-button shop-button-secondary"
+                    (click)="cancelConfirmation()"
+                    [disabled]="isOperationBusy()"
+                  >
+                    تراجع
+                  </button>
+                </div>
+              </div>
+            }
+          } @else {
+            <p class="detail-hint">لا توجد انتقالات أخرى متاحة لهذه الحالة.</p>
+          }
+        </div>
+        <section class="history">
+          <h4>سجل المتابعة</h4>
+          @if (detail.history.length) {
+            <ol>
+              @for (entry of detail.history; track $index) {
+                <li>
+                  <strong>{{ entry.statusLabel }}</strong
+                  ><time [attr.datetime]="entry.createdAt">{{
+                    entry.createdAt | date: 'dd/MM/yyyy HH:mm'
+                  }}</time>
+                  @if (entry.note) {
+                    <p>{{ entry.note }}</p>
+                  }
+                </li>
+              }
+            </ol>
+          } @else {
+            <p class="detail-hint">لا توجد تغييرات مسجلة لهذا السجل القديم.</p>
+          }
+        </section>
+      }
+    </section>
+  }
+</section>

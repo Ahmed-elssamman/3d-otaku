@@ -1,0 +1,1152 @@
+{
+  "schemaVersion": 1,
+  "locale": "ar-EG",
+  "scope": "existing-twelve-local-snapshot-products",
+  "publicationApproval": false,
+  "sourceSnapshot": {
+    "sourceUrl": "https://outako.modev.me/api/products?limit=100",
+    "retrievedAtUtc": "2026-09-16T21:02:46.405Z",
+    "remoteSha256": "6831a127a17bc23562e7e36829120a4b4ba7f02c989d911696584ccd34971330",
+    "localBeforeSha256": "f7f11f9fada4f7de72f689cc38b9a246fa8262bb23f089cb5d70ce60ed09a930",
+    "productCount": 12,
+    "commercialRightsVerified": false,
+    "note": "Read-only source API and supplied images support copy only. Original copy/specifications are retained below; runtime CLI also backs up complete local documents before applying copy fields. No remote writes or commercial release approval."
+  },
+  "mutableFields": [
+    "name",
+    "shortDescription",
+    "description",
+    "imageAlt",
+    "safetyNote",
+    "metaTitle",
+    "metaDescription",
+    "tags",
+    "keywords"
+  ],
+  "searchPolicy": "Preserve existing tags/keywords and include original English name and canonical slug in tags, because Mongo text search covers tags but not slug or keywords.",
+  "products": [
+    {
+      "id": "6a85c475caec9f8f80726a3f",
+      "slug": "minion-phone-stand",
+      "originalName": "Minion phone stand",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/minion-phone-stand",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/4dd1b92d2b60287f6ce6687c.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787151437688-f72efca1d52e8c60.webp",
+          "sha256": "d2783366dcbcc7002eb6a0750d8f4fe99930c2e8c10a6d2a35c3d7d99195e215"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: yellow one-eyed character, oval base, sloped support and front lip. Image does not establish material, actual dimensions or device load.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787151451679-bd471ac44477d9e4.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Minion phone stand",
+        "shortDescription": "Minion phone stand",
+        "description": "Minion phone stand",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 300,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Desk Models",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "Black , Gray ",
+        "size": "0",
+        "weight": "68",
+        "printTime": "1 day",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Photo is yellow; stored color is Black , Gray. Final offered colors and actual sample require confirmation.",
+        "Character/IP permission is unverified; no official affiliation or license is claimed.",
+        "Stored size is 0; weight is 68 without units. Fit, load and case thickness are untested."
+      ],
+      "fields": {
+        "name": "حامل موبايل بشكل مينيون",
+        "shortDescription": "حامل مكتبي يجمع شكل مينيون بقاعدة ومسند للموبايل، ليضيف تفصيلة مرحة إلى ركن العمل أو الدراسة.",
+        "description": "قطعة مطبوعة ثلاثية الأبعاد تجمع بين مجسم مينيون وحامل للموبايل. يظهر التصميم بشخصية ذات عين واحدة تقف على قاعدة بيضاوية، مع مسند مائل وحافة أمامية لوضع الجهاز.\n\nفكرة لركن المكتب أو كهدية لمحبي الشخصيات الكرتونية. قبل الطلب، تأكد من ملاءمة مقاس الموبايل وسمك الجراب للمسند؛ توافق الأجهزة وثباتها لم يُختبرا لكل المقاسات.\n\nتُظهر الصورة مثالًا باللون الأصفر، بينما تختلف الألوان المسجلة للمنتج؛ يُؤكَّد اللون النهائي قبل الطلب. المقصود هو الحامل المطبوع، ولا تشمل تسمية المنتج الموبايل أو عناصر المكتب الظاهرة في الصورة.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "مجسم مينيون أصفر بعين واحدة على قاعدة بيضاوية يحمل مسندًا مائلًا للموبايل",
+        "safetyNote": "استخدمه على سطح مستوٍ بعد التأكد من اتزان جهازك. قطعة مكتبية وليست لعبة للأطفال؛ أبعدها عن الحرارة واللهب.",
+        "metaTitle": "حامل موبايل بشكل مينيون | أوتاكو",
+        "metaDescription": "حامل مكتبي يجمع شكل مينيون بقاعدة ومسند للموبايل، ليضيف تفصيلة مرحة إلى ركن العمل أو الدراسة.",
+        "tags": [
+          "Minion phone stand",
+          "minion-phone-stand",
+          "حامل موبايل",
+          "مينيون",
+          "مكتب",
+          "هدية"
+        ],
+        "keywords": [
+          "Minion phone stand",
+          "minion-phone-stand",
+          "حامل موبايل",
+          "مينيون",
+          "مكتب",
+          "هدية"
+        ]
+      }
+    },
+    {
+      "id": "6a85c3e0caec9f8f80726a33",
+      "slug": "templar-knight-phone-and-tablet-holder",
+      "originalName": "Templar knight phone and tablet holder",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/templar-knight-phone-and-tablet-holder",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/34dd3f750db9b23f587c739f.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787151184810-53305dfb67f34fff.webp",
+          "sha256": "c8fc790b3bd5e17bd7747a844a3e3ff4f05844b4acddc5780f89aa236959882f"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: gray kneeling armored knight, helmet, cape, shield with cross, two forward supports, rectangular base. Phone/tablet function comes from the original product title.",
+        "originalModelUrl": null,
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Templar knight phone and tablet holder",
+        "shortDescription": "Templar knight phone and tablet holder",
+        "description": "Phone and tablet holder with a beautiful Templar knight motif",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 300,
+        "discountPrice": 250,
+        "currency": "EGP",
+        "category": "Desk Models",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black , gray ",
+        "size": "0",
+        "weight": "45",
+        "printTime": "2 day ",
+        "layerHeight": "0.2",
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "No model file URL is supplied for this product.",
+        "Stored size is 0 and weight is 45 without units. Device fit, case thickness and load capacity are untested."
+      ],
+      "fields": {
+        "name": "حامل موبايل وتابلت بشكل فارس",
+        "shortDescription": "فارس راكع بدرع وخوذة على قاعدة مكتبية، مع مسند أمامي لوضع الموبايل أو التابلت بعد تأكيد المقاس المناسب.",
+        "description": "حامل مكتبي مطبوع ثلاثي الأبعاد بتصميم فارس راكع، تظهر فيه تفاصيل الخوذة والدرع والعباءة. يستقر المجسم على قاعدة مستطيلة، ويضم مسندين أماميين لحمل الجهاز.\n\nيجمع التصميم بين وظيفة الحامل وشكل مجسم للعرض على المكتب. الاسم الأصلي يصفه كحامل للموبايل والتابلت، لكن ذلك لا يثبت ملاءمته لجميع الأجهزة؛ يُؤكَّد عرض الجهاز وسمكه ووزنه مع الجراب قبل الطلب.\n\nالصورة تعرض نموذجًا رماديًا. يُؤكَّد اللون والمقاس النهائيان قبل التنفيذ، ولا يشمل المنتج الأجهزة التي قد تظهر في صور الاستخدام.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "حامل رمادي على شكل فارس راكع بخوذة ودرع وعباءة فوق قاعدة مستطيلة ومسندين أماميين",
+        "safetyNote": "ضع الحامل على سطح مستوٍ واختبر اتزان الجهاز قبل تركه عليه. لا تعتمد عليه لحمل جهاز لم تُؤكَّد ملاءمته. أبعده عن الحرارة واللهب.",
+        "metaTitle": "حامل موبايل وتابلت بشكل فارس | أوتاكو",
+        "metaDescription": "فارس راكع بدرع وخوذة على قاعدة مكتبية، مع مسند أمامي لوضع الموبايل أو التابلت بعد تأكيد المقاس المناسب.",
+        "tags": [
+          "Templar knight phone and tablet holder",
+          "templar-knight-phone-and-tablet-holder",
+          "حامل موبايل",
+          "حامل تابلت",
+          "فارس",
+          "مكتب"
+        ],
+        "keywords": [
+          "Templar knight phone and tablet holder",
+          "templar-knight-phone-and-tablet-holder",
+          "حامل موبايل",
+          "حامل تابلت",
+          "فارس",
+          "مكتب"
+        ]
+      }
+    },
+    {
+      "id": "6a85c271caec9f8f80726a15",
+      "slug": "compact-phone-stand",
+      "originalName": "Compact Phone Stand",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/compact-phone-stand",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/f840346108ccf18a170d3cb7.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787150870263-4c7082422cc258ac.webp",
+          "sha256": "5984dba744d164db631bdedeb330eed3e350747f3fc9d0fbebae611e5999de4d"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary montage: ribbed arch/inverted-V profile with curled front stop, portrait phone example, gray/brown examples. No hinge, measured angle or charging feature is established.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787150895733-184dd5a5a56b5377.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Compact Phone Stand",
+        "shortDescription": "compact phone stand",
+        "description": "small and compact phone stand that I can travel with and print as a gift",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": "Compact Phone Stand",
+        "metaDescription": null,
+        "tags": [
+          "phone",
+          "stand"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 100,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Desk Models",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black , gray ",
+        "size": "0",
+        "weight": "15",
+        "printTime": "1 day",
+        "layerHeight": "0.4",
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Stored size is 0 and weight is 15 without units. Exact footprint, phone fit, angle and load are unverified."
+      ],
+      "fields": {
+        "name": "حامل موبايل صغير بخطوط بارزة",
+        "shortDescription": "حامل موبايل بتصميم مقوّس وخطوط متوازية بارزة، مع حافة أمامية لإسناد الجهاز على المكتب.",
+        "description": "حامل موبايل مطبوع ثلاثي الأبعاد بشكل مقوّس، تتكرر على سطحه خطوط بارزة متوازية. الحافة الأمامية مخصّصة لإسناد الجهاز، وتعرض صور المنتج مثالًا للموبايل في الوضع الرأسي.\n\nيناسب من يبحث عن شكل بسيط للحامل في مساحة العمل أو الدراسة. كلمة «صغير» هي وصف الاسم الأصلي؛ الأبعاد الفعلية غير موثّقة، لذلك يُؤكَّد المقاس وملاءمة الموبايل والجراب قبل الطلب.\n\nتُؤكَّد ألوان التنفيذ قبل الطلب. المنتج هو الحامل المطبوع، والموبايل الظاهر يوضّح الاستخدام فقط. لا تتوفر بيانات تثبت زاوية مشاهدة محددة أو آلية طي.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "حامل موبايل مقوّس بخطوط بارزة وحافة أمامية، مع مثال لاستخدامه في الوضع الرأسي",
+        "safetyNote": "استخدم الحامل على سطح مستوٍ بعد التأكد من ثبات جهازك وملاءمة الجراب. أبعده عن اللهب والحرارة المباشرة.",
+        "metaTitle": "حامل موبايل صغير بخطوط بارزة | أوتاكو",
+        "metaDescription": "حامل موبايل بتصميم مقوّس وخطوط متوازية بارزة، مع حافة أمامية لإسناد الجهاز على المكتب.",
+        "tags": [
+          "phone",
+          "stand",
+          "Compact Phone Stand",
+          "compact-phone-stand",
+          "حامل موبايل",
+          "حامل هاتف",
+          "مكتب",
+          "خطوط بارزة"
+        ],
+        "keywords": [
+          "Compact Phone Stand",
+          "compact-phone-stand",
+          "حامل موبايل",
+          "حامل هاتف",
+          "مكتب",
+          "خطوط بارزة"
+        ]
+      }
+    },
+    {
+      "id": "6a849fdbcaec9f8f8072693d",
+      "slug": "samurai-sword-incense-holder",
+      "originalName": "Samurai Sword Incense Holder",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/samurai-sword-incense-holder",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/23700ffe48ad031c87cf3cc0.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787076516809-28efc9058b854ec6.webp",
+          "sha256": "2e267f95ec94046889ee6c2a52be1aa2ffa0e3b6ac42490908626ef3e89b1f36"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: dark armored samurai, wide stance, raised arms, long oval tray/base and a smoking incense stick. This image is a safety conflict, not evidence of heat resistance.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787076550414-a3f1febddb7dbcc1.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Samurai Sword Incense Holder",
+        "shortDescription": "Japanese-inspired decor with functional incense burning for desks, gaming setups, meditation spaces, and shelf decor.",
+        "description": "Transform your incense into a samurai’s katana.\n\nThis digital download includes the files needed to 3D print your own Samurai Incense Holder — a dramatic incense burner where the incense stick becomes the warrior’s raised blade.\n\nDesigned for easy printing and display, this piece combines Japanese-inspired decor with functional incense burning for desks, gaming setups, meditation spaces, and shelf decor.",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "Samurai",
+          "Sword",
+          "Incense",
+          "Holder",
+          "Japanese"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 1000,
+        "discountPrice": 850,
+        "currency": "EGP",
+        "category": "Desk Models",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black , gray ",
+        "size": "0",
+        "weight": "140",
+        "printTime": "2 day ",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Original description advertised a digital download and burning incense; neither claim is retained for this physical PLA+ listing.",
+        "No noncombustible insert specification, heat/fire test or safe incense-burning construction is documented. Burning use must not be promoted.",
+        "Existing lit-incense image conflicts with the unlit-only description and requires replacement with an authorized accurate product photo before commercial release.",
+        "Stored size is 0 and weight is 140 without units. Included parts and any stick hardware are not documented."
+      ],
+      "fields": {
+        "name": "مجسم ساموراي بحامل أعواد للديكور",
+        "shortDescription": "مجسم ساموراي بقاعدة طويلة ووضعية تحمل عودًا للعرض الزخرفي فقط؛ لا يُستخدم مع بخور مشتعل أو جمر.",
+        "description": "مجسم مطبوع ثلاثي الأبعاد لساموراي مدرّع في وضعية واسعة، بذراعين مرفوعتين وقاعدة بيضاوية طويلة. يوضع عود غير مشتعل في وضعية تشبه امتداد السيف لإكمال مشهد الديكور.\n\nهذه النسخة موصوفة للعرض الزخرفي فقط. الخامة المسجلة هي PLA+، ولا يوجد توثيق لجزء عازل غير قابل للاحتراق أو لاختبار تحمّل الحرارة. لا تضع عليها بخورًا مشتعلًا أو جمرًا أو رمادًا ساخنًا.\n\nتُظهر صورة المصدر بخورًا مشتعلًا؛ الصورة لا تثبت أمان هذا الاستخدام للقطعة المطبوعة المعروضة هنا. يُؤكَّد اللون والمقاس ومحتويات القطعة قبل الطلب. المنتج قطعة فعلية، ولا يتضمن الوصف بيع ملفات رقمية أو أعواد بخور.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "مجسم ساموراي داكن على قاعدة طويلة يحمل عودًا؛ صورة المصدر تعرض دخانًا رغم أن الاستخدام هنا للديكور غير المشتعل فقط",
+        "safetyNote": "للديكور بأعواد غير مشتعلة فقط. ممنوع وضع بخور مشتعل أو جمر أو رماد ساخن على أجزاء PLA+. أبعد القطعة عن اللهب والحرارة؛ صورة البخور المشتعل ليست دليل أمان.",
+        "metaTitle": "مجسم ساموراي بحامل أعواد للديكور | أوتاكو",
+        "metaDescription": "مجسم ساموراي بقاعدة طويلة ووضعية تحمل عودًا للعرض الزخرفي فقط؛ لا يُستخدم مع بخور مشتعل أو جمر.",
+        "tags": [
+          "Samurai",
+          "Sword",
+          "Incense",
+          "Holder",
+          "Japanese",
+          "Samurai Sword Incense Holder",
+          "samurai-sword-incense-holder",
+          "ساموراي",
+          "مجسم",
+          "ديكور",
+          "حامل أعواد غير مشتعلة"
+        ],
+        "keywords": [
+          "Samurai Sword Incense Holder",
+          "samurai-sword-incense-holder",
+          "ساموراي",
+          "مجسم",
+          "ديكور",
+          "حامل أعواد غير مشتعلة"
+        ]
+      }
+    },
+    {
+      "id": "6a849eb5caec9f8f8072692f",
+      "slug": "kunai-fidget-spinner-2",
+      "originalName": "Kunai Fidget Spinner",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/kunai-fidget-spinner-2",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/f03e8f1f0a0f848456e942e7.jpg",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787076029380-57bc2c1b6f1c612c.jpg",
+          "sha256": "b960770ee6b6ebfdc3a64c15c0706fb17b7524370f0e0a9962564c10e80ca8f4"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary promotional image: faceted pointed black kunai form, pale wrapped-looking grip, black ring and small hand demonstration. It does not establish a tested spinner mechanism.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787076243452-d5cf81019b5bbef6.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": {
+          "url": "https://makerworld.com/en/models/672914-kunai-fidget-spinner",
+          "basis": "Existing src/seed/makerworldProducts.js contains a similarly named product with different slug, price and weight.",
+          "verification": "Unverified candidate only; direct fetch returned HTTP 403. No license or model-file match obtained."
+        }
+      },
+      "originalCopyFields": {
+        "name": "Kunai Fidget Spinner",
+        "shortDescription": "Kunai Fidget Spinner trying to best represent Naruto's kunai (I am a big fan)!",
+        "description": "Kunai Fidget Spinner\nI made this Kunai Fidget Spinner trying to best represent Naruto's kunai (I am a big fan)!\n\n \n\nThe parts are designed to be assembled without glue, but if they seem too tight you can sand them a bit and use glue!\n\nAt first it may seem that there is friction when turning, but the more you use it, the smoother it becomes.",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "Kunai",
+          "Fidget",
+          "Spinner"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 250,
+        "discountPrice": 200,
+        "currency": "EGP",
+        "category": "Anime Figures",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black , gray ,red ",
+        "size": "0",
+        "weight": "20",
+        "printTime": "2 day",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Seed contains a candidate MakerWorld model 672914, but its relationship to this uploaded STL and its commercial license have not been established; source fetch returned HTTP 403.",
+        "Original copy references Naruto; character/IP rights are unverified. Official affiliation is not claimed.",
+        "Stored size is 0 and weight is 20 without units. Assembly, moving parts, hardware, durability and spin behavior are untested."
+      ],
+      "fields": {
+        "name": "سبينر بتصميم كوناي",
+        "shortDescription": "قطعة مطبوعة بتصميم كوناي ذي مقبض وحلقة طرفية، لمحبي الإكسسوارات المستوحاة من عالم النينجا.",
+        "description": "سبينر مطبوع ثلاثي الأبعاد بتصميم كوناي: شكل مدبّب متعدد الأوجه، ومقبض بتفاصيل تشبه اللفّ، وحلقة دائرية عند الطرف. تعرض صورة المصدر مثالًا للإمساك به من جهة الحلقة.\n\nقطعة للاقتناء أو العرض والاستخدام اليدوي الهادئ. لا توجد تجربة تشغيل موثّقة للنسخة المباعة تحدد سلاسة الدوران أو مدته أو طريقة التجميع؛ تُؤكَّد حالة التجميع والحركة واللون والمقاس قبل الطلب.\n\nالتصميم زخرفي، ولا يُستخدم كسلاح أو للرمي أو المبارزة. لا يصفه هذا العرض كمنتج رسمي تابع لعمل أنمي أو كقطعة مرخّصة من أصحاب الشخصيات.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "تصميم كوناي بلون داكن وطرف مدبّب ومقبض فاتح وحلقة دائرية، مع مثال يدوي صغير في صورة المصدر",
+        "safetyNote": "للعرض أو الاستخدام اليدوي الهادئ فقط. لا يُرمى ولا يُستخدم للضرب أو المبارزة. انتبه للطرف والأجزاء الصغيرة، وأبعده عن متناول الأطفال الصغار وعن الحرارة.",
+        "metaTitle": "سبينر بتصميم كوناي | أوتاكو",
+        "metaDescription": "قطعة مطبوعة بتصميم كوناي ذي مقبض وحلقة طرفية، لمحبي الإكسسوارات المستوحاة من عالم النينجا.",
+        "tags": [
+          "Kunai",
+          "Fidget",
+          "Spinner",
+          "Kunai Fidget Spinner",
+          "kunai-fidget-spinner-2",
+          "كوناي",
+          "سبينر",
+          "نينجا",
+          "إكسسوار"
+        ],
+        "keywords": [
+          "Kunai Fidget Spinner",
+          "kunai-fidget-spinner-2",
+          "كوناي",
+          "سبينر",
+          "نينجا",
+          "إكسسوار"
+        ]
+      }
+    },
+    {
+      "id": "6a849bc1caec9f8f8072691f",
+      "slug": "ballerina-keychain",
+      "originalName": "ballerina keychain",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/ballerina-keychain",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/0d18de6f6c5b5195791b9eb2.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787075435383-56093ad50ad68e61.webp",
+          "sha256": "90b7977d29d1b19923af75b8bf0bf0d5fa21b1ef11e3631b4554dc47d3a7488b"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: flat black ballerina silhouette with tutu, dance pose, attachment loop and metal chain/ring. Hardware is pictured but inclusion is not documented.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787075449596-b0da333a10dceb0f.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "ballerina keychain",
+        "shortDescription": "ballerina keychain captures the beauty, balance, and elegance of dance in a minimalist silhouette",
+        "description": "This ballerina keychain captures the beauty, balance, and elegance of dance in a minimalist silhouette. Lightweight, durable, and stylish, it’s the perfect accessory for keys, bags, or backpacks.\nAn ideal gift for dancers, ballet lovers, or anyone who appreciates art in motion—carry elegance wherever you go. 🩰✨",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "ballerina",
+          "keychain"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 70,
+        "discountPrice": 40,
+        "currency": "EGP",
+        "category": "Collectibles",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black ,red",
+        "size": "2 x 10 cm ",
+        "weight": "6",
+        "printTime": "0.2",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Stored size 2 x 10 cm is not verified against a sample; weight 6 has no units; printTime 0.2 has no units.",
+        "Key ring/chain inclusion, connection strength and thin-part durability require confirmation."
+      ],
+      "fields": {
+        "name": "ميدالية مفاتيح راقصة باليه",
+        "shortDescription": "ميدالية بتصميم مسطّح لراقصة باليه وتنورة بارزة في حدود الشكل، لتزيين المفاتيح أو الحقيبة.",
+        "description": "ميدالية مطبوعة ثلاثية الأبعاد على هيئة ظلّ لراقصة باليه في وضعية رقص. يبرز التصميم الخارجي للتنورة والأطراف من دون تفاصيل وجه، لتكون فكرة هدية مرتبطة بحب الباليه.\n\nيمكن استخدامها كتعليقة للمفاتيح أو الحقيبة بعد تأكيد مقاسها وتجهيزات التثبيت. تُظهر الصورة حلقة وسلسلة معدنيتين؛ يُؤكَّد شمول ملحقات التعليق وشكلها واللون النهائي قبل الطلب.\n\nتجنّب شدّ الأجزاء الرفيعة أو تعليق أحمال عليها. المقاسات المسجلة تحتاج مراجعة على العينة الفعلية، ولا توجد بيانات اختبار للتحمل.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "ميدالية سوداء مسطّحة بشكل راقصة باليه بتنورة، تظهر موصولة بسلسلة وحلقة مفاتيح",
+        "safetyNote": "تعليقة زينة وليست لعبة أو وسيلة لحمل أوزان. تعامل برفق مع الأطراف الرفيعة والأجزاء الصغيرة، وأبعدها عن الأطفال الصغار والحرارة.",
+        "metaTitle": "ميدالية مفاتيح راقصة باليه | أوتاكو",
+        "metaDescription": "ميدالية بتصميم مسطّح لراقصة باليه وتنورة بارزة في حدود الشكل، لتزيين المفاتيح أو الحقيبة.",
+        "tags": [
+          "ballerina",
+          "keychain",
+          "ballerina keychain",
+          "ballerina-keychain",
+          "ميدالية مفاتيح",
+          "باليه",
+          "راقصة",
+          "تعليقة حقيبة"
+        ],
+        "keywords": [
+          "ballerina keychain",
+          "ballerina-keychain",
+          "ميدالية مفاتيح",
+          "باليه",
+          "راقصة",
+          "تعليقة حقيبة"
+        ]
+      }
+    },
+    {
+      "id": "6a849a19caec9f8f807268f3",
+      "slug": "gymnast-keychain",
+      "originalName": "Gymnast Keychain",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/gymnast-keychain",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/e1c9d08b5a9b9dc310d9e910.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787075040137-883c5fbecabb5d4b.webp",
+          "sha256": "5187621199ade33ba469d4d3e28fd4e399d7d7112f445bb9934e37a571714469"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: red flat gymnast silhouette in a floor pose with raised leg/arm; chain and ring pictured on the table.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787075053564-bb86b002aee7d939.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Gymnast Keychain",
+        "shortDescription": "dynamic silhouette is perfect for customizing your gym bag, school backpack, or keyring",
+        "description": "Carry your passion for gymnastics with you everywhere! \n\nThis keychain captures the grace and strength of a gymnast performing an artistic floor pose. \n\nThe stylized and dynamic silhouette is perfect for customizing your gym bag, school backpack, or keyring. It is the ideal small gift for teammates, coaches, or to celebrate a good competition result.",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "Keychain",
+          "Gymnast",
+          "keyring",
+          "gym bag"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 70,
+        "discountPrice": 50,
+        "currency": "EGP",
+        "category": "Collectibles",
+        "material": "PLA+",
+        "finish": "matte",
+        "color": "black , red , blue",
+        "size": "20",
+        "weight": "5",
+        "printTime": "1 day",
+        "layerHeight": "0.2",
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Stored size 20 and weight 5 lack units. Ring/chain inclusion and attachment durability are unverified."
+      ],
+      "fields": {
+        "name": "ميدالية مفاتيح لاعبة جمباز",
+        "shortDescription": "تعليقة مسطّحة على هيئة لاعبة جمباز في وضعية أرضية، كلمسة شخصية للمفاتيح أو حقيبة التمرين.",
+        "description": "ميدالية مطبوعة ثلاثية الأبعاد بتصميم ظلّ للاعبة جمباز في وضعية أرضية، مع ساق ممدودة إلى أعلى. تعتمد القطعة على الخط الخارجي للحركة وتظهر في صورة المصدر باللون الأحمر.\n\nفكرة تعليقة لحقيبة التمرين أو المفاتيح، أو هدية لمن تحب الجمباز. يُؤكَّد اللون والمقاس النهائيان وملحقات التعليق قبل الطلب؛ وجود الحلقة والسلسلة في الصورة لا يحدد وحده محتويات الطلب.\n\nتعامل برفق مع الأطراف الرفيعة وتجنّب شدّها أو استخدامها لحمل أوزان. لا توجد بيانات موثّقة لاختبار قوة التثبيت أو التحمل.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "ميدالية حمراء مسطّحة بشكل لاعبة جمباز بساق مرفوعة، مع سلسلة وحلقة مفاتيح ظاهرتين بجانبها",
+        "safetyNote": "للزينة فقط، وليست لعبة أو أداة رياضية. انتبه للأطراف الرفيعة والأجزاء الصغيرة، وأبعدها عن الأطفال الصغار والحرارة المباشرة.",
+        "metaTitle": "ميدالية مفاتيح لاعبة جمباز | أوتاكو",
+        "metaDescription": "تعليقة مسطّحة على هيئة لاعبة جمباز في وضعية أرضية، كلمسة شخصية للمفاتيح أو حقيبة التمرين.",
+        "tags": [
+          "Keychain",
+          "Gymnast",
+          "keyring",
+          "gym bag",
+          "Gymnast Keychain",
+          "gymnast-keychain",
+          "ميدالية مفاتيح",
+          "جمباز",
+          "حقيبة تمرين",
+          "هدية رياضية"
+        ],
+        "keywords": [
+          "Gymnast Keychain",
+          "gymnast-keychain",
+          "ميدالية مفاتيح",
+          "جمباز",
+          "حقيبة تمرين",
+          "هدية رياضية"
+        ]
+      }
+    },
+    {
+      "id": "6a8498fdcaec9f8f807268e0",
+      "slug": "moon-star-keychain",
+      "originalName": "Moon & Star Keychain",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/moon-star-keychain",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/c223a994490ebdcfbf80bbe7.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074638351-55347830fb3f5b41.webp",
+          "sha256": "a297efa6cfe1dda0b32d39e3135fa52de83ef0f4e7da73ecbdadb98e04ef7923"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: pale pink crescent and overlapping star with heart cutout, gold-colored rings and clasp. No metal composition or included hardware specification.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787074662754-a3311149e28a8dcc.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Moon & Star Keychain",
+        "shortDescription": "soft filament. Perfect for adding a touch of charm to your keys, bags, or gifts. Lightweight, durable",
+        "description": "Clean and practical 3D models designed for smooth printing and everyday use.\nPerfect for quick projects, customization, and reliable results.\n\nThis adorable keychain was designed in Tinkercad and 3D printed in soft  filament. Perfect for adding a touch of charm to your keys, bags, or gifts. Lightweight, durable, and handmade with care a sweet little accessory for anyone who loves cute, celestial-inspired designs.",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "girls",
+          "3D Moon",
+          "Star Keychain"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 70,
+        "discountPrice": 40,
+        "currency": "EGP",
+        "category": "Collectibles",
+        "material": "PLA+",
+        "finish": "Hand",
+        "color": "pink , black, red",
+        "size": "10 cm",
+        "weight": "5",
+        "printTime": "1 day",
+        "layerHeight": "0.2",
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Original description says soft filament, conflicting with stored PLA+. Flexibility and material identity require actual sample verification.",
+        "Stored size 10 cm is unverified; weight 5 lacks units; finish Hand is ambiguous. Hardware inclusion/type is not established."
+      ],
+      "fields": {
+        "name": "ميدالية مفاتيح هلال ونجمة",
+        "shortDescription": "هلال مع نجمة تتوسطها فتحة على شكل قلب، في تعليقة للمفاتيح أو الحقيبة بتفاصيل بسيطة.",
+        "description": "ميدالية مطبوعة ثلاثية الأبعاد تجمع شكل الهلال والنجمة. تُظهر صورة المنتج هلالًا ورديًا فاتحًا، وأمامه نجمة بفتحة صغيرة على شكل قلب، مع وصلات للتعليق.\n\nتصميم لتزيين المفاتيح أو الحقيبة، ويمكن اختياره كهدية بسيطة. يُؤكَّد اللون والمقاس النهائيان وشمول الحلقات أو المشبك قبل الطلب؛ نوع المعدن الظاهر في الصورة غير محدد.\n\nالخامة المسجلة هي PLA+، لذلك لا يُقدَّم المنتج بوصفه مرنًا أو ناعمًا كالسيليكون. تجنّب ثني الأجزاء أو شدّها، ولا تستخدم التعليقة لحمل أوزان.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "ميدالية وردية فاتحة بشكل هلال ونجمة بفتحة قلب، مع حلقات ومشبك بلون ذهبي ظاهر في الصورة",
+        "safetyNote": "تعليقة زينة تحتوي على أجزاء صغيرة. لا تثنِ الأجزاء أو تشدّها، وأبعدها عن الأطفال الصغار وعن اللهب والحرارة المباشرة.",
+        "metaTitle": "ميدالية مفاتيح هلال ونجمة | أوتاكو",
+        "metaDescription": "هلال مع نجمة تتوسطها فتحة على شكل قلب، في تعليقة للمفاتيح أو الحقيبة بتفاصيل بسيطة.",
+        "tags": [
+          "girls",
+          "3D Moon",
+          "Star Keychain",
+          "Moon & Star Keychain",
+          "moon-star-keychain",
+          "ميدالية مفاتيح",
+          "هلال",
+          "نجمة",
+          "قلب",
+          "تعليقة حقيبة"
+        ],
+        "keywords": [
+          "Moon & Star Keychain",
+          "moon-star-keychain",
+          "ميدالية مفاتيح",
+          "هلال",
+          "نجمة",
+          "قلب",
+          "تعليقة حقيبة"
+        ]
+      }
+    },
+    {
+      "id": "6a849683caec9f8f807268ce",
+      "slug": "dual-name-customize",
+      "originalName": "Dual Name Customize",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/dual-name-customize",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/ae23841f092a212eb9b97673.jpg",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074015976-ad60a936a87719f0.jpg",
+          "sha256": "bb183adc2b1e70581b7785b08639c4c5df0ccc4e75931fca68d283bcd075581d"
+        },
+        "inspectedGallery": [
+          {
+            "localPath": "/uploads/local-snapshot/e63a1fe6b541e2c23ee16e6c.webp",
+            "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074022142-ca0835e880557659.webp",
+            "sha256": "899ecae60262f2e24c8b1878b4681a87af85b548bf78370c445150890da82eb3"
+          },
+          {
+            "localPath": "/uploads/local-snapshot/7d433ebc5898354f60265d7c.webp",
+            "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074022165-e4a1b83098fbc953.webp",
+            "sha256": "7ff28387b8d4a9455f0d0a8999a59aa77032b0cd8e5c316f088b744dae743bf3"
+          },
+          {
+            "localPath": "/uploads/local-snapshot/4b23c5374efdffdb14130abd.jpg",
+            "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074022227-64f0f06a0d2416f5.jpg",
+            "sha256": "bb183adc2b1e70581b7785b08639c4c5df0ccc4e75931fca68d283bcd075581d"
+          },
+          {
+            "localPath": "/uploads/local-snapshot/113ac078dcdf280d3d821671.jpg",
+            "sourceUrl": "https://outako.modev.me/uploads/images/products/1787074022273-6ceed01bcd0f916a.jpg",
+            "sha256": "bb183adc2b1e70581b7785b08639c4c5df0ccc4e75931fca68d283bcd075581d"
+          }
+        ],
+        "observed": "Primary image shows BAMBU on a long rounded base; inspected gallery first image shows LAB and hearts from another view, supporting two-word optical design. These are source examples, not proof of arbitrary-name support.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787074081549-ca7092fabdce1f4e.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Dual Name Customize",
+        "shortDescription": "A Dual Name Illusion is a 3D nameplate where two different words share the same geometry:",
+        "description": "It's an optical illusion based on the superposition of two sets of extruded and rotated letters.\nThis makes it perfect for:\n\npersonalized desk nameplates (first name + last name, name + role, nickname, etc.)\nspecial gifts (two names, couples, parents, children, friends…)\ndecorations for bedrooms, study, office, or shop\nsmall creative branding projects and text logos",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "desk"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 450,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Collectibles",
+        "material": "PLA+",
+        "finish": "Glossy",
+        "color": "black , red",
+        "size": "20",
+        "weight": "45",
+        "printTime": "one day ",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "No confirmed customization workflow, accepted scripts/fonts, character limits, preview approval process or pricing rules.",
+        "Stored size 20 and weight 45 lack units. Photo is light-colored while stored colors are black/red.",
+        "BAMBU/LAB source examples do not establish authorization, endorsement or an available fixed branded product."
+      ],
+      "fields": {
+        "name": "لوحة اسمين بتأثير بصري",
+        "shortDescription": "لوحة مكتبية بحروف متداخلة تُظهر كلمتين من زاويتين مختلفتين؛ تُراجع الأسماء وإمكانية تنفيذها قبل الطلب.",
+        "description": "قطعة مكتبية مطبوعة ثلاثية الأبعاد تعتمد على تداخل الحروف، بحيث تظهر كلمة من زاوية وتظهر كلمة أخرى عند تغيير اتجاه النظر. يستقر التصميم على قاعدة طويلة مستديرة الأطراف.\n\nيمكن مناقشة تصميم باسمين أو كلمتين كهدية شخصية. قبل الطلب، تواصل لتأكيد النصين وكتابتهما واللغة وطول الكلمات وقابلية تنفيذ التأثير؛ لا توجد في هذه الصفحة موافقة تلقائية على كل اسم أو دعم موثّق للحروف العربية.\n\nالصور تعرض مثالًا للتأثير البصري، وليست الأسماء التي ستُنفذ تلقائيًا. تُؤكَّد الصيغة النهائية واللون والمقاس وأي أثر للتخصيص على السعر ووقت التنفيذ قبل اعتماد الطلب.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "لوحة اسم مطبوعة بلون فاتح على قاعدة طويلة، تحمل حروفًا متداخلة لتأثير بصري يتغيّر مع زاوية النظر",
+        "safetyNote": "للزينة المكتبية فقط. تجنّب الضغط على الحروف أو شدّها، وضع اللوحة بعيدًا عن الحرارة واللهب وعن متناول الأطفال الصغار.",
+        "metaTitle": "لوحة اسمين بتأثير بصري | أوتاكو",
+        "metaDescription": "لوحة مكتبية بحروف متداخلة تُظهر كلمتين من زاويتين مختلفتين؛ تُراجع الأسماء وإمكانية تنفيذها قبل الطلب.",
+        "tags": [
+          "desk",
+          "Dual Name Customize",
+          "dual-name-customize",
+          "لوحة اسمين",
+          "اسم مخصص",
+          "تأثير بصري",
+          "هدية شخصية",
+          "مكتب"
+        ],
+        "keywords": [
+          "Dual Name Customize",
+          "dual-name-customize",
+          "لوحة اسمين",
+          "اسم مخصص",
+          "تأثير بصري",
+          "هدية شخصية",
+          "مكتب"
+        ]
+      }
+    },
+    {
+      "id": "6a849153caec9f8f80726870",
+      "slug": "ninja-pen-holder",
+      "originalName": "Ninja Pen Holder",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/ninja-pen-holder",
+        "basis": "Source product text plus manually inspected source image; manufacturing and rights unverified.",
+        "primaryImage": {
+          "localPath": "/uploads/local-snapshot/98f92bdbf7d9f04ec097458d.webp",
+          "sourceUrl": "https://outako.modev.me/uploads/images/products/1787071624761-1c65a11a188dce0f.webp",
+          "sha256": "6d7d652b0ef29078dcedf9557be613c9f20d0a39c3a21b63d7187e0acc7c7db4"
+        },
+        "inspectedGallery": [],
+        "observed": "Primary image: black kneeling masked/armored ninja, hands holding a pen horizontally, sword behind. No universal pen-fit or tested stability claim.",
+        "originalModelUrl": "https://outako.modev.me/uploads/models/1787072840468-4b576199ba73452f.stl",
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Ninja Pen Holder",
+        "shortDescription": "The kneeling Ninja Pen holder, fun, simple, easy to print, single-color profile,",
+        "description": "If you're like me, you spend quite a bit of time stuck at your desk behind the computer screen.. whether in your home office, or an actual office.. Here's your chance to at least spice things up a little and make things a bit more interesting while you help make millions of dollars to the corporate stakeholders! The kneeling Ninja Pen holder, fun, simple, easy to print, single-color profile, guranteed to be a talking piece anytime you have someone come by to bother you while you're hard at work!",
+        "imageAlt": "",
+        "safetyNote": "",
+        "metaTitle": null,
+        "metaDescription": null,
+        "tags": [
+          "katana"
+        ],
+        "keywords": []
+      },
+      "originalSpecifications": {
+        "price": 500,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Desk Models",
+        "material": "PLA+",
+        "finish": "matte ",
+        "color": "black , red , blue",
+        "size": "70",
+        "weight": "70",
+        "printTime": "2 days",
+        "layerHeight": null,
+        "infill": null,
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "Stored size 70 and weight 70 lack units. Supported pen diameter, stability and included accessories are not documented."
+      ],
+      "fields": {
+        "name": "حامل قلم بشكل نينجا",
+        "shortDescription": "مجسم نينجا راكع يحمل قلمًا أفقيًا بكلتا اليدين، ليجمع بين حامل القلم وقطعة الديكور المكتبية.",
+        "description": "حامل قلم مطبوع ثلاثي الأبعاد على هيئة نينجا مقنّع في وضعية الركوع. تُظهر الصورة اليدين ممتدتين لحمل قلم أفقيًا، مع تفاصيل ملابس وسيف عند الظهر.\n\nقطعة لمكتب العمل أو الدراسة، وفكرة هدية لمحبي تصميمات النينجا. يُؤكَّد قطر القلم وملاءمته للمسند وثباته قبل الطلب؛ لا توجد بيانات توافق مع جميع أنواع الأقلام.\n\nالقلم الظاهر يوضّح الاستخدام، والمنتج الموصوف هو الحامل. يُؤكَّد اللون والمقاس النهائيان على العينة المتاحة، ولا تُستنتج الأبعاد من القلم الموجود في الصورة.\n\nللعناية، استخدم قطعة قماش ناعمة ونظّف برفق. أبعد القطعة عن اللهب والحرارة المباشرة، ولا تتركها داخل سيارة ساخنة.",
+        "imageAlt": "مجسم نينجا أسود راكع يحمل قلمًا أفقيًا بكلتا اليدين، مع سيف ظاهر خلف الظهر",
+        "safetyNote": "ضع الحامل على سطح مستوٍ ولا تضغط على اليدين أو التفاصيل الرفيعة. قطعة مكتبية وليست لعبة؛ أبعدها عن الحرارة واللهب.",
+        "metaTitle": "حامل قلم بشكل نينجا | أوتاكو",
+        "metaDescription": "مجسم نينجا راكع يحمل قلمًا أفقيًا بكلتا اليدين، ليجمع بين حامل القلم وقطعة الديكور المكتبية.",
+        "tags": [
+          "katana",
+          "Ninja Pen Holder",
+          "ninja-pen-holder",
+          "حامل قلم",
+          "نينجا",
+          "مكتب",
+          "هدية"
+        ],
+        "keywords": [
+          "Ninja Pen Holder",
+          "ninja-pen-holder",
+          "حامل قلم",
+          "نينجا",
+          "مكتب",
+          "هدية"
+        ]
+      }
+    },
+    {
+      "id": "6a7314c6a2e659d8c20ee99b",
+      "slug": "tiny-dragon-statue",
+      "originalName": "Tiny Dragon Statue",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/tiny-dragon-statue",
+        "basis": "Source product text only; no visual evidence.",
+        "primaryImage": null,
+        "inspectedGallery": [],
+        "observed": "No primary image, gallery or model supplied. Only original product identity and intended desk/shelf display use support this minimal copy. No pose, wings or surface-detail claims.",
+        "originalModelUrl": null,
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Tiny Dragon Statue",
+        "shortDescription": "Cute miniature dragon for your desk or shelf.",
+        "description": "A charming dragon figurine with high surface detail and smooth finish.",
+        "imageAlt": "",
+        "safetyNote": "Small parts, keep away from children under 3.",
+        "metaTitle": "",
+        "metaDescription": "",
+        "tags": [
+          "dragon",
+          "miniature",
+          "desk"
+        ],
+        "keywords": [
+          "dragon",
+          "figurine",
+          "miniature"
+        ]
+      },
+      "originalSpecifications": {
+        "price": 24.5,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Collectibles",
+        "material": "Resin",
+        "finish": "Smooth",
+        "color": "Green",
+        "size": "12cm",
+        "weight": "120g",
+        "printTime": "6 hours",
+        "layerHeight": "0.10mm",
+        "infill": "20%",
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "No product photograph or model file. Actual appearance and condition cannot be reviewed.",
+        "Stored Resin, Green, Smooth, 12cm, 120g, 6 hours and print settings have no measurement/source report.",
+        "Resin is outside the owner's PLA/PLA+ 2.5 EGP/gram premise. Existing price 24.5 EGP is not a validated manufacturing quote."
+      ],
+      "fields": {
+        "name": "مجسم تنين صغير",
+        "shortDescription": "مجسم تنين مخصّص للعرض على المكتب أو الرف. يلزم تأكيد صورة العينة ومواصفاتها قبل الطلب.",
+        "description": "مجسم تنين للديكور المكتبي أو العرض على الرف، بحسب اسم المنتج ووصفه الأصلي. لا توجد صور أو معاينة نموذج متاحة في السجل الحالي، لذلك لا يمكن وصف وضعية التنين أو تفاصيل شكله بدقة.\n\nالخامة المسجلة هي الراتنج «Resin»، وتحتاج مواصفات العينة الفعلية إلى تأكيد. قبل الطلب، اطلب صورة واضحة للقطعة وتأكيد المقاس واللون والتشطيب ومحتويات الطلب؛ وصف «صغير» مأخوذ من الاسم الأصلي ولا يحل محل القياس.\n\nهذه قطعة للعرض وليست لعبة. نظّفها برفق بقطعة قماش ناعمة وجافة، وتجنّب الصدمات والضغط على التفاصيل الدقيقة والحرارة المباشرة.",
+        "imageAlt": "",
+        "safetyNote": "للعرض فقط. قد تحتوي القطعة على تفاصيل أو أجزاء صغيرة؛ أبعدها عن الأطفال الصغار. يجب تأكيد خامة العينة وصورتها قبل الطلب.",
+        "metaTitle": "مجسم تنين صغير | أوتاكو",
+        "metaDescription": "مجسم تنين مخصّص للعرض على المكتب أو الرف. يلزم تأكيد صورة العينة ومواصفاتها قبل الطلب.",
+        "tags": [
+          "dragon",
+          "miniature",
+          "desk",
+          "Tiny Dragon Statue",
+          "tiny-dragon-statue",
+          "مجسم تنين",
+          "تنين",
+          "ديكور",
+          "مجسم صغير"
+        ],
+        "keywords": [
+          "dragon",
+          "figurine",
+          "miniature",
+          "Tiny Dragon Statue",
+          "tiny-dragon-statue",
+          "مجسم تنين",
+          "تنين",
+          "ديكور",
+          "مجسم صغير"
+        ]
+      }
+    },
+    {
+      "id": "6a7314c2a2e659d8c20ee998",
+      "slug": "sword-of-the-flame-hero",
+      "originalName": "Sword of the Flame Hero",
+      "evidence": {
+        "sourceProductUrl": "https://outako.modev.me/api/products/sword-of-the-flame-hero",
+        "basis": "Source product text only; no visual evidence.",
+        "primaryImage": null,
+        "inspectedGallery": [],
+        "observed": "No primary image, gallery or model supplied. Only original name, anime-inspired display purpose and stored PLA/Metallic text support this minimal copy. No visual franchise identification.",
+        "originalModelUrl": null,
+        "originalAuthor": null,
+        "originalLicense": null,
+        "commercialPrintRightsVerified": false,
+        "imageRightsVerified": false,
+        "candidateSource": null
+      },
+      "originalCopyFields": {
+        "name": "Sword of the Flame Hero",
+        "shortDescription": "A stunning display sword inspired by anime hero blades.",
+        "description": "Hand-finished display sword with metallic paint and a strong, durable PLA core.",
+        "imageAlt": "",
+        "safetyNote": "Display only. Blade is not sharp and is not for combat.",
+        "metaTitle": "",
+        "metaDescription": "",
+        "tags": [
+          "sword",
+          "hero",
+          "display"
+        ],
+        "keywords": [
+          "sword",
+          "anime sword",
+          "display blade"
+        ]
+      },
+      "originalSpecifications": {
+        "price": 89,
+        "discountPrice": null,
+        "currency": "EGP",
+        "category": "Swords & Daggers",
+        "material": "PLA",
+        "finish": "Metallic",
+        "color": "Red/Black",
+        "size": "95cm",
+        "weight": "850g",
+        "printTime": "18 hours",
+        "layerHeight": "0.15mm",
+        "infill": "25%",
+        "isMadeToOrder": false,
+        "productionTimeMin": null,
+        "productionTimeMax": null,
+        "productionTimeUnit": null
+      },
+      "missingEvidence": [
+        "Original model author, canonical source URL and applicable license are not documented; commercial print rights remain unverified.",
+        "Source image author and reuse permission are not documented; a hosted product image is not proof of image rights.",
+        "No approved production sample, slicer report, measured dimensions, verified consumed filament or manufacturing cost sheet.",
+        "Stored price is preserved, not approved against the owner's PLA/PLA+ cost of 2.5 EGP per consumed gram plus explicit expenses and profit; shipping excluded.",
+        "Stored printTime is unverified production text, not a promised dispatch or delivery time; no production range is established.",
+        "No product photograph or model file. Shape, construction, edge condition, assembly and mounting are unknown.",
+        "Stored PLA, Metallic, Red/Black, 95cm, 850g, 18 hours and print settings are unverified.",
+        "If 850g were confirmed consumed PLA, material alone would be 2125 EGP at 2.5 EGP/g, exceeding stored price 89 EGP. This is a conditional inconsistency, not a verified weight or a replacement quote."
+      ],
+      "fields": {
+        "name": "سيف بطل اللهب للعرض",
+        "shortDescription": "سيف ديكوري مستوحى من أجواء الأنمي للعرض فقط. يلزم تأكيد صورة العينة ومواصفاتها قبل الطلب.",
+        "description": "قطعة على هيئة سيف للعرض الزخرفي، يصفها السجل الأصلي بأنها مستوحاة من أجواء الأنمي. لا توجد صور أو معاينة نموذج متاحة حاليًا، لذلك لا يُنسب التصميم إلى شخصية بعينها ولا تُوصف تفاصيله غير المرئية.\n\nالخامة المسجلة هي PLA، مع تشطيب موصوف بأنه معدني؛ هذا وصف للتشطيب ولا يعني أن النصل مصنوع من المعدن. يجب تأكيد صورة العينة والطول والوزن واللون وطريقة التجميع قبل الطلب، ولا تُعد القيم المسجلة قياسات مراجَعة.\n\nللعرض فقط، وليس للضرب أو المبارزة أو الرمي. يُؤكَّد ما إذا كان يحتاج إلى حامل أو تثبيت خاص، إذ لا توجد ملحقات موثّقة في السجل. نظّفه برفق وأبعده عن اللهب والحرارة المباشرة.",
+        "imageAlt": "",
+        "safetyNote": "سيف ديكوري للعرض فقط؛ لا يُستخدم للضرب أو المبارزة أو الرمي. تعامل بحذر مع الأطراف وأبعده عن الأطفال الصغار. لا يوجد اختبار موثّق لحدة الأطراف أو التحمل.",
+        "metaTitle": "سيف بطل اللهب للعرض | أوتاكو",
+        "metaDescription": "سيف ديكوري مستوحى من أجواء الأنمي للعرض فقط. يلزم تأكيد صورة العينة ومواصفاتها قبل الطلب.",
+        "tags": [
+          "sword",
+          "hero",
+          "display",
+          "Sword of the Flame Hero",
+          "sword-of-the-flame-hero",
+          "سيف للعرض",
+          "سيف ديكور",
+          "أنمي",
+          "بطل اللهب"
+        ],
+        "keywords": [
+          "sword",
+          "anime sword",
+          "display blade",
+          "Sword of the Flame Hero",
+          "sword-of-the-flame-hero",
+          "سيف للعرض",
+          "سيف ديكور",
+          "أنمي",
+          "بطل اللهب"
+        ]
+      }
+    }
+  ]
+}

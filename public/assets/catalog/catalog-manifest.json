@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "verifiedDate": "2026-09-16",
+  "currency": "EGP",
+  "products": [
+    {
+      "slug": "wavy-desk-bin",
+      "provenance": "/assets/catalog/wavy-desk-bin/provenance.json",
+      "preview": "/assets/catalog/wavy-desk-bin/preview.webp",
+      "model": "/assets/catalog/wavy-desk-bin/model.glb",
+      "saleReady": false
+    },
+    {
+      "slug": "modular-desk-organizer",
+      "provenance": "/assets/catalog/modular-desk-organizer/provenance.json",
+      "preview": "/assets/catalog/modular-desk-organizer/preview.webp",
+      "model": "/assets/catalog/modular-desk-organizer/model.glb",
+      "saleReady": false
+    },
+    {
+      "slug": "modular-chess-set",
+      "provenance": "/assets/catalog/modular-chess-set/provenance.json",
+      "preview": "/assets/catalog/modular-chess-set/preview.webp",
+      "model": "/assets/catalog/modular-chess-set/model.glb",
+      "saleReady": false
+    },
+    {
+      "slug": "resorte-phone-stand",
+      "provenance": "/assets/catalog/resorte-phone-stand/provenance.json",
+      "preview": "/assets/catalog/resorte-phone-stand/preview.webp",
+      "model": "/assets/catalog/resorte-phone-stand/model.glb",
+      "saleReady": false
+    }
+  ]
+}

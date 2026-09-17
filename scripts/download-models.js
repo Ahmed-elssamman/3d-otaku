@@ -1,59 +1,59 @@
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+const { createHash } = require('node:crypto');
+const { readFile, writeFile, mkdir } = require('node:fs/promises');
+const path = require('node:path');
 
-const root = process.cwd();
-const pubDir = path.join(root, 'public', 'assets', 'models');
-const srcDir = path.join(root, 'src', 'assets', 'models');
-
-fs.mkdirSync(pubDir, { recursive: true });
-fs.mkdirSync(srcDir, { recursive: true });
-
-function downloadFile(url, destFile) {
-  return new Promise((resolve, reject) => {
-    const client = url.startsWith('https') ? https : http;
-    client.get(url, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return downloadFile(res.headers.location, destFile).then(resolve).catch(reject);
-      }
-      if (res.statusCode === 200) {
-        const outStream = fs.createWriteStream(destFile);
-        res.pipe(outStream);
-        outStream.on('finish', () => {
-          outStream.close(() => resolve(true));
-        });
-      } else {
-        console.error(`Failed (${res.statusCode}): ${url}`);
-        resolve(false);
-      }
-    }).on('error', (err) => {
-      console.error(`Error (${err.message}): ${url}`);
-      resolve(false);
-    });
-  });
+const catalogRoot = path.resolve(__dirname, '../public/assets/catalog');
+function withinCatalog(relativePath) {
+  const target = path.resolve(catalogRoot, relativePath);
+  if (!target.startsWith(catalogRoot + path.sep))
+    throw new Error('Asset path must stay inside the catalog.');
+  return target;
 }
-
-const fileList = [
-  { name: 'shadow-katana.glb', url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb' },
-  { name: 'demon-edge-dagger.glb', url: 'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb' },
-  { name: 'cyber-samurai-mask.glb', url: 'https://modelviewer.dev/shared-assets/models/glTF-Sample-Assets/Models/MaterialsVariantsShoe/glTF-Binary/MaterialsVariantsShoe.glb' },
-  { name: 'otaku-desk-dragon.glb', url: 'https://modelviewer.dev/shared-assets/models/Astronaut.glb' },
-  { name: 'shonen-hero-emblem.glb', url: 'https://modelviewer.dev/shared-assets/models/NeilArmstrong.glb' }
-];
-
+function verify(content, record) {
+  if (
+    content.length !== record.bytes ||
+    createHash('sha256').update(content).digest('hex') !== record.sha256
+  ) {
+    throw new Error('Catalog asset failed integrity verification: ' + record.file);
+  }
+}
 async function main() {
-  for (const item of fileList) {
-    const destPub = path.join(pubDir, item.name);
-    const destSrc = path.join(srcDir, item.name);
-    console.log(`Downloading ${item.name}...`);
-    const success = await downloadFile(item.url, destPub);
-    if (success && fs.existsSync(destPub)) {
-      fs.copyFileSync(destPub, destSrc);
-      console.log(`Saved ${item.name} (${fs.statSync(destPub).size} bytes)`);
+  const manifest = JSON.parse(
+    await readFile(path.join(catalogRoot, 'catalog-manifest.json'), 'utf8'),
+  );
+  let verified = 0;
+  for (const product of manifest.products) {
+    const productDirectory = withinCatalog(product.slug);
+    const provenance = JSON.parse(
+      await readFile(path.join(productDirectory, 'provenance.json'), 'utf8'),
+    );
+    await mkdir(productDirectory, { recursive: true });
+    for (const record of provenance.downloads) {
+      const destination = withinCatalog(path.join(product.slug, record.file));
+      let content;
+      try {
+        content = await readFile(destination);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+        const source = new URL(record.sourceUrl);
+        if (source.protocol !== 'https:') throw new Error('Catalog downloads require HTTPS.');
+        const response = await fetch(source, { signal: AbortSignal.timeout(30000) });
+        if (!response.ok) throw new Error('Source download failed: HTTP ' + response.status);
+        content = Buffer.from(await response.arrayBuffer());
+        verify(content, record);
+        await writeFile(destination, content, { flag: 'wx' });
+      }
+      verify(content, record);
+      verified += 1;
+    }
+    for (const record of provenance.generatedFiles) {
+      verify(await readFile(withinCatalog(path.join(product.slug, record.file))), record);
+      verified += 1;
     }
   }
-  console.log('Done downloading models!');
+  process.stdout.write('Verified ' + verified + ' licensed catalog source and preview assets.\n');
 }
-
-main();
+main().catch((error) => {
+  process.stderr.write(error.message + '\n');
+  process.exitCode = 1;
+});

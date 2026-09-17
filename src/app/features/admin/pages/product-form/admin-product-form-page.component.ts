@@ -1,19 +1,23 @@
-import { Component, computed, inject, signal, OnInit } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { CurrencyPipe } from '@angular/common';
+import {
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+  OnInit,
+  WritableSignal,
+} from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { catchError, finalize, forkJoin, map, of } from 'rxjs';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductBadge } from '@core/enums/product-badge.enum';
-import { ProductCategory } from '@core/enums/product-category.enum';
-import { ProductMaterial } from '@core/enums/product-material.enum';
 import { ProductModelType } from '@core/enums/product-model-type.enum';
-import { ProductionTimeUnit } from '@core/enums/production-time-unit.enum';
 import { Product } from '@core/models/product.model';
-import { APP_CONSTANTS } from '@core/constants/app.constants';
 import {
   getModelTypeFromPath,
   MAX_MODEL_UPLOAD_SIZE_BYTES,
-  MAX_MODEL_UPLOAD_SIZE_LABEL,
-  MODEL_FILE_ACCEPT
+  MODEL_FILE_ACCEPT,
 } from '@core/constants/model-file.constants';
 import { MessageService } from 'primeng/api';
 import { Button } from 'primeng/button';
@@ -25,43 +29,35 @@ import { ToggleSwitch } from 'primeng/toggleswitch';
 import { AdminProductService } from '../../services/admin-product.service';
 import { UploadService } from '@core/services/upload.service';
 import {
-  ADMIN_CATEGORY_OPTIONS,
+  ADMIN_CATEGORY_TEXT,
+  adminCategoryOptions,
   PRODUCT_BADGE_OPTIONS,
   PRODUCT_MATERIAL_OPTIONS,
   PRODUCT_MODEL_TYPE_OPTIONS,
-  MODEL_UPLOAD_HELP_TEXT
-  ,PRODUCTION_TIME_UNIT_OPTIONS
+  MODEL_UPLOAD_HELP_TEXT,
+  PRODUCTION_TIME_UNIT_OPTIONS,
 } from '../../data/admin-products.data';
 import { AdminFilePreviewComponent } from '../../components/admin-file-preview.component';
-import { AdminSettingsService } from '../../services/admin-settings.service';
-
-export interface FormValidationError {
-  id: string;
-  field: string;
-  message: string;
-  category: string;
-}
-
-function productPricingValidator(control: AbstractControl): ValidationErrors | null {
-  const price = control.get('price')?.value as number | null;
-  const discountPrice = control.get('discountPrice')?.value as number | null;
-  if (discountPrice === null || discountPrice === 0) {
-    return null;
-  }
-  return typeof price === 'number' && discountPrice >= 0 && discountPrice < price ? null : { invalidDiscount: true };
-}
-
-function productionRangeValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.get('isMadeToOrder')?.value) {
-    return null;
-  }
-  const minimum = control.get('productionTimeMin')?.value as number | null;
-  const maximum = control.get('productionTimeMax')?.value as number | null;
-  const unit = control.get('productionTimeUnit')?.value as string | null;
-  return typeof minimum === 'number' && typeof maximum === 'number' && minimum > 0 && maximum >= minimum && Boolean(unit)
-    ? null
-    : { invalidProductionRange: true };
-}
+import {
+  AdminImageField,
+  ADMIN_IMAGE_ACCEPT,
+  ADMIN_IMAGE_TYPES,
+  MAX_ADMIN_IMAGE_SIZE,
+  ADMIN_PRODUCT_SPEC_FIELDS,
+  ADMIN_PRODUCT_VALIDATION_FIELDS,
+  ADMIN_PRODUCT_META_FIELDS,
+  ADMIN_PRODUCT_REVIEW_TEXT,
+  createAdminProductForm,
+  FormValidationError,
+} from './admin-product-form-page.control';
+import {
+  AdminManufacturingReviewStatus,
+  AdminProductRecord,
+} from '../../models/admin-product-form.model';
+import { ApiErrorResponse } from '@core/models/api-response.model';
+import { ManufacturingReviewComponent } from '../../components/manufacturing-review/manufacturing-review.component';
+import { AdminManufacturingService } from '../../services/admin-manufacturing.service';
+import { AdminProductCategory } from '../../models/admin-product-category.model';
 
 @Component({
   selector: 'app-admin-product-form-page',
@@ -71,32 +67,39 @@ function productionRangeValidator(control: AbstractControl): ValidationErrors | 
     Button,
     InputNumber,
     InputText,
-    CurrencyPipe,
     Select,
     Textarea,
     ToggleSwitch,
-    AdminFilePreviewComponent
+    AdminFilePreviewComponent,
+    ManufacturingReviewComponent,
   ],
   templateUrl: './admin-product-form-page.component.html',
-  styleUrl: './admin-product-form-page.component.scss'
+  styleUrl: './admin-product-form-page.component.scss',
 })
 export class AdminProductFormPageComponent implements OnInit {
   private formBuilder = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private adminProductService = inject(AdminProductService);
+  private manufacturingService = inject(AdminManufacturingService);
   private uploadService = inject(UploadService);
   private messageService = inject(MessageService);
-  private settingsService = inject(AdminSettingsService);
+  private destroyRef = inject(DestroyRef);
 
-  categoryOptions = ADMIN_CATEGORY_OPTIONS.filter(option => option.value !== 'all');
+  categories = signal<AdminProductCategory[]>([]);
+  categoriesLoading = signal(false);
+  categoryLoadError = signal('');
+  categoryText = ADMIN_CATEGORY_TEXT;
+  reviewText = ADMIN_PRODUCT_REVIEW_TEXT;
   badgeOptions = PRODUCT_BADGE_OPTIONS;
   materialOptions = PRODUCT_MATERIAL_OPTIONS;
   modelTypeOptions = PRODUCT_MODEL_TYPE_OPTIONS;
   productionTimeUnitOptions = PRODUCTION_TIME_UNIT_OPTIONS;
 
-  productId = this.route.snapshot.paramMap.get('id');
-  existingProduct = signal<Product | null>(null);
+  productId = signal(this.route.snapshot.paramMap.get('id'));
+  isLoadingProduct = signal(this.productId() !== null);
+  productLoadError = signal('');
+  existingProduct = signal<AdminProductRecord | null>(null);
   isEditMode = signal<boolean>(false);
   slugEditedManually = signal<boolean>(false);
   isUploadingImage = signal<boolean>(false);
@@ -109,135 +112,314 @@ export class AdminProductFormPageComponent implements OnInit {
   selectedModelFileName = signal<string>('');
   galleryUploadProgress = signal<string>('');
   galleryPreviewUrls = signal<string[]>([]);
+  reviewUnsaved = signal(false);
+  reviewBusy = signal(false);
+  isStartingReview = signal(false);
+  reviewStartError = signal('');
+  reviewStartConflict = signal(false);
+  private savedProductForm = signal('');
+  productEditorBusy = computed(
+    () =>
+      this.isSubmitting() ||
+      this.isStartingReview() ||
+      this.isLoadingProduct() ||
+      this.isUploadingImage() ||
+      this.isUploadingModel() ||
+      this.isUploadingGallery() ||
+      this.isUploadingPoster() ||
+      this.isUploadingSocial(),
+  );
+  canSaveProduct = computed(
+    () =>
+      !this.isSubmitting() &&
+      !this.isStartingReview() &&
+      !this.reviewStartConflict() &&
+      !this.isLoadingProduct() &&
+      !this.productLoadError() &&
+      !this.isUploadingImage() &&
+      !this.isUploadingModel() &&
+      !this.isUploadingGallery() &&
+      !this.isUploadingPoster() &&
+      !this.isUploadingSocial() &&
+      !this.reviewUnsaved() &&
+      !this.reviewBusy(),
+  );
 
   modelFileAccept = MODEL_FILE_ACCEPT;
   modelUploadHelpText = MODEL_UPLOAD_HELP_TEXT;
 
-  productForm = this.formBuilder.group({
-    name: ['', [Validators.required]],
-    slug: ['', [Validators.required, Validators.pattern(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)]],
-    category: [ProductCategory.SWORDS as string, [Validators.required]],
-    shortDescription: ['', [Validators.required]],
-    description: ['', [Validators.required]],
-    price: [0, [Validators.required, Validators.min(0.01)]],
-    discountPrice: [null as number | null],
-    badge: [ProductBadge.NONE as string, [Validators.required]],
-    isFeatured: [false],
-    isActive: [true],
-    mainImage: [''],
-    galleryImages: [''],
-    modelUrl: [''],
-    modelType: [ProductModelType.GLB as string, [Validators.required]],
-    posterImage: [''],
-    imageAlt: [''],
-    socialImage: [''],
-    material: [ProductMaterial.PLA_PLUS as string, [Validators.required]],
-    finish: [APP_CONSTANTS.DEFAULT_FINISH, [Validators.required]],
-    color: ['', [Validators.required]],
-    size: ['', [Validators.required]],
-    weight: ['', [Validators.required]],
-    printTime: ['', [Validators.required]],
-    isMadeToOrder: [false],
-    productionTimeMin: [null as number | null],
-    productionTimeMax: [null as number | null],
-    productionTimeUnit: [ProductionTimeUnit.BUSINESS_DAYS as string],
-    layerHeight: [''],
-    infill: [''],
-    metaTitle: [''],
-    metaDescription: [''],
-    keywords: [''],
-    tags: [''],
-    safetyNote: ['']
-  }, { validators: [productPricingValidator, productionRangeValidator] });
+  productForm = createAdminProductForm(this.formBuilder);
 
-  previewImage = computed(() => this.productForm.controls.mainImage.value);
-  previewModel = computed(() => this.productForm.controls.modelUrl.value);
-  previewModelType = computed(() => (this.productForm.controls.modelType.value as ProductModelType) ?? ProductModelType.GLB);
-  previewPoster = computed(() => this.productForm.controls.posterImage.value || this.productForm.controls.mainImage.value);
-  previewProductName = computed(() => this.productForm.controls.name.value || 'Product Preview');
+  private formValue = toSignal(
+    this.productForm.events.pipe(map(() => this.productForm.getRawValue())),
+    {
+      initialValue: this.productForm.getRawValue(),
+    },
+  );
+  private formStatus = toSignal(this.productForm.statusChanges, {
+    initialValue: this.productForm.status,
+  });
+  categoryOptions = computed(() =>
+    adminCategoryOptions(this.categories(), this.formValue().category ?? '', true),
+  );
+  productEditorDirty = computed(
+    () =>
+      this.savedProductForm() !== '' &&
+      JSON.stringify(this.formValue()) !== this.savedProductForm(),
+  );
+  canStartReview = computed(() => {
+    const product = this.existingProduct();
+    return (
+      product !== null &&
+      !product.requiresManufacturingReview &&
+      !product.isActive &&
+      product.updatedAt !== '' &&
+      !this.productEditorBusy() &&
+      !this.productEditorDirty() &&
+      !this.productLoadError() &&
+      !this.reviewStartConflict()
+    );
+  });
+
+  previewImage = computed(() => this.formValue().mainImage);
+  previewModel = computed(() => this.formValue().modelUrl);
+  previewModelType = computed(() => this.formValue().modelType ?? ProductModelType.GLB);
+  previewPoster = computed(() => this.formValue().posterImage || this.formValue().mainImage);
+  previewProductName = computed(() => this.formValue().name || 'معاينة المنتج');
+  madeToOrder = computed(() => this.formValue().isMadeToOrder);
+  hasPricingError = computed(() => {
+    this.formValue();
+    this.formStatus();
+    return this.productForm.errors?.['invalidDiscount'] === true;
+  });
+  hasProductionRangeError = computed(() => {
+    this.formValue();
+    this.formStatus();
+    return this.productForm.errors?.['invalidProductionRange'] === true;
+  });
 
   validationErrors = computed<FormValidationError[]>(() => {
-    const errors: FormValidationError[] = [];
-    const f = this.productForm.controls;
-
-    if (f.name.invalid) {
-      errors.push({ id: 'field-name', field: 'Product Name', message: 'Name is required.', category: 'Basic Info' });
-    }
-    if (f.slug.invalid) {
-      errors.push({ id: 'field-slug', field: 'Slug', message: 'Valid lowercase slug required (e.g. zoro-katana).', category: 'Basic Info' });
-    }
-    if (f.category.invalid) {
-      errors.push({ id: 'field-category', field: 'Category', message: 'Category must be selected.', category: 'Basic Info' });
-    }
-    if (f.shortDescription.invalid) {
-      errors.push({ id: 'field-short-description', field: 'Short Description', message: 'Short summary is required.', category: 'Basic Info' });
-    }
-    if (f.description.invalid) {
-      errors.push({ id: 'field-description', field: 'Full Description', message: 'Detailed description is required.', category: 'Basic Info' });
-    }
-    if (f.price.invalid) {
-      errors.push({ id: 'field-price', field: 'Regular Price', message: 'Price must be greater than 0 EGP.', category: 'Basic Info' });
-    }
-    if (this.productForm.hasError('invalidDiscount')) {
-      errors.push({ id: 'field-discount', field: 'Discount Price', message: 'Discount must be lower than regular price.', category: 'Basic Info' });
-    }
-    if (f.material.invalid) {
-      errors.push({ id: 'field-material', field: 'Material', message: 'Material must be selected.', category: 'Specifications' });
-    }
-    if (f.finish.invalid) {
-      errors.push({ id: 'field-finish', field: 'Finish', message: 'Finish specification is required.', category: 'Specifications' });
-    }
-    if (f.color.invalid) {
-      errors.push({ id: 'field-color', field: 'Color', message: 'Color is required (e.g. Black / Gold).', category: 'Specifications' });
-    }
-    if (f.size.invalid) {
-      errors.push({ id: 'field-size', field: 'Size / Dimensions', message: 'Dimensions are required (e.g. 104 cm).', category: 'Specifications' });
-    }
-    if (f.weight.invalid) {
-      errors.push({ id: 'field-weight', field: 'Weight', message: 'Weight is required (e.g. 450 g).', category: 'Specifications' });
-    }
-    if (f.printTime.invalid) {
-      errors.push({ id: 'field-print-time', field: 'Print Time', message: 'Print time estimate is required.', category: 'Specifications' });
-    }
-    if (f.isMadeToOrder.value && (f.productionTimeMin.invalid || f.productionTimeMax.invalid || this.productForm.hasError('invalidProductionRange'))) {
-      errors.push({ id: 'field-production-time', field: 'Production Range', message: 'Enter a valid production range (Max >= Min).', category: 'Specifications' });
-    }
-
+    const values = this.formValue();
+    this.formStatus();
+    const errors: FormValidationError[] = ADMIN_PRODUCT_VALIDATION_FIELDS.filter((field) => {
+      const control = this.productForm.controls[field.key];
+      const emptyPublishedField =
+        field.requiredWhenPublished && values.isActive && !String(values[field.key] || '').trim();
+      const invalidPublishedPrice =
+        field.key === 'price' && this.productForm.errors?.['invalidPublishedPrice'] === true;
+      return control.invalid || emptyPublishedField || invalidPublishedPrice;
+    });
+    if (this.hasPricingError())
+      errors.push({
+        id: 'field-discount',
+        field: 'سعر الخصم',
+        message: 'سعر الخصم يجب أن يكون أقل من السعر الأساسي وغير سالب.',
+        category: 'التسعير',
+      });
+    if (this.hasProductionRangeError())
+      errors.push({
+        id: 'field-production-time',
+        field: 'مدة التصنيع',
+        message: 'حدد مدة موجبة ووحدتها، والحد الأقصى لا يقل عن الحد الأدنى.',
+        category: 'المواصفات',
+      });
     return errors;
   });
 
+  fieldErrors = computed(() => {
+    this.formValue();
+    const errors: Record<string, boolean> = {};
+    for (const field of ADMIN_PRODUCT_VALIDATION_FIELDS) {
+      const control = this.productForm.controls[field.key];
+      const invalid = this.validationErrors().some((error) => error.id === field.id);
+      errors[field.id] = invalid && (control.touched || this.attemptedSubmit());
+    }
+    return errors;
+  });
+  specFields = computed(() =>
+    ADMIN_PRODUCT_SPEC_FIELDS.map((field) => ({
+      ...field,
+      invalid: this.fieldErrors()[field.id] || false,
+    })),
+  );
+  metaFields = ADMIN_PRODUCT_META_FIELDS;
+  imageAccept = ADMIN_IMAGE_ACCEPT;
+  pageTitle = computed(() => (this.isEditMode() ? 'تعديل المنتج' : 'إضافة منتج'));
+  mainUploadLabel = computed(() =>
+    this.isUploadingImage()
+      ? 'جارٍ رفع الصورة…'
+      : this.previewImage()
+        ? 'استبدال الصورة الرئيسية'
+        : 'اختيار الصورة الرئيسية',
+  );
+  galleryUploadLabel = computed(() =>
+    this.isUploadingGallery()
+      ? `جارٍ رفع الصور ${this.galleryUploadProgress()}`
+      : 'إضافة صور للمعرض',
+  );
+  modelUploadLabel = computed(() =>
+    this.isUploadingModel()
+      ? 'جارٍ رفع المجسم…'
+      : this.selectedModelFileName() || 'اختيار ملف المجسم',
+  );
+  posterUploadLabel = computed(() =>
+    this.isUploadingPoster() ? 'جارٍ الرفع…' : 'اختيار صورة غلاف المجسم',
+  );
+  socialUploadLabel = computed(() =>
+    this.isUploadingSocial() ? 'جارٍ الرفع…' : 'اختيار صورة المشاركة',
+  );
+  canPreviewLive = computed(() => this.existingProduct()?.isActive === true);
+  publicationBlocked = computed(() => {
+    const product = this.existingProduct();
+    if (!product) return true;
+    if (!product.requiresManufacturingReview) return false;
+    const review = product.manufacturingReview;
+    return (
+      !review ||
+      review.status !== AdminManufacturingReviewStatus.Approved ||
+      !review.sampleApproved ||
+      !review.pricingApproved ||
+      !review.rightsReviewed ||
+      !review.approvedAt ||
+      !review.approvedBy ||
+      !review.approvedFingerprint ||
+      !review.approvedQuote ||
+      !review.measurementReference ||
+      !review.sampleReference ||
+      !review.rightsReference ||
+      !review.verifiedWeightGrams ||
+      !review.verifiedPrintHours ||
+      !review.consumedFilamentGrams
+    );
+  });
+  publicationGuidance = computed(() =>
+    this.existingProduct() ? this.reviewText.pendingGuidance : this.reviewText.newDraftGuidance,
+  );
   constructor() {
-    this.productForm.controls.name.valueChanges.subscribe(value => {
-      if (!this.slugEditedManually() && value) {
-        this.productForm.controls.slug.setValue(this.buildSlug(value), { emitEvent: false });
-      }
-    });
+    this.productForm.controls.name.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => {
+        if (!this.slugEditedManually() && value) {
+          this.productForm.controls.slug.setValue(this.buildSlug(value), { emitEvent: false });
+        }
+      });
+    this.productForm.controls.galleryImages.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((value) => this.galleryPreviewUrls.set(this.extractList(value)));
   }
 
   ngOnInit(): void {
-    this.settingsService.getAdminSettings().subscribe();
-    if (this.productId) {
+    this.loadCategories();
+    const productId = this.productId();
+    if (productId) {
       this.isEditMode.set(true);
-      this.adminProductService.getProductById(this.productId).subscribe({
-        next: (res) => {
-          const product = res.data || this.adminProductService.loadFromStorage().find(p => p.id === this.productId);
-          if (product) {
-            this.existingProduct.set(product);
-            this.populateForm(product);
-          }
-        },
-        error: () => {
-          const product = this.adminProductService.loadFromStorage().find(p => p.id === this.productId);
-          if (product) {
-            this.existingProduct.set(product);
-            this.populateForm(product);
-          }
-        }
-      });
+      this.loadProduct(productId);
     }
   }
 
-  private populateForm(product: Product): void {
+  loadCategories(): void {
+    if (this.categoriesLoading()) return;
+    this.categoriesLoading.set(true);
+    this.categoryLoadError.set('');
+    this.adminProductService
+      .getCategories()
+      .pipe(
+        finalize(() => this.categoriesLoading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => this.categories.set(response.data),
+        error: () => this.categoryLoadError.set(ADMIN_CATEGORY_TEXT.loadError),
+      });
+  }
+
+  retryLoadProduct(): void {
+    const productId = this.productId();
+    if (productId) this.loadProduct(productId);
+  }
+
+  onManufacturingProductUpdated(product: AdminProductRecord): void {
+    const unsavedValues = this.productEditorDirty() ? this.productForm.getRawValue() : null;
+    this.existingProduct.set(product);
+    this.populateForm(product);
+    if (unsavedValues) {
+      this.productForm.patchValue({ ...unsavedValues, isActive: product.isActive });
+      this.galleryPreviewUrls.set(this.extractList(unsavedValues.galleryImages));
+    }
+    this.reviewUnsaved.set(false);
+  }
+
+  onReviewDirtyChanged(dirty: boolean): void {
+    this.reviewUnsaved.set(dirty);
+  }
+
+  onReviewBusyChanged(busy: boolean): void {
+    this.reviewBusy.set(busy);
+  }
+
+  startManufacturingReview(): void {
+    const product = this.existingProduct();
+    if (!product || !this.canStartReview()) return;
+    this.isStartingReview.set(true);
+    this.reviewStartError.set('');
+    this.manufacturingService
+      .startReview(product.id, { expectedUpdatedAt: product.updatedAt })
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isStartingReview.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          this.onManufacturingProductUpdated(response.data);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'بدأت مراجعة التصنيع',
+            detail: 'أدخل القياسات والتكاليف الفعلية. المنتج ما زال غير منشور.',
+          });
+        },
+        error: (error: ApiErrorResponse) => {
+          this.reviewStartConflict.set(true);
+          this.reviewStartError.set(
+            error.statusCode === 409
+              ? 'تغيّرت بيانات المنتج أو حالة نشره. أعد تحميل النسخة الحالية قبل بدء المراجعة.'
+              : 'لم تتأكد نتيجة بدء المراجعة. أعد تحميل المنتج للتحقق من حالته قبل المحاولة مجددًا.',
+          );
+        },
+      });
+  }
+
+  reloadManufacturingProduct(): void {
+    if (this.productEditorBusy()) return;
+    this.reviewStartError.set('');
+    this.reviewStartConflict.set(false);
+    this.retryLoadProduct();
+  }
+
+  private loadProduct(productId: string): void {
+    this.isLoadingProduct.set(true);
+    this.productLoadError.set('');
+    this.adminProductService
+      .getProductById(productId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.isLoadingProduct.set(false)),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response.data) {
+            this.productLoadError.set('بيانات المنتج غير متاحة. أعد تحميلها قبل التعديل.');
+            return;
+          }
+          this.existingProduct.set(response.data);
+          this.populateForm(response.data);
+        },
+        error: () =>
+          this.productLoadError.set('تعذّر تحميل بيانات المنتج. تحقق من الاتصال ثم أعد المحاولة.'),
+      });
+  }
+
+  private populateForm(product: AdminProductRecord): void {
+    this.slugEditedManually.set(true);
     this.productForm.patchValue({
       name: product.name,
       slug: product.slug,
@@ -251,8 +433,11 @@ export class AdminProductFormPageComponent implements OnInit {
       isActive: product.isActive,
       mainImage: product.image,
       galleryImages: (product.gallery ?? []).join(', '),
-      modelUrl: product.modelUrl,
-      modelType: product.modelType,
+      modelUrl: product.modelUrl || '',
+      modelType:
+        PRODUCT_MODEL_TYPE_OPTIONS.find((option) => option.value === product.modelType)?.value ||
+        getModelTypeFromPath(product.modelUrl || '') ||
+        ProductModelType.GLB,
       posterImage: product.posterImage ?? '',
       imageAlt: product.imageAlt ?? '',
       socialImage: product.socialImage ?? '',
@@ -265,16 +450,23 @@ export class AdminProductFormPageComponent implements OnInit {
       isMadeToOrder: product.isMadeToOrder ?? false,
       productionTimeMin: product.productionTimeMin ?? null,
       productionTimeMax: product.productionTimeMax ?? null,
-      productionTimeUnit: product.productionTimeUnit ?? ProductionTimeUnit.BUSINESS_DAYS,
+      productionTimeUnit: product.productionTimeUnit ?? null,
       layerHeight: product.layerHeight ?? '',
       infill: product.infill ?? '',
       metaTitle: product.metaTitle ?? '',
       metaDescription: product.metaDescription ?? '',
       keywords: (product.keywords ?? []).join(', '),
       tags: (product.tags ?? []).join(', '),
-      safetyNote: product.safetyNote
+      safetyNote: product.safetyNote,
     });
     this.galleryPreviewUrls.set(product.gallery ?? []);
+    if (this.publicationBlocked()) {
+      this.productForm.controls.isActive.setValue(false);
+      this.productForm.controls.isActive.disable({ emitEvent: false });
+    } else {
+      this.productForm.controls.isActive.enable({ emitEvent: false });
+    }
+    this.savedProductForm.set(JSON.stringify(this.productForm.getRawValue()));
   }
 
   onSlugChange(): void {
@@ -282,205 +474,169 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   onMainImageFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      this.isUploadingImage.set(true);
-      this.uploadService.uploadImage(file, 'products').subscribe({
-        next: (res) => {
-          this.isUploadingImage.set(false);
-          if (res.data?.url) {
-            this.productForm.controls.mainImage.setValue(res.data.url);
-            this.messageService.add({ severity: 'success', summary: 'Image uploaded', detail: 'Main product image uploaded.' });
-          }
-        },
-        error: (err) => {
-          this.isUploadingImage.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Failed to upload image.';
-          this.messageService.add({ severity: 'error', summary: 'Upload failed', detail: errorMsg });
-        }
-      });
+    this.uploadImage(event, AdminImageField.Main);
+  }
+  onPosterImageSelected(event: Event): void {
+    this.uploadImage(event, AdminImageField.Poster);
+  }
+  onSocialImageSelected(event: Event): void {
+    this.uploadImage(event, AdminImageField.Social);
+  }
+
+  private imageUploadingState(field: AdminImageField): WritableSignal<boolean> {
+    switch (field) {
+      case AdminImageField.Main:
+        return this.isUploadingImage;
+      case AdminImageField.Poster:
+        return this.isUploadingPoster;
+      case AdminImageField.Social:
+        return this.isUploadingSocial;
     }
+  }
+
+  private validImageFile(file: File): boolean {
+    if (file.size > MAX_ADMIN_IMAGE_SIZE || !ADMIN_IMAGE_TYPES.includes(file.type)) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'تعذر اختيار الصورة',
+        detail: 'اختر صورة JPEG أو PNG أو WebP لا يزيد حجمها عن 10 MB.',
+      });
+      return false;
+    }
+    return true;
+  }
+
+  private uploadImage(event: Event, field: AdminImageField): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || !this.validImageFile(file)) return;
+    const uploading = this.imageUploadingState(field);
+    uploading.set(true);
+    this.uploadService
+      .uploadImage(file, 'products')
+      .pipe(
+        finalize(() => uploading.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response.data?.url) {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'لم تكتمل الصورة',
+              detail: 'لم يصل رابط الصورة من الخادم. أعد المحاولة.',
+            });
+            return;
+          }
+          this.productForm.controls[field].setValue(response.data.url);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'تم رفع الصورة',
+            detail: 'احفظ المنتج لتثبيت الصورة في بياناته.',
+          });
+        },
+        error: () =>
+          this.messageService.add({
+            severity: 'error',
+            summary: 'تعذر رفع الصورة',
+            detail: 'تحقق من الاتصال وصيغة الصورة وحجمها ثم أعد المحاولة.',
+          }),
+      });
   }
 
   onGalleryImagesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
-
-    const files = Array.from(input.files);
-    const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
-    const validFiles = files.filter(f => {
-      if (f.size > MAX_IMAGE_SIZE) {
-        this.messageService.add({ severity: 'warn', summary: 'File too large', detail: `${f.name} exceeds 10 MB and was skipped.` });
-        return false;
-      }
-      return true;
-    });
-
-    if (validFiles.length === 0) {
-      input.value = '';
-      return;
-    }
-
-    this.isUploadingGallery.set(true);
-    let completed = 0;
-    const uploadedUrls: string[] = [];
-
-    validFiles.forEach(file => {
-      this.galleryUploadProgress.set(`${completed + 1}/${validFiles.length}`);
-      this.uploadService.uploadImage(file, 'products').subscribe({
-        next: (res) => {
-          completed++;
-          if (res.data?.url) {
-            uploadedUrls.push(res.data.url);
-          }
-          this.galleryUploadProgress.set(`${completed}/${validFiles.length}`);
-
-          if (completed === validFiles.length) {
-            this.isUploadingGallery.set(false);
-            const currentUrls = this.galleryPreviewUrls();
-            const newUrls = [...currentUrls, ...uploadedUrls];
-            this.galleryPreviewUrls.set(newUrls);
-            this.productForm.controls.galleryImages.setValue(newUrls.join(', '));
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Gallery updated',
-              detail: `${uploadedUrls.length} image(s) uploaded successfully.`
-            });
-          }
-        },
-        error: (err) => {
-          completed++;
-          const errorMsg = err?.error?.message || err?.message || 'Upload error';
-          this.messageService.add({ severity: 'error', summary: 'Upload failed', detail: `Failed to upload ${file.name}: ${errorMsg}` });
-          if (completed === validFiles.length) {
-            this.isUploadingGallery.set(false);
-            if (uploadedUrls.length > 0) {
-              const currentUrls = this.galleryPreviewUrls();
-              const newUrls = [...currentUrls, ...uploadedUrls];
-              this.galleryPreviewUrls.set(newUrls);
-              this.productForm.controls.galleryImages.setValue(newUrls.join(', '));
-            }
-          }
-        }
-      });
-    });
-
+    const files = Array.from(input.files || []).filter((file) => this.validImageFile(file));
     input.value = '';
+    if (!files.length) return;
+    this.isUploadingGallery.set(true);
+    this.galleryUploadProgress.set(`0/${files.length}`);
+    let completed = 0;
+    const uploads = files.map((file) =>
+      this.uploadService.uploadImage(file, 'products').pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          completed += 1;
+          this.galleryUploadProgress.set(`${completed}/${files.length}`);
+        }),
+      ),
+    );
+    forkJoin(uploads)
+      .pipe(
+        finalize(() => this.isUploadingGallery.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((responses) => {
+        const urls = responses.flatMap((response) =>
+          response?.data?.url ? [response.data.url] : [],
+        );
+        const allUrls = [...new Set([...this.galleryPreviewUrls(), ...urls])];
+        this.productForm.controls.galleryImages.setValue(allUrls.join(', '));
+        this.messageService.add({
+          severity: urls.length === files.length ? 'success' : 'warn',
+          summary: 'نتيجة رفع الصور',
+          detail: `تم رفع ${urls.length} من ${files.length} صورة. احفظ المنتج لتثبيت الصور المرفوعة.`,
+        });
+      });
   }
 
   removeGalleryImage(index: number): void {
     const urls = [...this.galleryPreviewUrls()];
     urls.splice(index, 1);
-    this.galleryPreviewUrls.set(urls);
     this.productForm.controls.galleryImages.setValue(urls.join(', '));
-  }
-
-  onPosterImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        this.messageService.add({ severity: 'error', summary: 'File too large', detail: 'Poster image must be under 10 MB.' });
-        input.value = '';
-        return;
-      }
-      this.isUploadingPoster.set(true);
-      this.uploadService.uploadImage(file, 'products').subscribe({
-        next: (res) => {
-          this.isUploadingPoster.set(false);
-          if (res.data?.url) {
-            this.productForm.controls.posterImage.setValue(res.data.url);
-            this.messageService.add({ severity: 'success', summary: 'Poster uploaded', detail: 'Poster image uploaded successfully.' });
-          }
-        },
-        error: (err) => {
-          this.isUploadingPoster.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Failed to upload poster image.';
-          this.messageService.add({ severity: 'error', summary: 'Upload failed', detail: errorMsg });
-        }
-      });
-    }
-  }
-
-  onSocialImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      if (file.size > 10 * 1024 * 1024) {
-        this.messageService.add({ severity: 'error', summary: 'File too large', detail: 'Social image must be under 10 MB.' });
-        input.value = '';
-        return;
-      }
-      this.isUploadingSocial.set(true);
-      this.uploadService.uploadImage(file, 'general').subscribe({
-        next: (res) => {
-          this.isUploadingSocial.set(false);
-          if (res.data?.url) {
-            this.productForm.controls.socialImage.setValue(res.data.url);
-            this.messageService.add({ severity: 'success', summary: 'Social image uploaded', detail: 'Social sharing image uploaded successfully.' });
-          }
-        },
-        error: (err) => {
-          this.isUploadingSocial.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Failed to upload social image.';
-          this.messageService.add({ severity: 'error', summary: 'Upload failed', detail: errorMsg });
-        }
-      });
-    }
   }
 
   onModelFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const detectedType = getModelTypeFromPath(file.name);
-
-      if (!detectedType) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Unsupported 3D format',
-          detail: `Choose one of these formats: ${this.modelUploadHelpText}`
-        });
-        input.value = '';
-        return;
-      }
-
-      if (file.size > MAX_MODEL_UPLOAD_SIZE_BYTES) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Model is too large',
-          detail: `The selected file exceeds the ${MAX_MODEL_UPLOAD_SIZE_LABEL} limit.`
-        });
-        input.value = '';
-        return;
-      }
-
-      this.selectedModelFileName.set(file.name);
-      this.productForm.controls.modelType.setValue(detectedType);
-      this.isUploadingModel.set(true);
-      this.uploadService.uploadModel(file, this.productId).subscribe({
-        next: (res) => {
-          this.isUploadingModel.set(false);
-          if (res.data?.url) {
-            this.productForm.controls.modelUrl.setValue(res.data.url);
-            this.messageService.add({
-              severity: 'success',
-              summary: `${detectedType} model ready`,
-              detail: 'The model was uploaded and its format was detected automatically.'
-            });
-          }
-        },
-        error: (err) => {
-          this.isUploadingModel.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Failed to upload 3D model.';
-          this.messageService.add({ severity: 'error', summary: 'Upload failed', detail: errorMsg });
-        }
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const detectedType = getModelTypeFromPath(file.name);
+    if (!detectedType || file.size > MAX_MODEL_UPLOAD_SIZE_BYTES) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'ملف المجسم غير مناسب',
+        detail: this.modelUploadHelpText,
       });
+      return;
     }
+    this.isUploadingModel.set(true);
+    this.uploadService
+      .uploadModel(file, this.productId())
+      .pipe(
+        finalize(() => this.isUploadingModel.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (response) => {
+          if (!response.data?.url) {
+            this.messageService.add({
+              severity: 'error',
+              summary: 'لم يكتمل رفع المجسم',
+              detail: 'لم يصل رابط الملف من الخادم. أعد المحاولة.',
+            });
+            return;
+          }
+          this.productForm.controls.modelType.setValue(detectedType);
+          this.productForm.controls.modelUrl.setValue(response.data.url);
+          this.selectedModelFileName.set(file.name);
+          this.messageService.add({
+            severity: 'success',
+            summary: 'تم رفع المجسم',
+            detail: 'تم التعرف على الصيغة. احفظ المنتج لتثبيت الملف.',
+          });
+        },
+        error: () =>
+          this.messageService.add({
+            severity: 'error',
+            summary: 'تعذر رفع المجسم',
+            detail: 'تحقق من الاتصال وسلامة الملف وصيغته ثم أعد المحاولة.',
+          }),
+      });
   }
-
   saveProduct(continueEditing: boolean): void {
+    if (!this.canSaveProduct()) return;
     this.attemptedSubmit.set(true);
 
     if (this.productForm.invalid) {
@@ -488,8 +644,8 @@ export class AdminProductFormPageComponent implements OnInit {
       const count = this.validationErrors().length;
       this.messageService.add({
         severity: 'error',
-        summary: 'Incomplete Product Form',
-        detail: `Please fix the ${count} required field${count > 1 ? 's' : ''} listed in the error panel.`
+        summary: 'راجع بيانات المنتج',
+        detail: `راجع ${count} من الحقول الموضحة في قائمة الملاحظات.`,
       });
       this.scrollToFirstInvalidField();
       return;
@@ -497,42 +653,85 @@ export class AdminProductFormPageComponent implements OnInit {
 
     this.isSubmitting.set(true);
     const product = this.buildProduct();
+    if (!product) {
+      this.isSubmitting.set(false);
+      return;
+    }
 
     if (this.isEditMode()) {
-      this.adminProductService.updateProduct(product.id, product).subscribe({
-        next: () => {
-          this.isSubmitting.set(false);
-          this.messageService.add({ severity: 'success', summary: 'Product updated', detail: 'Product updated successfully.' });
-          if (continueEditing) {
-            this.router.navigate(['/admin/products', product.id, 'edit']);
-          } else {
-            this.router.navigate(['/admin/products']);
-          }
-        },
-        error: (err) => {
-          this.isSubmitting.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Could not update product.';
-          this.messageService.add({ severity: 'error', summary: 'Update failed', detail: errorMsg });
-        }
-      });
+      this.adminProductService
+        .updateProduct(product.id, product)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (response) => {
+            this.isSubmitting.set(false);
+            this.existingProduct.set(response.data);
+            this.populateForm(response.data);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'تم تحديث المنتج',
+              detail: 'تم حفظ تعديلات المنتج.',
+            });
+            if (continueEditing) {
+              this.router.navigate(['/admin/products', product.id, 'edit']);
+            } else {
+              this.router.navigate(['/admin/products']);
+            }
+          },
+          error: (err: ApiErrorResponse) => {
+            this.isSubmitting.set(false);
+            const errorMsg =
+              err.statusCode === 409
+                ? this.existingProduct()?.requiresManufacturingReview
+                  ? 'لم يُحفظ التعديل: قد تتطلب حالة المراجعة إلغاء النشر أولًا أو اعتمادًا جديدًا، أو قد يكون رابط المنتج مستخدمًا. أعد تحميل بيانات المنتج وراجع الحالة والرابط.'
+                  : 'رابط المنتج مستخدم بالفعل أو تغيّرت بياناته. راجع الرابط وأعد تحميل المنتج.'
+                : 'لم يتم تأكيد حفظ التعديلات. راجع الحقول وحالة النشر ثم أعد المحاولة.';
+            this.messageService.add({
+              severity: 'error',
+              summary: 'تعذر حفظ التعديل',
+              detail: errorMsg,
+            });
+          },
+        });
     } else {
-      this.adminProductService.createProduct(product).subscribe({
-        next: (res) => {
-          this.isSubmitting.set(false);
-          const createdId = res.data?.id || (res.data as unknown as { _id?: string })?._id || product.id;
-          this.messageService.add({ severity: 'success', summary: 'Product created', detail: 'Product created successfully.' });
-          if (continueEditing) {
-            this.router.navigate(['/admin/products', createdId, 'edit']);
-          } else {
-            this.router.navigate(['/admin/products']);
-          }
-        },
-        error: (err) => {
-          this.isSubmitting.set(false);
-          const errorMsg = err?.error?.message || err?.message || 'Could not create product.';
-          this.messageService.add({ severity: 'error', summary: 'Creation failed', detail: errorMsg });
-        }
-      });
+      this.adminProductService
+        .createProduct(product)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (res) => {
+            this.isSubmitting.set(false);
+            const createdId = res.data?.id || res.data?._id || product.id;
+            const createdProduct = { ...product, ...res.data, id: createdId };
+            this.existingProduct.set(createdProduct);
+            this.populateForm(createdProduct);
+            this.productId.set(createdId);
+            this.isEditMode.set(true);
+            this.messageService.add({
+              severity: 'success',
+              summary: this.reviewText.createdSummary,
+              detail: this.reviewText.createdDetail,
+            });
+            if (continueEditing) {
+              this.router.navigate(['/admin/products', createdId, 'edit']);
+            } else {
+              this.router.navigate(['/admin/products']);
+            }
+          },
+          error: (err: ApiErrorResponse) => {
+            this.isSubmitting.set(false);
+            let errorMsg = 'لم يتم تأكيد إنشاء المنتج. تحقق من القائمة قبل تكرار الحفظ.';
+            if (err.errors?.['isActive']?.length) {
+              errorMsg = this.reviewText.activeCreationError;
+            } else if (err.statusCode === 409) {
+              errorMsg = 'رابط المنتج مستخدم بالفعل. اختر رابطًا مختلفًا.';
+            }
+            this.messageService.add({
+              severity: 'error',
+              summary: 'تعذر إنشاء المنتج',
+              detail: errorMsg,
+            });
+          },
+        });
     }
   }
 
@@ -540,7 +739,9 @@ export class AdminProductFormPageComponent implements OnInit {
     const el = document.getElementById(fieldId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const targetInput = el.querySelector('input, textarea, select, .p-select, .p-inputnumber-input') as HTMLElement | null;
+      const targetInput = el.querySelector(
+        'input, textarea, select, .p-select, .p-inputnumber-input',
+      ) as HTMLElement | null;
       targetInput?.focus?.();
     }
   }
@@ -548,7 +749,7 @@ export class AdminProductFormPageComponent implements OnInit {
   private scrollToFirstInvalidField(): void {
     setTimeout(() => {
       const firstInvalid = document.querySelector(
-        '.admin-field.has-error input, .admin-field.has-error textarea, .admin-field.has-error .p-select, .admin-field .ng-invalid'
+        '.admin-field.has-error input, .admin-field.has-error textarea, .admin-field.has-error .p-select, .admin-field .ng-invalid',
       ) as HTMLElement | null;
       if (firstInvalid) {
         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -562,35 +763,34 @@ export class AdminProductFormPageComponent implements OnInit {
   }
 
   previewProduct(): void {
-    const slug = this.productForm.controls.slug.value;
-    if (slug) {
-      this.router.navigate(['/products', slug]);
-    }
+    const product = this.existingProduct();
+    if (product?.isActive) this.router.navigate(['/products', product.slug]);
   }
 
-  private buildProduct(): Product {
+  private buildProduct(): Product | null {
     const formValue = this.productForm.getRawValue();
+    if (!formValue.category || !formValue.material || formValue.price === null) return null;
     const now = new Date().toISOString();
 
     return {
       id: this.existingProduct()?.id ?? `prod-${Date.now()}`,
-      slug: formValue.slug ?? '',
-      name: formValue.name ?? '',
-      category: (formValue.category as ProductCategory) ?? ProductCategory.SWORDS,
+      slug: formValue.slug.trim(),
+      name: formValue.name.trim(),
+      category: formValue.category,
       shortDescription: formValue.shortDescription ?? '',
       description: formValue.description ?? '',
       price: Number(formValue.price ?? 0),
-      discountPrice: formValue.discountPrice ? Number(formValue.discountPrice) : null,
+      discountPrice: formValue.discountPrice,
       rating: this.existingProduct()?.rating ?? null,
       image: formValue.mainImage ?? '',
       gallery: this.extractList(formValue.galleryImages),
       modelUrl: formValue.modelUrl ?? '',
-      modelType: (formValue.modelType as ProductModelType) ?? ProductModelType.GLB,
-      posterImage: formValue.posterImage || formValue.mainImage || null,
+      modelType: formValue.modelType ?? ProductModelType.GLB,
+      posterImage: formValue.posterImage || null,
       imageAlt: formValue.imageAlt || null,
       socialImage: formValue.socialImage || null,
       tags: this.extractList(formValue.tags),
-      material: (formValue.material as ProductMaterial) ?? ProductMaterial.PLA_PLUS,
+      material: formValue.material,
       finish: formValue.finish ?? '',
       color: formValue.color ?? '',
       size: formValue.size ?? '',
@@ -599,28 +799,35 @@ export class AdminProductFormPageComponent implements OnInit {
       isMadeToOrder: formValue.isMadeToOrder ?? false,
       productionTimeMin: formValue.isMadeToOrder ? formValue.productionTimeMin : null,
       productionTimeMax: formValue.isMadeToOrder ? formValue.productionTimeMax : null,
-      productionTimeUnit: formValue.isMadeToOrder ? formValue.productionTimeUnit as ProductionTimeUnit : null,
+      productionTimeUnit: formValue.isMadeToOrder ? formValue.productionTimeUnit : null,
       layerHeight: formValue.layerHeight || null,
       infill: formValue.infill || null,
       isFeatured: formValue.isFeatured ?? false,
-      isActive: formValue.isActive ?? true,
-      badge: (formValue.badge as ProductBadge) ?? ProductBadge.NONE,
+      isActive: formValue.isActive,
+      badge: formValue.badge ?? ProductBadge.NONE,
       safetyNote: formValue.safetyNote ?? '',
       metaTitle: formValue.metaTitle || null,
       metaDescription: formValue.metaDescription || null,
       keywords: this.extractList(formValue.keywords),
       createdAt: this.existingProduct()?.createdAt ?? now,
-      updatedAt: now
+      updatedAt: now,
     };
   }
 
   private extractList(value: string | null): string[] {
     if (!value) return [];
-    return value.split(',').map(item => item.trim()).filter(item => item.length > 0);
+    return value
+      .split(/[,،]/)
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
   }
 
   private buildSlug(value: string): string {
-    const clean = value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const clean = value
+      .toLowerCase()
+      .trim()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/(^-|-$)/g, '');
     return clean || `product-${Date.now().toString(36)}`;
   }
 }

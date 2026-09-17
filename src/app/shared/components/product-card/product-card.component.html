@@ -1,101 +1,67 @@
-<div class="vt-card rounded-2xl overflow-hidden flex flex-col h-full group relative border border-neutral-800/80 hover:border-neutral-700 transition-all duration-300">
-  <!-- Badge -->
-  @if (displayBadge()) {
-    <span class="absolute top-3 start-3 z-20 vt-badge vt-badge-pink shadow-sm">
-      {{ displayBadge() }}
-    </span>
-  }
-
-  <div class="relative h-60 overflow-hidden bg-neutral-950">
+<article class="product-card">
+  <a [routerLink]="productLink()" class="product-image-link" [attr.aria-label]="product().name">
     @if (hasImage()) {
       <img
-        [src]="product().image"
-        [alt]="product().imageAlt || product().name"
-        width="640"
-        height="480"
-        loading="lazy"
+        [src]="image().url"
+        [attr.srcset]="image().srcset || null"
+        sizes="(min-width: 1024px) 30vw, (min-width: 640px) 46vw, 92vw"
+        [alt]="imageAlt()"
+        [width]="image().width"
+        [height]="image().height"
+        [attr.loading]="imageLoading()"
+        [attr.fetchpriority]="imagePriority()"
+        decoding="async"
         (error)="onImageError()"
-        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-        class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
       />
     } @else {
-      <div class="flex h-full items-center justify-center bg-gradient-to-br from-neutral-950 via-purple-950/30 to-neutral-950" role="img" [attr.aria-label]="product().name + ' image unavailable'">
-        <div class="text-center text-neutral-500">
-          <i class="pi pi-image mb-2 block text-3xl"></i>
-          <span class="text-xs">Product image coming soon</span>
-        </div>
+      <div class="image-unavailable">
+        <i class="pi pi-image" aria-hidden="true"></i><span>صورة المنتج غير متاحة</span>
       </div>
     }
-      <div class="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
-      
-      <!-- Category pill -->
-      <span class="absolute bottom-3 start-3 z-10 text-[10px] font-semibold uppercase tracking-wider text-neutral-400 bg-neutral-900/90 px-2.5 py-1 rounded-md border border-neutral-800 backdrop-blur-md">
-        {{ product().category }}
-      </span>
-    </div>
-
-  <!-- Content -->
-  <div class="p-5 flex flex-col flex-grow justify-between bg-[#0a0a0a]">
-    <div>
-      <div class="flex items-start justify-between gap-2 mb-1.5">
-        <h3 class="text-base font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-1">
-          {{ product().name }}
-        </h3>
-      </div>
-
-      <p class="text-neutral-400 text-xs line-clamp-2 mb-4 leading-relaxed font-normal">
-        {{ product().shortDescription || product().description }}
-      </p>
-      <div class="mb-4 flex flex-wrap gap-2 text-[11px] text-neutral-300">
-        @if (product().material) { <span class="rounded-lg border border-neutral-800 px-2 py-1">{{ product().material }}</span> }
-        @if (product().size) { <span class="rounded-lg border border-neutral-800 px-2 py-1">{{ product().size }}</span> }
-        @if (product().isMadeToOrder) { <span class="rounded-lg border border-pink-500/40 bg-pink-500/10 px-2 py-1 text-pink-200">Made specifically for your order</span> }
-      </div>
-      @if (productionEstimate()) {
-        <p class="mb-4 text-xs text-neutral-400">Estimated production: {{ productionEstimate() }}</p>
+    @if (badgeLabel()) {
+      <span class="product-badge">{{ badgeLabel() }}</span>
+    }
+    <span class="image-action" aria-hidden="true"><i class="pi pi-arrow-up-left"></i></span>
+  </a>
+  <div class="product-content">
+    <span class="product-category">{{ categoryLabel() }}</span>
+    <h3>
+      <a [routerLink]="productLink()">{{ product().name }}</a>
+    </h3>
+    <p class="product-description">{{ product().shortDescription || product().description }}</p>
+    <div class="product-specs">
+      @if (materialLabel()) {
+        <span dir="auto">{{ materialLabel() }}</span>
+      }
+      @if (sizeLabel()) {
+        <span>{{ sizeLabel() }}</span>
+      }
+      @if (product().isMadeToOrder) {
+        <span>يُصنع حسب الطلب</span>
       }
     </div>
-
-    <div>
-      <!-- Price & Specs bar -->
-      <div class="flex items-center justify-between mb-4 pt-3 border-t border-neutral-800/80 text-xs">
-        <div class="flex flex-col">
-          <span class="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider">Price</span>
-          <div class="flex items-baseline gap-2">
-            <span class="text-lg font-black text-white">
-              {{ salePrice() | currency: 'EGP' }}
-            </span>
-            @if (hasValidDiscount()) {
-              <span class="text-xs text-neutral-500 line-through">
-                {{ product().price | currency: 'EGP' }}
-              </span>
-              <span class="text-xs font-bold text-emerald-400">-{{ discountPercentage() }}%</span>
-            }
-          </div>
-        </div>
-        <div class="text-end">
-          <span class="text-[10px] uppercase font-semibold text-neutral-500 tracking-wider">Material</span>
-          <span class="block text-xs font-medium text-neutral-300">{{ product().material }}</span>
-        </div>
+    <div class="product-bottom">
+      <div class="product-price">
+        <span>{{ salePrice() | number: '1.0-2' }} <small>ج.م</small></span>
+        @if (hasDiscount()) {
+          <del>{{ product().price | number: '1.0-2' }} ج.م</del>
+        }
       </div>
-
-      <!-- Action Buttons -->
-      <div class="grid grid-cols-2 gap-2">
-        <a
-          [routerLink]="['/products', product().slug]"
-          class="px-3 py-2 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-neutral-200 text-xs font-semibold text-center transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          <i class="pi pi-eye text-[11px] opacity-70"></i>
-          <span>View details & price</span>
-        </a>
-        <button
-          (click)="addToCartAndCheckout($event)"
-          class="px-3 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold text-center transition-all flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-        >
-          <i class="pi pi-shopping-bag text-xs"></i>
-          <span>Add to cart</span>
-        </button>
-      </div>
+      <button
+        type="button"
+        (click)="addToCart()"
+        [disabled]="!canPurchase()"
+        [attr.aria-label]="cartLabel() + ': ' + product().name"
+        class="add-button"
+      >
+        <i class="pi pi-plus" aria-hidden="true"></i>{{ cartLabel() }}
+      </button>
+    </div>
+    <div class="cart-feedback" aria-live="polite">
+      <span>{{ statusLabel() }}</span>
+      @if (hasCartItems()) {
+        <a routerLink="/cart">افتح السلة <i class="pi pi-arrow-left" aria-hidden="true"></i></a>
+      }
     </div>
   </div>
-</div>
+</article>

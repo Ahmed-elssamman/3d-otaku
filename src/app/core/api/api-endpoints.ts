@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
     clear: '/cart/clear',
   },
   orders: {
+    quote: '/orders/quote',
     create: '/orders',
     list: '/orders',
     details: (id: string) => `/orders/${id}`,
@@ -30,6 +31,7 @@ export const API_ENDPOINTS = {
   admin: {
     products: {
       list: '/admin/products',
+      categories: '/admin/products/categories',
       details: (id: string) => `/admin/products/${id}`,
       create: '/admin/products',
       update: (id: string) => `/admin/products/${id}`,

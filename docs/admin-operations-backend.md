@@ -1,0 +1,129 @@
+# Administrative operations API
+
+Updated 2026-09-17. All administrative routes below start with `/api/admin` and require a valid administrator access token. A missing token returns 401; a customer token returns 403. No endpoint sends email or WhatsApp messages.
+
+## Lists and details
+
+| Resource | List | Detail | Status action |
+| --- | --- | --- | --- |
+| Product orders | `GET /orders` | `GET /orders/:id` | `PATCH /orders/:id/status` |
+| Custom requests | `GET /custom-orders` | `GET /custom-orders/:id` | `PATCH /custom-orders/:id/status` |
+| Contact inbox | `GET /contact-messages` | `GET /contact-messages/:id` | `PATCH /contact-messages/:id/status` |
+
+The existing `PATCH /contact-messages/:id/read` remains supported. Reading a detail endpoint does not change message status.
+
+List query parameters: `page` (default 1, positive integer up to 100000), `limit` (default 20, 1–100), `status` (omit/empty for all), `search` (single text value, at most 120 characters), `sort` (`newest` or `oldest`, default newest). Order lists also accept exact `orderNumber` and Egyptian `phone` filters. Phone and search filters are combined. Search treats regex punctuation as literal text; repeated query values and invalid filters receive field-specific 422 errors.
+
+Lists return records and standard `meta`: `page`, `limit`, `totalItems`, `totalPages`, `hasNextPage`, `hasPreviousPage`. Sorting uses timestamps plus `_id` for stable ties. Product-order detail additionally selects `items[].manufacturingSnapshot`; lists and action responses omit this protected evidence. New order lines retain their purchased public configuration; legacy lines explicitly return null. See the [configuration and manufacturing snapshot contract](order-configuration-backend.md). Invalid identifiers return 400; valid but missing IDs return 404.
+
+## Administrator product category options
+
+`GET /api/admin/products/categories` returns HTTP 200 with `{ success: true, message: "Product categories retrieved successfully.", data: [{ name: string, productsCount: number }] }`. The route is registered before the product `/:id` route and uses the existing administrator authorization middleware (anonymous 401, customer 403).
+
+Names are exact stored category values, including custom Arabic names. Counts include active and inactive products, including pending manufacturing drafts, and exclude every soft-deleted product. Only categories with a remaining product appear. Results have deterministic ascending binary name order, no pagination, and no product IDs, costing, evidence or draft details. An empty catalog returns `data: []`. The public category endpoint continues counting only active products; administrator forms and filters should use this private endpoint for complete options.
+
+## Record and state contracts
+
+Every record uses string `id`, ISO `createdAt`/`updatedAt`, `statusHistory`, and administrative `allowedNextStatuses`. Internal database version fields, request fingerprints and idempotency keys are never serialized.
+
+- **Orders:** existing customer/items/invoice fields, `orderNumber`, `statusHistory: [{ status, createdAt, publicNote }]`. Optional `customer.governorate` is trimmed text up to 100 characters, persisted separately from `customer.city`; existing clients may omit it. `PATCH` body: `{ status, expectedStatus?, publicNote? }`. Existing progression remains pending → processing → printed → shipped → delivered, with cancellation from pending/processing/printed. Delivered/cancelled are terminal. Public notes are visible through authorized customer/guest order tracking.
+- **Custom requests:** `requestNumber`, `fullName`, `phone`, `whatsappNumber`, `email`, `productIdea`, `description`, `preferredColor`, `estimatedSize`, `referenceImageUrl`, `notes` (customer text), `designSource`, `quantity`, `preferredMaterial`, `rightsConfirmed`, and `statusHistory: [{ status, createdAt, note }]`. `PATCH` body: `{ status, expectedStatus?, note? }`. Existing statuses are `pending`, `contacted`, `in_progress`, `completed`, `cancelled`. These remain reversible; no additional fulfillment restriction was invented. History `note` is private to administrators and is omitted from public creation/retry responses.
+- **Messages:** `messageNumber`, `fullName`, `email`, `phone`, `subject`, `message`, `readAt` (ISO or null), `statusHistory: [{ status, createdAt }]`. `PATCH` body: `{ status, expectedStatus? }`, with `unread`/`read`. Marking unread clears `readAt`; repeating the same state preserves its original time/history.
+
+Status notes are optional plain text up to 1000 characters and accompany a status transition. `expectedStatus`, when present, detects a stale screen. All status writes also compare the stored state atomically; conflicting edits return 409 without losing history. An unchanged status with an absent, empty or whitespace-only note returns 200 without changing the record. An unchanged status with a nonempty custom `note` or order `publicNote` returns 422 with `errors[noteField]: ['Choose a different status before adding a status note.']`; it never reports that discarded text was saved. A stale `expectedStatus` still takes precedence and returns 409. Contact-message read/unread behavior is unchanged. No standalone note append or new history semantics are introduced.
+
+Legacy records without a persisted `requestNumber`/`messageNumber` return an empty string. They are not assigned synthetic references merely by being read.
+
+## Public submission contracts
+
+`POST /api/custom-orders` and `POST /api/contact-messages` support an optional `Idempotency-Key` header of 16–128 letters/digits/hyphens. Clients must retain both the key and the original body through an ambiguous network failure. Explicit recovery repeats that saved body; editing a form must not silently replace an uncertain attempt. New records return 201; an identical normalized retry returns 200 with the same saved ID/reference and current status. Server-owned IDs, statuses and history supplied in a request body are ignored.
+
+The server looks up a committed key before fresh input validation. Changed valid details or malformed fields on a bound retry return HTTP 409 with `errors.requestDetails: string[]`; the response contains no `data`, saved reference or submitted/private fields. The message directs the client to restore the original submission and recover its reference. A genuinely unbound invalid request still returns ordinary field-specific 422; a key is rechecked after validation fails to recognize a concurrently committed winner. That negative check is not durable proof of non-recording: generic 409/422 after prior uncertainty must keep the saved original body/key. Only a definitely first-attempt validation rejection may unlock edits and let the client prepare a new key. The API retains legacy same-key correction of an unbound invalid request.
+
+The existing per-collection unique key and SHA-256 of the original normalized JSON remain unchanged. One insert atomically binds the key, payload fingerprint, reference and submitted record; concurrent exact insertion losers replay 200 and changed-body losers receive the same private 409. No separate reservation collection, tombstone, changed hash protocol or migration is introduced. These forms have no separate catalog decision/materialization step. Replay never resets operator status, history or read time. The original record and its private binding must be retained for recovery; deleting it would remove this guarantee. There is no terminal failure marker or read-only absence endpoint for these forms.
+
+New custom requests receive `CUSTOM-<16 uppercase hex digits>`. New contact messages receive `MESSAGE-<16 uppercase hex digits>`. Responses preserve the existing submitted-field record shape and include the real reference, status and timestamps. No payment or manufacture is implied by receipt.
+
+Custom input rules:
+
+- `fullName`: trimmed, 3–100 characters; Egyptian `phone` or `whatsappNumber` required, both normalized when supplied; optional email up to 254 characters. Separate valid phone/WhatsApp numbers remain distinct; only a missing alias falls back to the other. Calls should use `phone`, and an explicitly opened WhatsApp draft should prefer `whatsappNumber`.
+- `productIdea`: 3–300 characters; `description`: 10–5000; optional color/size: at most 200 each; optional notes: at most 2000.
+- `designSource`: `written-idea` (default), `makerworld-url`, `other-model-url`, or `reference-image`. Non-written sources require `referenceImageUrl`. Links must be HTTPS, at most 2000 characters, without embedded credentials. The API stores links and does not fetch them.
+- `quantity`: integer 1–99, default 1 only when omitted. `preferredMaterial`: `PLA`, `PLA+`, or empty for advice. `rightsConfirmed` must be boolean true.
+
+Contact input rules: trimmed name 3–100, required valid email up to 254, optional Egyptian mobile, subject 3–150, message 10–5000. On an unbound request, nonnumeric quantity values, object/array text fields, unsupported enum values and invalid optional fields are rejected with `errors[field]: string[]` and HTTP 422. Bound malformed retries follow the private 409 rule above.
+
+The existing shared public-submission limiter remains 30 requests per IP per 15 minutes. Rejected requests count toward the limit. HTTP 429 includes `Retry-After`. Its in-memory store is suitable for one API process; multiple replicas need a shared store. Idempotency prevents duplicate records, not automated spam by itself.
+
+Authentication quotas are separate from routine session navigation: `POST /auth/login` and `POST /auth/register` share 30 attempts per IP per 15 minutes. `POST /auth/refresh-token` has its own 30-request quota in the same window. `GET /auth/me` and `POST /auth/logout` only use the broader API limiter (300 requests per IP per minute), so session probes cannot exhaust credential attempts and logout remains available when a narrow authentication quota is full.
+
+## Dashboard truth
+
+`GET /api/admin/dashboard/stats` returns:
+
+- `products`: `total` excludes soft-deleted records and equals active + inactive for valid catalog records; `deleted` is separate; `featured` counts active, non-deleted featured products. Top-level `featuredProducts` remains available for compatibility.
+- `categoriesCount`: unique configured category names plus categories used by non-deleted products. This includes inferred categories that have no Category collection entry.
+- `averagePrice`: current active/non-deleted product prices; inactive draft placeholders do not lower the average.
+- `customOrders` and `productOrders`: actual `total`, explicit zero/nonzero `byStatus` counts and five newest serialized records.
+- `contactMessages`: actual `total`, `unread`, `read`, `byStatus` and five newest serialized records.
+- `customersCount`: registered customer accounts; guest orders are not counted as verified customer accounts.
+
+The response does not manufacture WhatsApp-click statistics or describe pending order totals as collected revenue. The recent-product endpoint remains `GET /api/admin/dashboard/recent-products?limit=5`.
+
+## Per-order shipping confirmation
+
+`PATCH /api/admin/orders/:id/shipping` records an explicitly agreed EGP fee, including zero, for pending, processing or printed orders. The request requires `expectedStatus`, `expectedShippingRevision`, `deliveryFee`, `customerAgreementConfirmed: true` and an `Idempotency-Key`; an optional note is private. Server-side piastre arithmetic preserves item-price snapshots, subtotal and discount while updating the confirmed fee and total.
+
+Atomic revision/status checks prevent stale writes. The existing subtotal-minus-discount-plus-fee equation must already equal the saved total; inconsistent invoices return `shippingInvoice` 409 without changing history or payment summaries. Retries do not duplicate history, and a superseded fee request requires reload. Server-owned shipping history remains separate from status history and is visible only to administrators; stored request keys/fingerprints are never serialized. Existing authorized receipts/tracking expose the current fee and total with the same tracking token. Legacy missing/null revision and history fields initialize safely, including a guard against overwriting concurrently restored history.
+
+See the [complete shipping API contract and verification](order-shipping-backend.md) for response fields, structured conflicts and retry behavior. This action records the operator's agreement attestation; it does not choose merchant rates, collect payment, contact customers or change fulfillment status.
+
+## Manual payment records
+
+`POST /api/admin/orders/:id/payments` records an operator-confirmed completed collection or refund. `POST /api/admin/orders/:id/payments/:entryId/correction` appends a distinct clerical correction with a required reason and no-money-moved attestation. Both require the current payment/shipping revisions, status, invoice total and shipping-confirmed flag, plus an `Idempotency-Key`. `GET /api/admin/orders/:id/payments/attempt` uses that header to recover the exact recorded entry without writing; a negative read does not authorize a replacement key.
+
+Private administrator order responses include payment revision/history. Original entries are immutable; effective sums exclude explicitly corrected originals, and refunds/corrections cannot leave negative recorded net funds. Customer-visible summaries contain only recorded totals and invoice balance information: absent records do not prove unpaid, unconfirmed shipping prevents a final balance, and cancellation requests settlement review without inventing an automatic refund. Shipping revisions recalculate balances without rewriting the ledger. See the [complete payment contract and verification](order-payments-backend.md).
+
+These actions record completed external events and clerical evidence. They do not transfer money, verify provider transactions or change fulfillment; provider integration remains unconfigured.
+
+## Verification and deployment
+
+The same-status note guard is source-ready but not yet executed or activated. Two added HTTP cases in `test/admin-operations.test.js` cover both note fields, unchanged raw records (including timestamps/history), no-note/trimmed-empty 200, and stale 409 precedence. Existing transition, public/private note and contact read-time cases remain in that file. Planned scoped command, from `outako/backend-api`: `node --test test/admin-operations.test.js`; syntax/full commands remain `npm run check` and `npm test`. Execution waits for the coordinated slot.
+
+Most recent executed backend verification, before that guard: **183/183 tests passed**, zero failures/skips/cancellations (**11768.1003 ms** TAP; 12.253 seconds wall time; started **2026-09-17T05:30:42.309Z**), with syntax checks passing in **6.179 seconds**. Five added tracking-cache/privacy/quota cases protect the existing guest and owner receipt contract. Guarded local activation passed at **05:40:51.377 UTC**, preserving all original sixteen products, full settings and explicit preactivation 44/70 media checksums; anonymous tracking 404 carried `no-store`, privacy gates passed and business collections were empty. See [tracking verification, activation and retained fixture-failure evidence](guest-tracking-backend.md#verification).
+
+The preceding inquiry checkpoint passed **178/178** (**11149.4184 ms** TAP), including all nine custom/contact idempotency cases: legacy normalized hashes/private replay after status changes, malformed/changed bound conflicts, unbound validation correction, exact and changed-body insertion races on both resources, and validation following a stale initial-negative lookup. That checkpoint required no follow-up fix or repeated pass. Its evidence remains in the ignored backend `.local/submission-idempotency-check-2026-09-17.log` and `.local/submission-idempotency-full-test-2026-09-17.log`.
+
+Latest coordinated frontend verification is **256/256 tests across 42 files in 5.83 seconds**, with compilation completing **05:36:54.936 UTC**. The baseline guest-link integration build completed **05:38:24.836 UTC** in **10.727 seconds** (`main-BALOZ47T.js`, `styles-LJHQOUSH.css`). Scoped guest/authentication/recovery/product-cart browser checks passed on the subsequent **05:44 `main-NOO3XGHS` build**; see [the exact overlapping scopes and final preservation](guest-tracking-backend.md#verification). At **05:47:26.559 UTC**, all original sixteen products, full settings and 44/70 media remained intact, with seven synthetic orders/seven checkout decisions retained and no cleanup or runtime mutation.
+
+Historical inquiry frontend verification passed **239/239 tests across 39 files in 6.38 seconds**. The **05:09 production build** completed in **10.283 seconds** (`main-P6YL7ZPA.js`, `styles-Y3PILGOW.css`; initial 483.50 kB/estimated transfer 129.61 kB). Broader scoped checks passed **11 desktop cases plus two contact desktop cases**, and **12 mobile cases** on earlier builds. The final 05:09 build then passed **6/6 cart cases in 27.3 seconds**, three per device, including the corrected stale-attempt/lost-response race. Its old-build reproduction failed on the actual overwritten-attempt defect, and that report/QA data were retained. These overlapping scoped checks are not a new complete 70-case run on the final build. The preceding 234-test/eight-targeted-check frontend checkpoint and 178-case backend source remain historical.
+
+Inquiry API activation passed at **2026-09-17T04:53:54.633Z**. The original sixteen product records, full settings, 44 image-source records and 70 WebP files passed preservation/checksum/dimension/size checks. Twelve Arabic products stayed public, four drafts stayed pending/inactive and returned 404; private categories denied anonymous access with 401 and counted seven categories/sixteen non-deleted products. Health returned 200 and all twelve public configuration fingerprints remained valid. All four business collections were empty before QA, with no login or public POST probe. Private report: `.local/inquiry-recovery-activation-preservation-1789620834633.json`.
+
+Post-mobile read-only preservation passed at **2026-09-17T05:06:11.118Z** against `.local/catalog-restart-baseline-1789621370439.json` and its full-settings counterpart. All original sixteen records, 44 sources/70 variants, configuration hashes and privacy/category counts remained unchanged. The healthy API was not restarted or mutated; retained synthetic records numbered three orders, one custom request, one contact message and three checkout decisions. No login or submission probe was sent. Report: `.local/post-mobile-inquiry-preservation-1789621571118.json`.
+
+Final read-only preservation after the 05:09 cart scenarios passed at **2026-09-17T05:12:30.832Z** against the same baselines: sixteen original records, full settings, 44/70 media, twelve public configuration fingerprints and all draft/category privacy gates remained unchanged. The API returned health 200. Eleven synthetic orders, one custom request, one contact message and eleven checkout decisions remained intact, including the earlier failing regression's records. There was no reset, login, POST or database mutation. Report: `.local/final-inquiry-cart-preservation-1789621950832.json`.
+
+The prior 169-case configuration checkpoint included 13 configuration/compatibility cases, 13 shipping cases, 17 manual-payment cases, 11 terminal payment-recovery cases, 11 quote cases, 12 durable checkout-decision cases and the existing operational/identity suites, all retained in the latest run. Tests use disposable MongoDB and synthetic records, with a one-member replica set for durability and paused-write proof tests. Configuration version 2 was activated locally at 04:01:15 UTC with all original catalog/media/full settings preserved and empty business collections. All 35 scenarios per device are subsequently covered on that frozen 04:03 build through complete 34/35 runs plus targeted fixture-only corrections; see [precise scoped browser evidence](order-configuration-backend.md#verification-scope).
+
+The administrator configuration/evidence view passed six focused cases within the root-coordinated **208/208 Angular tests across 37 files** (5.33 seconds; compilation 04:02:13.192 UTC). It distinguishes omitted detail data from absent/unavailable evidence, displays stored references as escaped text without fetching them, and preserves a loaded snapshot across ordinary operation responses only for the same order and purchased line. See [snapshot UI verification](order-configuration-backend.md#verification-scope).
+
+Final post-mobile read-only verification at **04:23:11.111 UTC** preserved all sixteen original products, full settings and 44/70 image records/variants, with twelve valid public configuration fingerprints and intact draft/category privacy. Synthetic business records were left intact; no restart, login or mutation occurred.
+
+Checkout now requires current quote consent before new insertion, preserves an approved invoice/Order identity through lost responses, and returns terminal `checkoutNotRecorded` only for an exact durable rejected attempt. Administrator cancellation retains both the Order and its binding; no cleanup endpoint deletes them. See [checkout pricing and rollout](checkout-pricing.md). Old writers must be drained before rollout; decisions must never be expired/reset. Private decision/customer snapshots are excluded from administrator and public Order serializers.
+
+Historical pricing activation at 02:57:11 UTC preserved the original sixteen products, twelve Arabic public records/four inactive drafts and all 44 image-source records/70 verified variants. Fresh order/custom/contact/checkout-attempt collections were empty, with no login or POST probes. The completed version 1 pricing browser suites passed 35 desktop and 35 mobile cases on the same `main-LACTZSO4` build; [implementation progress](implementation-progress.md#current-verification-evidence) owns coordinated current results.
+
+Historical manual-payment checkpoint: `npm test` passed **118/118**, including 17 payment cases and 12 shipping cases. Coverage included protected recording/recovery, arithmetic, cancelled states, strict validation, duplicate references, concurrent requests, invoice/status/shipping races, clerical corrections, legacy initialization and privacy.
+
+Earlier shipping checkpoint: `node --test test/order-shipping.test.js` passed **12/12**; the then-current full `npm test` passed **101/101**, with zero failures or skips. Coverage includes permission gates, exact invoice arithmetic, zero fees, concurrent updates/replays, terminal and stale rejection, receipt privacy, missing/null legacy fields, status races and concurrent history restoration.
+
+Earlier category endpoint checkpoint: `node --test test/admin-product-categories.test.js` passed **3/3**; the then-current full `npm test` passed **89/89**, with zero failures or skips, and `npm run check` passed. Those HTTP cases cover anonymous/customer denial, custom Arabic names, active/inactive/pending-draft counts, deleted-only category exclusion, unchanged stored records, the existing exact category filter, continued public privacy, deletion of the last member and empty results.
+
+Coordinated local activation restored twelve Arabic public products and four pending inactive drafts. Comparison with the pre-restart baseline preserved all product fields except the expected new database IDs/timestamps/version; prices, specifications, media, review and provenance were unchanged. All 44 image-source records/70 distinct WebP files were verified, and each draft returned public 404. The new private category endpoint returned 200 with seven options totaling sixteen products, anonymous access returned 401, and public categories totaled twelve products. No checkout submissions were made during this activation and the fresh local database had zero orders. Production rate limits were unchanged.
+
+Earlier operations checkpoint: `npm test` passed **44 tests**, including 12 operational HTTP tests and 3 authentication quota regression tests against disposable MongoDB. Coverage includes authorization on every operational route, concurrent submission deduplication, search/pagination accuracy, stale edit rejection, order lifecycle, reversible custom status history, inbox read/unread behavior, public validation/throttling, exact dashboard fixtures and legacy references. Repeated session probes/logout do not consume credential attempts; refresh throttling is isolated, credential spam remains restricted and logout still revokes a token after narrow quotas are exhausted. `npm run check` passed.
+
+The API waits for order/custom/contact unique indexes before listening. New custom `requestNumber` and contact `messageNumber` indexes are sparse and unique; both submission collections also require sparse unique `idempotencyKey` indexes. If an earlier development deployment already created a non-sparse `requestNumber_1`, inspect and migrate that index before rollout; do not blindly synchronize/drop unrelated indexes. No production database migration or external write was performed here.
+
+The verified local API was restarted with the public snapshot and cached media, then the four licensed drafts were reimported: 4 created, 0 skipped, 0 active. Each draft returned 404 from the public product endpoint. Local runtime credentials are generated afresh and remain in ignored `backend-api/.local/runtime.json`.

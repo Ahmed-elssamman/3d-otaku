@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "slug": "modular-desk-organizer",
+  "verifiedDate": "2026-09-16",
+  "sourceRepository": "https://github.com/vector76/gridfinity_openscad",
+  "sourceRevision": "0e7308cd8fc7fb4191aa69d81175a90d10de751c",
+  "author": "Jamie / vector76",
+  "license": "MIT",
+  "scale": 1,
+  "parts": [
+    {
+      "file": "baseplate.stl",
+      "quantity": 1
+    },
+    {
+      "file": "divided_cup_2x1x3x5.stl",
+      "quantity": 3
+    },
+    {
+      "file": "basic_cup_2x1x2.stl",
+      "quantity": 3
+    },
+    {
+      "file": "basic_cup_1x1x3_nolip.stl",
+      "quantity": 3
+    }
+  ],
+  "notes": [
+    "One 5 by 3 base. At 42 mm grid pitch, each row contains a divided 2 by 1 bin, open 2 by 1 bin and 1 by 1 cup.",
+    "Preview vertical bin offset is 3 mm; physical assembly fit and offset must be checked on samples."
+  ],
+  "sourceUnit": "millimeter",
+  "previewModelUnit": "meter",
+  "previewCoordinateOrder": "width-height-depth (Y up)",
+  "previewKind": "source-mesh-render",
+  "previewIsPhotograph": false,
+  "manufacturingVerified": false,
+  "saleReady": false,
+  "previewGeometryDimensionsMm": [
+    210,
+    34.75,
+    126
+  ],
+  "meshMeasurements": [
+    {
+      "file": "baseplate.stl",
+      "sha256": "76094ce9b0ab720e19c93141385f2a027d2a873276cf42724dfd85ded91210b0",
+      "bytes": 297284,
+      "triangleCount": 5944,
+      "sourceDimensionsMm": [
+        210,
+        126,
+        5
+      ]
+    },
+    {
+      "file": "basic_cup_1x1x3_nolip.stl",
+      "sha256": "8fe31ba18f56b66553d6087c0e179d0aa1dc40e7b69b218d7b5faaedf9531a51",
+      "bytes": 47884,
+      "triangleCount": 956,
+      "sourceDimensionsMm": [
+        41.5,
+        41.5,
+        31.75
+      ]
+    },
+    {
+      "file": "basic_cup_2x1x2.stl",
+      "sha256": "cb294fa96ae098263e4a5aecc7cadf0e8dbc6ba70461de29d0d7d8a9084f8003",
+      "bytes": 93284,
+      "triangleCount": 1864,
+      "sourceDimensionsMm": [
+        83.5,
+        41.5,
+        17.75
+      ]
+    },
+    {
+      "file": "divided_cup_2x1x3x5.stl",
+      "sha256": "c8e475faca016c5d4fefabdf37b42ee6c0fb1dda87976f8d2a9a451505e7a7ad",
+      "bytes": 126684,
+      "triangleCount": 2532,
+      "sourceDimensionsMm": [
+        83.5,
+        41.5,
+        24.75
+      ]
+    }
+  ],
+  "downloads": [
+    {
+      "file": "LICENSE",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/LICENSE",
+      "bytes": 1062,
+      "sha256": "1290f78547e35d9ddce10442c3d5961ffc2f91a5c8a40fff1cf2be749054b7aa"
+    },
+    {
+      "file": "divided_cup_2x1x3x5.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/divided_cup_2x1x3x5.stl",
+      "bytes": 126684,
+      "sha256": "c8e475faca016c5d4fefabdf37b42ee6c0fb1dda87976f8d2a9a451505e7a7ad"
+    },
+    {
+      "file": "basic_cup_2x1x2.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/basic_cup_2x1x2.stl",
+      "bytes": 93284,
+      "sha256": "cb294fa96ae098263e4a5aecc7cadf0e8dbc6ba70461de29d0d7d8a9084f8003"
+    },
+    {
+      "file": "baseplate.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/baseplate.stl",
+      "bytes": 297284,
+      "sha256": "76094ce9b0ab720e19c93141385f2a027d2a873276cf42724dfd85ded91210b0"
+    },
+    {
+      "file": "basic_cup_1x1x3_nolip.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/vector76/gridfinity_openscad/0e7308cd8fc7fb4191aa69d81175a90d10de751c/Renders/basic_cup_1x1x3_nolip.stl",
+      "bytes": 47884,
+      "sha256": "8fe31ba18f56b66553d6087c0e179d0aa1dc40e7b69b218d7b5faaedf9531a51"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "model.glb",
+      "bytes": 639316,
+      "sha256": "49c486b8e841f98c433f821bee67d0ed703cc42f57e96a230733c1d41d115773"
+    },
+    {
+      "file": "preview.webp",
+      "bytes": 21690,
+      "sha256": "65060df1796387927293e2ccfe7e7a24df880dbe39a1dbf9af246cd7bb5a9129"
+    }
+  ],
+  "rendering": {
+    "engine": "Three.js 0.185.1",
+    "browser": "Google Chrome via Playwright",
+    "resolution": [
+      960,
+      960
+    ],
+    "imageFormat": "WebP",
+    "meshOptimization": "Shared geometry per source mesh; merge duplicate vertices with tolerance 0.00001 mm. No mesh simplification or image generation."
+  }
+}

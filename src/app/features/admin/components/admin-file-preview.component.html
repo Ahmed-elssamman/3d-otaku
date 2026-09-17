@@ -1,23 +1,29 @@
-<div class="grid gap-4 xl:grid-cols-2">
-  <div class="admin-card overflow-hidden p-3">
-    <div class="mb-3 flex items-center justify-between">
-      <h4 class="text-sm font-bold text-white">Image Preview</h4>
-      <span class="text-xs text-neutral-500">{{ productName() }}</span>
-    </div>
-    @if (imageUrl()) {
-      <img [src]="imageUrl()" [alt]="productName()" class="h-72 w-full rounded-2xl object-cover" />
+<div class="file-previews">
+  <section class="preview-card" aria-label="معاينة الصورة">
+    <header>
+      <h4>معاينة الصورة</h4>
+      <p>{{ productName() }}</p>
+    </header>
+    @if (imageFailed()) {
+      <p class="preview-empty" role="status">
+        تعذّر تحميل الصورة. تحقق من الرابط أو ارفع صورة أخرى.
+      </p>
+    } @else if (imageUrl()) {
+      <img
+        [src]="imageUrl()"
+        [alt]="productName()"
+        class="preview-image"
+        (error)="onImageError()"
+      />
     } @else {
-      <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
-        Main image preview will appear here.
-      </div>
+      <p class="preview-empty">تظهر الصورة هنا بعد رفعها أو إدخال رابطها.</p>
     }
-  </div>
-
-  <div class="admin-card overflow-hidden p-3">
-    <div class="mb-3 flex items-center justify-between">
-      <h4 class="text-sm font-bold text-white">3D Preview</h4>
-      <span class="text-xs text-neutral-500">Deferred render</span>
-    </div>
+  </section>
+  <section class="preview-card">
+    <header>
+      <h4>معاينة المجسم</h4>
+      <p>الألوان داخل المعاينة لا تغيّر بيانات المنتج.</p>
+    </header>
     @if (modelUrl()) {
       @defer (on viewport) {
         <app-product-3d-viewer
@@ -28,14 +34,10 @@
           [compact]="true"
         />
       } @placeholder {
-        <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
-          Loading 3D preview...
-        </div>
+        <p class="preview-empty" role="status">جارٍ تجهيز معاينة المجسم…</p>
       }
     } @else {
-      <div class="flex h-72 items-center justify-center rounded-2xl border border-dashed border-white/10 bg-black/20 text-sm text-neutral-500">
-        Enter a model URL to preview the 3D asset.
-      </div>
+      <p class="preview-empty">ارفع ملف مجسم أو أدخل رابطه لبدء المعاينة.</p>
     }
-  </div>
+  </section>
 </div>

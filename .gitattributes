@@ -1,0 +1,4 @@
+# Preserve reviewed generated icon bytes across Windows and Unix checkouts.
+src/assets/primeicons/primeicons.css text eol=lf
+public/assets/fonts/primeicons-license.txt text eol=lf
+src/assets/primeicons/primeicons-subset.woff2 binary

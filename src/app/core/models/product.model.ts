@@ -1,15 +1,15 @@
-import { ProductCategory } from '../enums/product-category.enum';
 import { ProductBadge } from '../enums/product-badge.enum';
 import { ProductMaterial } from '../enums/product-material.enum';
 import { ProductModelType } from '../enums/product-model-type.enum';
 import { ProductionTimeUnit } from '../enums/production-time-unit.enum';
+import { ProductImage } from './product-image.model';
 
 export interface Product {
   id: string;
   _id?: string;
   slug: string;
   name: string;
-  category: ProductCategory;
+  category: string;
   shortDescription: string;
   description: string;
   price: number;
@@ -19,6 +19,7 @@ export interface Product {
   currency?: string | null;
   image: string;
   gallery: string[];
+  imageVariants?: ProductImage[];
   modelUrl?: string | null;
   modelType?: ProductModelType | string | null;
   posterImage?: string | null;
@@ -41,6 +42,7 @@ export interface Product {
   isActive: boolean;
   badge?: ProductBadge;
   safetyNote: string;
+  configurationFingerprint?: string | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
   keywords?: string[] | null;

@@ -3,17 +3,62 @@ export interface WorkflowStep {
   title: string;
   description: string;
   icon: string;
+  stepNumber?: string;
 }
 
 export const WORKFLOW_STEPS: WorkflowStep[] = [
-  { id: 'review', title: 'Review the product or design', description: 'The product specifications or custom reference are checked before confirmation.', icon: 'pi pi-search' },
-  { id: 'confirm', title: 'Confirm the requirements', description: 'Size, material, color, finish, price, and production information are confirmed for the order.', icon: 'pi pi-check-circle' },
-  { id: 'produce', title: 'Manufacture the piece', description: 'Made-to-order production begins after confirmation using the selected product requirements.', icon: 'pi pi-cog' },
-  { id: 'prepare', title: 'Prepare for delivery', description: 'The completed piece is checked and delivery arrangements are handled separately from production.', icon: 'pi pi-box' }
+  {
+    id: 'choose',
+    stepNumber: '١',
+    title: 'اختَر القطعة',
+    description: 'تصفح المنتجات، واقرأ الوصف والمقاسات والخامة المتاحة في صفحة كل قطعة.',
+    icon: 'pi pi-search',
+  },
+  {
+    id: 'details',
+    stepNumber: '٢',
+    title: 'راجع التفاصيل',
+    description:
+      'حدد الخيارات المتاحة وأضف القطعة إلى السلة. اسألنا قبل الطلب إذا كانت هناك تفاصيل تحتاج إلى توضيح.',
+    icon: 'pi pi-list',
+  },
+  {
+    id: 'order',
+    stepNumber: '٣',
+    title: 'أرسل طلبك',
+    description:
+      'أدخل بياناتك وعنوانك داخل مصر. تكلفة الشحن منفصلة عن سعر المنتج وتُؤكّد عند التواصل.',
+    icon: 'pi pi-shopping-bag',
+  },
+  {
+    id: 'follow',
+    stepNumber: '٤',
+    title: 'تابع الطلب',
+    description:
+      'راجع الطلبات المسجلة بحسابك. وقت التصنيع والتوصيل يعتمد على القطعة وتفاصيل الطلب.',
+    icon: 'pi pi-box',
+  },
 ];
 
 export const SERVICE_PRINCIPLES: WorkflowStep[] = [
-  { id: 'data', title: 'Product-specific specifications', description: 'Material, finish, dimensions, weight, and safety information are managed per product.', icon: 'pi pi-list' },
-  { id: 'media', title: 'Photos before interactive media', description: 'Product information stays usable if a 3D model or WebGL is unavailable.', icon: 'pi pi-images' },
-  { id: 'custom', title: 'Custom feasibility review', description: 'Custom designs are checked for printability and permissions before they can be accepted.', icon: 'pi pi-verified' }
+  {
+    id: 'physical',
+    title: 'قطع تصل إلى يدك',
+    description: 'المعروض للبيع منتجات مطبوعة ثلاثية الأبعاد، وليس ملفات رقمية للتنزيل.',
+    icon: 'pi pi-box',
+  },
+  {
+    id: 'material',
+    title: 'لكل قطعة تفاصيلها',
+    description:
+      'الخامة والمقاس وطريقة الاستخدام تختلف حسب المنتج. راجع الوصف، واسأل عن أي معلومة غير مذكورة.',
+    icon: 'pi pi-sliders-h',
+  },
+  {
+    id: 'custom',
+    title: 'فكرتك تبدأ بسؤال',
+    description:
+      'يمكنك إرسال مرجع لتصميم خاص. نراجع قابلية طباعته وحقوق استخدامه قبل تأكيد إمكانية تنفيذه وتكلفته.',
+    icon: 'pi pi-pencil',
+  },
 ];

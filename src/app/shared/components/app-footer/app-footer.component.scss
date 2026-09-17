@@ -1,1 +1,112 @@
-/* Styled exclusively using Tailwind CSS & PrimeNG */
+:host {
+  display: block;
+  color: var(--shop-ink);
+}
+.shop-footer {
+  background: #eeefe8;
+  border-top: 1px solid var(--shop-line);
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1.4fr 1fr;
+  gap: 3rem;
+  padding-block: 3.5rem;
+}
+.footer-brand > a {
+  display: inline-block;
+  font:
+    800 1.7rem Arial,
+    sans-serif;
+  letter-spacing: -0.07em;
+}
+p {
+  color: var(--shop-muted);
+  font-size: 0.8rem;
+  line-height: 2;
+  margin-block: 1rem;
+}
+.footer-country {
+  font-size: 0.72rem;
+  color: var(--shop-muted);
+}
+h2 {
+  font-size: 0.87rem;
+  font-weight: 750;
+  margin-block-end: 1rem;
+}
+.footer-navigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+.footer-navigation li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  color: var(--shop-muted);
+  font-size: 0.78rem;
+}
+a:hover {
+  color: var(--shop-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+.whatsapp-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 650;
+  min-height: 2.75rem;
+  color: var(--shop-primary);
+}
+.phone-link {
+  display: block;
+  font-size: 0.78rem;
+  min-height: 2rem;
+  width: fit-content;
+}
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border-top: 1px solid #d7dece;
+  padding-block: 1.25rem;
+  color: var(--shop-muted);
+  font-size: 0.65rem;
+}
+.social-links {
+  display: flex;
+  gap: 0.5rem;
+}
+.social-links a {
+  display: grid;
+  place-items: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  font-size: 1rem;
+}
+@media (max-width: 900px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer-contact {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 640px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding-block: 2rem;
+  }
+  .footer-bottom {
+    justify-content: center;
+    text-align: center;
+  }
+  .footer-bottom > span:nth-child(2) {
+    display: none;
+  }
+}

@@ -9,10 +9,6 @@ export const APP_CONSTANTS = {
   STORAGE_KEYS: {
     PRODUCTS: '3d-otaku-products',
     SETTINGS: '3d-otaku-settings',
-    AUTH_USER: '3d-otaku-auth-user'
+    AUTH_USER: '3d-otaku-auth-user',
   },
-  ADMIN_CREDENTIALS: {
-    EMAIL: 'admin@3dotaku.com',
-    PASSWORD: 'Admin@123'
-  }
 };
