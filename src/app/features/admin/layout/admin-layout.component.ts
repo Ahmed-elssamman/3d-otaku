@@ -8,14 +8,22 @@ import { AdminConfirmDialogComponent } from '../components/admin-confirm-dialog.
 import { AdminSidebarComponent } from './admin-sidebar.component';
 import { AdminTopbarComponent } from './admin-topbar.component';
 import { AuthService } from '@core/services/auth.service';
+import { ADMIN_TOAST_BREAKPOINTS } from './admin-layout.control';
 
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterOutlet, Toast, AdminConfirmDialogComponent, AdminSidebarComponent, AdminTopbarComponent],
+  imports: [
+    RouterOutlet,
+    Toast,
+    AdminConfirmDialogComponent,
+    AdminSidebarComponent,
+    AdminTopbarComponent,
+  ],
   providers: [ConfirmationService, MessageService],
   templateUrl: './admin-layout.component.html',
-  styleUrl: './admin-layout.component.scss'
+  styleUrl: './admin-layout.component.scss',
+  host: { '(document:keydown.escape)': 'closeSidebar()' },
 })
 export class AdminLayoutComponent {
   private route = inject(ActivatedRoute);
@@ -24,14 +32,15 @@ export class AdminLayoutComponent {
   private destroyRef = inject(DestroyRef);
 
   sidebarOpen = signal<boolean>(false);
-  pageTitle = signal<string>('Dashboard');
+  pageTitle = signal<string>('نظرة عامة');
   adminName = signal<string>(this.authService.currentUser()?.fullName ?? '3D Otaku Admin');
+  toastBreakpoints = ADMIN_TOAST_BREAKPOINTS;
 
   constructor() {
     this.router.events
       .pipe(
-        filter(event => event instanceof NavigationEnd),
-        takeUntilDestroyed(this.destroyRef)
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
         let activeRoute = this.route;
@@ -40,16 +49,18 @@ export class AdminLayoutComponent {
         }
 
         const title = activeRoute.snapshot.data['title'];
-        this.pageTitle.set(typeof title === 'string' ? title : 'Dashboard');
+        this.pageTitle.set(typeof title === 'string' ? title : 'نظرة عامة');
       });
   }
 
   toggleSidebar(): void {
-    this.sidebarOpen.update(value => !value);
+    this.sidebarOpen.update((value) => !value);
   }
 
   closeSidebar(): void {
+    const wasOpen = this.sidebarOpen();
     this.sidebarOpen.set(false);
+    if (wasOpen) document.getElementById('admin-navigation-toggle')?.focus();
   }
 
   logout(): void {

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "sourcePackage": "@fontsource/noto-sans-arabic@5.2.10",
+  "sourceFontVersion": "2.012",
+  "license": "SIL Open Font License 1.1; see OFL.txt",
+  "method": "Change only the post table from format 2 to format 3 to omit glyph-name storage; preserve all glyphs, coverage, outlines, metrics, hinting, shaping and font-name/license data.",
+  "tooling": { "fontTools": "4.65.0", "brotli": "1.2.0", "harfbuzzRepacker": false },
+  "fonts": [
+    {
+      "weight": 400,
+      "originalSha256": "4e2ca0745c908761dc5c5db951662873887c59366fa1a5693ad22c0864abf1bd",
+      "originalBytes": 48840,
+      "optimizedSha256": "29eedd73b82f1a4e5cb000ddf880d574d717cf3077eb38609961ceb74436ef8f",
+      "optimizedBytes": 45492
+    },
+    {
+      "weight": 700,
+      "originalSha256": "d2bf5ac762d07f769e4e644a1f919649317cb5b62e20ab9ae02918862627b723",
+      "originalBytes": 50228,
+      "optimizedSha256": "5decb5a926d745a801dd107e032975730cb57ddbd0504e0530dd07da2f367b96",
+      "optimizedBytes": 46720
+    }
+  ]
+}

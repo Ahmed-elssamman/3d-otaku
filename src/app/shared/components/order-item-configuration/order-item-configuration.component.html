@@ -1,0 +1,15 @@
+<details class="item-configuration">
+  <summary>{{ title() }}</summary>
+  @if (configuration()) {
+    <dl>
+      @for (row of rows(); track row.id) {
+        <div>
+          <dt>{{ row.label }}</dt>
+          <dd dir="auto">{{ row.value }}</dd>
+        </div>
+      }
+    </dl>
+  } @else {
+    <p>{{ missingText() }}</p>
+  }
+</details>

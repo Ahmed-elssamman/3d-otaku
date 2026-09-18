@@ -1,0 +1,40 @@
+Noto Sans Arabic, regular 400 and bold 700, Arabic subsets.
+Source: @fontsource/noto-sans-arabic 5.2.10
+https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-arabic@5.2.10/files/noto-sans-arabic-arabic-400-normal.woff2
+https://cdn.jsdelivr.net/npm/@fontsource/noto-sans-arabic@5.2.10/files/noto-sans-arabic-arabic-700-normal.woff2
+License: SIL Open Font License 1.1; see OFL.txt.
+Self-hosted. Latin text uses system fonts. The original static files total
+99,068 bytes. Font version: 2.012. Copyright 2022 The Noto Project Authors
+(https://github.com/notofonts/arabic). The supplied license contains no Reserved
+Font Name declaration; the font-name/copyright/license data is preserved.
+
+The current files are metadata-optimized derivatives, not variable fonts or
+newly subsetted files. The standard post table changes from format 2 to format 3
+to omit glyph-name storage. All 1,340 glyphs and 1,226 mapped code points per
+weight, outlines, hinting, shaping, metrics and font-name/license data remain.
+Italic angle, underline metrics and the other post header fields are unchanged.
+All non-post tables are identical apart from the required head checksum change.
+
+Current 400: 45,492 bytes; SHA-256
+29eedd73b82f1a4e5cb000ddf880d574d717cf3077eb38609961ceb74436ef8f
+Current 700: 46,720 bytes; SHA-256
+5decb5a926d745a801dd107e032975730cb57ddbd0504e0530dd07da2f367b96
+Combined: 92,212 bytes, saving 6,856 bytes (6.92%) from the original files.
+This includes 176 bytes saved by unchanged fontTools round-trip serialization;
+the post-table change saves a further 6,680 bytes against that control.
+
+Live CSS and preloads use the new fingerprinted names. Unhashed aliases match
+these current derivatives. Original fingerprinted files remain unchanged:
+400: 4e2ca0745c908761dc5c5db951662873887c59366fa1a5693ad22c0864abf1bd
+700: d2bf5ac762d07f769e4e644a1f919649317cb5b62e20ab9ae02918862627b723
+OFL.txt is unchanged. No font-family, display, unicode-range or layout CSS was
+changed for this optimization. Browser parity evidence is documented in the
+asset instructions; it does not establish a loading-time improvement.
+
+Pinned source/tool/output records: optimization.json
+Reproducer: ../../../scripts/optimize-noto-fonts.py
+Tool requirements: ../../../scripts/font-optimizer-requirements.txt
+Integrity manifest and update instructions:
+../../../scripts/storefront-assets.manifest.json
+../../../scripts/storefront-assets.md
+Verify from the workspace root with: npm run assets:verify

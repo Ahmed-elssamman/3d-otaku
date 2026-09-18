@@ -1,11 +1,3 @@
-export interface LoginFormModel {
-  email: string;
-  password: string;
-  rememberMe: boolean;
-}
+import { LoginRequest } from '@core/models/user.model';
 
-export const LOGIN_DEFAULT_VALUES: LoginFormModel = {
-  email: '',
-  password: '',
-  rememberMe: true
-};
+export const LOGIN_DEFAULT_VALUES: LoginRequest = { email: '', password: '' };

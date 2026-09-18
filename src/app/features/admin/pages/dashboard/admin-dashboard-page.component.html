@@ -1,87 +1,54 @@
-<section class="space-y-6">
-  <div class="admin-panel relative overflow-hidden p-6">
-    <div class="absolute inset-y-0 end-0 w-1/2 bg-[radial-gradient(circle_at_center,rgba(34,211,238,0.18),transparent_60%)]"></div>
-    <div class="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-      <div class="max-w-3xl space-y-3">
-        <span class="vt-badge vt-badge-cyan">Command Center</span>
-        <h2 class="text-3xl font-black text-white lg:text-5xl">Store catalog and configuration</h2>
-        <p class="max-w-2xl text-sm text-neutral-300 lg:text-base">
-          Manage customer-facing product data, media, production information, and storefront settings.
-        </p>
-      </div>
-      <div class="flex flex-wrap gap-3">
-        <a routerLink="/admin/products/new" class="admin-action-button">Add Product</a>
-        <a routerLink="/admin/products" class="admin-action-button admin-action-button-secondary">Manage Products</a>
-        <a routerLink="/admin/settings" class="admin-action-button admin-action-button-secondary">Edit Website Settings</a>
-      </div>
+<section class="dashboard" dir="rtl" aria-labelledby="dashboard-heading">
+  <header class="dashboard-header">
+    <div>
+      <span class="eyebrow">متابعة العمل اليومي</span>
+      <h2 id="dashboard-heading">نظرة عامة على المتجر</h2>
+      <p>طلبات العملاء ورسائلهم وبيانات المنتجات في مكان واحد.</p>
     </div>
-  </div>
-
-  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-    <app-admin-stat-card title="Total Products" [value]="totalProducts()" subtitle="Published and draft inventory" icon="pi pi-box" />
-    <app-admin-stat-card title="Featured Products" [value]="featuredProducts()" subtitle="Homepage spotlight lineup" icon="pi pi-star-fill" accentClass="from-cyan-400/20 via-blue-500/10 to-fuchsia-500/25" />
-    <app-admin-stat-card title="Active Categories" [value]="activeCategories()" subtitle="Distinct catalog zones" icon="pi pi-th-large" accentClass="from-violet-500/20 via-fuchsia-500/15 to-amber-400/20" />
-    <app-admin-stat-card title="Average Price" [value]="(averagePrice() | currency: 'EGP') ?? '0'" subtitle="Current catalog average" icon="pi pi-dollar" />
-    @if (hasBusinessStats()) {
-      <app-admin-stat-card title="WhatsApp CTA Clicks" [value]="ctaCount()" subtitle="Reported by the dashboard API" icon="pi pi-whatsapp" accentClass="from-emerald-400/20 via-teal-500/10 to-cyan-500/20" />
-      <app-admin-stat-card title="Custom Orders" [value]="customOrders()" subtitle="Reported by the dashboard API" icon="pi pi-sparkles" accentClass="from-fuchsia-500/25 via-pink-500/10 to-orange-400/20" />
+    <button
+      type="button"
+      class="shop-button shop-button-secondary"
+      (click)="refresh()"
+      [disabled]="isLoading()"
+    >
+      <i class="pi pi-refresh" aria-hidden="true"></i> تحديث الملخص
+    </button>
+  </header>
+  @if (isLoading()) {
+    <p class="dashboard-state" role="status">جارٍ تحميل ملخص المتجر…</p>
+  } @else if (loadError()) {
+    <div class="dashboard-state" role="alert">
+      <p>{{ loadError() }}</p>
+      <button type="button" class="shop-button shop-button-secondary" (click)="refresh()">
+        إعادة المحاولة
+      </button>
+    </div>
+  } @else {
+    <div class="dashboard-stats">
+      @for (card of cards(); track card.route) {
+        <a [routerLink]="card.route" class="dashboard-stat"
+          ><span><i [class]="card.icon" aria-hidden="true"></i>{{ card.label }}</span
+          ><strong>{{ card.value }}</strong
+          ><small>{{ card.hint }}</small></a
+        >
+      }
+    </div>
+  }
+  <h3>إدارة المتجر</h3>
+  <div class="dashboard-links">
+    @for (link of links; track link.route) {
+      <a [routerLink]="link.route"
+        ><i [class]="link.icon" aria-hidden="true"></i>
+        <div>
+          <h4>{{ link.label }}</h4>
+          <p>{{ link.description }}</p>
+        </div>
+        <i class="pi pi-arrow-left" aria-hidden="true"></i
+      ></a>
     }
   </div>
-
-  <div class="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
-    <div class="admin-card p-5">
-      <div class="mb-4 flex items-center justify-between">
-        <div>
-          <h3 class="admin-section-title">Recent Products</h3>
-          <p class="text-sm text-neutral-400">Latest items added to the catalog.</p>
-        </div>
-        <a routerLink="/admin/products" class="text-sm font-semibold text-cyan-300">See all</a>
-      </div>
-
-      <div class="space-y-3">
-        @for (product of recentProducts(); track product.id) {
-          <div class="rounded-3xl border border-white/10 bg-white/5 p-3">
-            <div class="flex items-center gap-3">
-              @if (product.image) { <img [src]="product.image" [alt]="product.name" class="h-16 w-16 rounded-2xl object-cover" /> } @else { <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-900"><i class="pi pi-image text-neutral-600"></i></span> }
-              <div class="min-w-0 flex-1">
-                <div class="flex flex-wrap items-center gap-2">
-                  <h4 class="truncate text-base font-bold text-white">{{ product.name }}</h4>
-                  <span class="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[10px] uppercase tracking-[0.2em] text-cyan-200">{{ product.category }}</span>
-                </div>
-                <p class="mt-1 text-sm text-neutral-400">{{ product.shortDescription }}</p>
-              </div>
-              <div class="text-end">
-                <p class="text-sm font-black text-white">{{ product.price | currency: 'EGP' }}</p>
-                <a [routerLink]="['/admin/products', product.id, 'edit']" class="text-xs font-semibold text-fuchsia-300">Edit</a>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-
-    <div class="admin-card p-5">
-      <h3 class="admin-section-title">Quick Ops</h3>
-      <div class="mt-4 space-y-3">
-        <a routerLink="/admin/products/new" class="block rounded-3xl border border-fuchsia-500/20 bg-fuchsia-500/10 p-4 transition hover:bg-fuchsia-500/15">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white">Create new release</h4>
-              <p class="text-sm text-neutral-400">Launch a new model with SEO and 3D preview data.</p>
-            </div>
-            <i class="pi pi-plus-circle text-fuchsia-300"></i>
-          </div>
-        </a>
-        <a routerLink="/admin/settings" class="block rounded-3xl border border-cyan-400/20 bg-cyan-400/10 p-4 transition hover:bg-cyan-400/15">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-bold text-white">Sync storefront voice</h4>
-              <p class="text-sm text-neutral-400">Update hero text, WhatsApp number, and support channels.</p>
-            </div>
-            <i class="pi pi-cog text-cyan-300"></i>
-          </div>
-        </a>
-      </div>
-    </div>
-  </div>
+  <p class="dashboard-note">
+    الأرقام تعكس السجلات المحفوظة في المتجر. حالة الطلب لا تثبت تحصيل الدفع، ولا تشمل اللوحة إحصاءات
+    زيارات غير متاحة.
+  </p>
 </section>

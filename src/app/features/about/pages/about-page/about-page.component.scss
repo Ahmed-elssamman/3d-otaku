@@ -1,1 +1,169 @@
-/* Styled exclusively using Tailwind CSS & PrimeNG */
+:host {
+  display: block;
+}
+.about-page {
+  background: var(--shop-bg);
+  color: var(--shop-ink);
+}
+.about-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 4rem;
+  padding-block: clamp(3rem, 7vw, 6rem);
+}
+h1 {
+  font-size: clamp(2.2rem, 4.6vw, 3.8rem);
+  font-weight: 700;
+  line-height: 1.5;
+  margin-block: 1rem 1.4rem;
+}
+h1 span {
+  color: var(--shop-primary);
+}
+.about-lead {
+  max-width: 40rem;
+  color: var(--shop-muted);
+  line-height: 2.1;
+  font-size: 1.08rem;
+}
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.8rem;
+}
+.about-note {
+  background: #e9eee4;
+  border: 1px solid #d7e0cf;
+  border-radius: 26px;
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+.about-note-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: var(--shop-primary);
+  background: #fff9;
+  border-radius: 16px;
+  font-size: 1.4rem;
+}
+.about-note h2 {
+  margin-block: 1.25rem 0.75rem;
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.7;
+}
+.about-note p {
+  line-height: 2;
+  font-size: 0.95rem;
+}
+.about-note p + p {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #ccd6c8;
+  color: var(--shop-muted);
+}
+.about-principles {
+  background: #fff;
+  padding-block: clamp(2.5rem, 5vw, 4.5rem);
+  border-block: 1px solid var(--shop-line);
+}
+.about-section-title {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 700;
+  line-height: 1.7;
+  margin-block: 0.6rem 2rem;
+}
+.about-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.about-card {
+  padding: 1.5rem;
+  background: var(--shop-bg);
+  border: 1px solid var(--shop-line);
+  border-radius: 18px;
+}
+.about-card > i {
+  color: var(--shop-primary);
+  font-size: 1.5rem;
+}
+.about-card h3,
+.about-steps h3 {
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.8;
+  margin-block: 1rem 0.5rem;
+}
+.about-card p,
+.about-steps p {
+  font-size: 0.95rem;
+  line-height: 2;
+  color: var(--shop-muted);
+}
+.about-process {
+  padding-block: clamp(2.5rem, 5vw, 4.5rem);
+}
+.about-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2rem;
+  list-style: none;
+  padding: 0;
+}
+.about-step-number {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #b6c6b4;
+  color: var(--shop-primary);
+  border-radius: 50%;
+  font-weight: 700;
+}
+.about-contact {
+  margin-top: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  background: #e9eee4;
+  border-radius: 20px;
+  padding: 2rem;
+}
+.about-contact h2 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.8;
+}
+.about-contact p {
+  line-height: 1.9;
+  color: var(--shop-muted);
+  margin-top: 0.5rem;
+}
+.about-contact a {
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .about-intro {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+  }
+  .about-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 640px) {
+  .about-card-grid,
+  .about-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .about-contact {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 1.5rem;
+  }
+}

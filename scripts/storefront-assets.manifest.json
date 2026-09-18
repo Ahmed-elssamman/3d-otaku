@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256",
+  "note": "Current aliases match their fingerprinted assets. Noto font glyph-name metadata is optimized as documented in public/assets/fonts/optimization.json; keep all previous fingerprinted files and never overwrite a deployed hash URL with different bytes.",
+  "assets": [
+    {
+      "alias": "/assets/fonts/noto-sans-arabic-400.woff2",
+      "references": ["src/styles.css", "src/index.html"],
+      "url": "/assets/fonts/noto-sans-arabic-400.29eedd73b82f1a4e5cb000ddf880d574d717cf3077eb38609961ceb74436ef8f.woff2",
+      "bytes": 45492,
+      "sha256": "29eedd73b82f1a4e5cb000ddf880d574d717cf3077eb38609961ceb74436ef8f"
+    },
+    {
+      "alias": "/assets/fonts/noto-sans-arabic-700.woff2",
+      "references": ["src/styles.css", "src/index.html"],
+      "url": "/assets/fonts/noto-sans-arabic-700.5decb5a926d745a801dd107e032975730cb57ddbd0504e0530dd07da2f367b96.woff2",
+      "bytes": 46720,
+      "sha256": "5decb5a926d745a801dd107e032975730cb57ddbd0504e0530dd07da2f367b96"
+    },
+    {
+      "alias": "/assets/storefront/knight-phone-holder.webp",
+      "references": ["src/app/features/home/home.control.ts"],
+      "url": "/assets/storefront/knight-phone-holder.c8fc790b3bd5e17bd7747a844a3e3ff4f05844b4acddc5780f89aa236959882f.webp",
+      "bytes": 5786,
+      "sha256": "c8fc790b3bd5e17bd7747a844a3e3ff4f05844b4acddc5780f89aa236959882f"
+    }
+  ]
+}

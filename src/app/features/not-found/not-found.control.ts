@@ -1,7 +1,16 @@
-export const NOT_FOUND_TEXT = {
+export interface NotFoundText {
+  code: string;
+  title: string;
+  subtitle: string;
+  backHomeText: string;
+  browseCatalogText: string;
+}
+
+export const NOT_FOUND_TEXT: NotFoundText = {
   code: '404',
-  title: 'Lost in the Anime Warp',
-  subtitle: 'The 3D model or prop page you are looking for has faded into another dimension.',
-  backHomeText: 'Return to Home',
-  browseCatalogText: 'Browse Prop Armory'
+  title: 'الصفحة غير موجودة.',
+  subtitle:
+    'قد يكون الرابط قد تغيّر أو كُتب بشكل غير صحيح. يمكنك العودة للرئيسية أو البحث عن القطعة التي تريدها.',
+  backHomeText: 'العودة للرئيسية',
+  browseCatalogText: 'تصفح المنتجات',
 };

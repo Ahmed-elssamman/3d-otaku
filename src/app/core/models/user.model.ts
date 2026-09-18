@@ -15,6 +15,15 @@ export interface AuthResponseData {
   refreshToken: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -24,5 +33,5 @@ export interface RegisterRequest {
   fullName: string;
   email: string;
   password: string;
-  confirmPassword?: string;
+  confirmPassword: string;
 }

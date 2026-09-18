@@ -1,3 +1,5 @@
+import { ContactMessageStatus } from '../enums/contact.enum';
+
 export interface ContactMessageRequest {
   fullName: string;
   email: string;
@@ -8,11 +10,20 @@ export interface ContactMessageRequest {
 
 export interface ContactMessageResponse {
   id: string;
+  messageNumber: string;
   createdAt: string;
 }
 
 export interface ContactMessageItem extends ContactMessageRequest {
   id: string;
-  status: 'unread' | 'read';
+  messageNumber: string;
+  status: ContactMessageStatus;
   createdAt: string;
+}
+
+export interface ContactMessageQuery {
+  page?: number;
+  limit?: number;
+  status?: ContactMessageStatus;
+  search?: string;
 }

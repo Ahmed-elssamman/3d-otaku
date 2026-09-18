@@ -18,22 +18,25 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "server": "src/main.server.ts",
+            "ssr": { "entry": "src/server.ts" },
+            "outputMode": "server",
+            "security": { "allowedHosts": ["localhost", "127.0.0.1"] },
             "tsConfig": "tsconfig.app.json",
-            "polyfills": [
-              "zone.js"
-            ],
             "optimization": {
               "fonts": false
             },
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public",
+                "ignore": ["assets/models/shadow-katana.glb", "assets/models/demon-edge-dagger.glb", "assets/models/cyber-samurai-mask.glb", "assets/models/otaku-desk-dragon.glb", "assets/models/shonen-hero-emblem.glb"]
               },
               {
                 "glob": "**/*",
                 "input": "src/assets",
-                "output": "assets"
+                "output": "assets",
+                "ignore": ["models/shadow-katana.glb", "models/demon-edge-dagger.glb", "models/cyber-samurai-mask.glb", "models/otaku-desk-dragon.glb", "models/shonen-hero-emblem.glb"]
               }
             ],
             "styles": [
@@ -43,6 +46,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -67,6 +76,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "3d-otaku:build:production"

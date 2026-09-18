@@ -9,7 +9,7 @@ import {
   inject,
   input,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { ProductModelType } from '@core/enums/product-model-type.enum';
 import { Product } from '@core/models/product.model';
@@ -20,15 +20,16 @@ import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js';
-import { MODEL_COLOR_OPTIONS, VIEWER_FEATURES, VIEWER_RENDER_SETTINGS } from './product-3d-viewer.control';
+import { MODEL_COLOR_OPTIONS, VIEWER_RENDER_SETTINGS } from './product-3d-viewer.control';
 import { AnalyticsService } from '@core/services/analytics.service';
 import { AnalyticsEventName } from '@core/enums/analytics-event-name.enum';
 
 @Component({
   selector: 'app-product-3d-viewer',
   standalone: true,
+  imports: [],
   templateUrl: './product-3d-viewer.component.html',
-  styleUrl: './product-3d-viewer.component.scss'
+  styleUrl: './product-3d-viewer.component.scss',
 })
 export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   private ngZone = inject(NgZone);
@@ -37,7 +38,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   product = input<Product | null>(null);
   modelUrl = input<string>('');
   modelType = input<ProductModelType>(ProductModelType.GLB);
-  modelName = input<string>('3D anime collectible');
+  modelName = input<string>('مجسم مطبوع');
   posterImage = input<string>('');
   compact = input<boolean>(false);
 
@@ -52,34 +53,46 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   detectedFormat = signal<ProductModelType>(ProductModelType.GLB);
   isFullscreen = signal<boolean>(false);
   viewReady = signal<boolean>(false);
-  selectedColor = signal<string>('#f8fafc');
+  selectedColor = signal<string>('');
 
-  readonly colorOptions = MODEL_COLOR_OPTIONS;
+  colorOptions = MODEL_COLOR_OPTIONS;
+  viewerNotice = signal('');
 
-  resolvedModelUrl = computed(() => this.modelUrl().trim() || this.product()?.modelUrl?.trim() || '');
+  resolvedModelUrl = computed(
+    () => this.modelUrl().trim() || this.product()?.modelUrl?.trim() || '',
+  );
   resolvedModelName = computed(() => this.product()?.name || this.modelName());
+  resolvedPoster = computed(
+    () => this.posterImage() || this.product()?.posterImage || this.product()?.image || '',
+  );
+  viewerLabel = computed(() => `معاينة تفاعلية: ${this.resolvedModelName()}`);
+  sceneLabel = computed(() => `مجسم ثلاثي الأبعاد: ${this.resolvedModelName()}`);
+  canInteract = computed(() => this.isLoaded() && !this.hasError());
+  fullscreenActionLabel = computed(() =>
+    this.isFullscreen() ? 'الخروج من ملء الشاشة' : 'عرض بملء الشاشة',
+  );
   loadingLabel = computed(() => {
     const progress = this.loadProgress();
-    return progress > 0 ? `Loading model ${progress}%` : 'Loading interactive model';
+    return progress > 0 ? `جاري تحميل المجسم ${progress}٪` : 'جاري تجهيز المعاينة';
   });
-  rotationActionLabel = computed(() => this.isAutoRotating() ? 'Pause rotation' : 'Start rotation');
-  viewerFeatures = VIEWER_FEATURES;
+  rotationActionLabel = computed(() => (this.isAutoRotating() ? 'إيقاف الدوران' : 'تشغيل الدوران'));
 
   private scene: THREE.Scene | null = null;
   private camera: THREE.PerspectiveCamera | null = null;
   private renderer: THREE.WebGLRenderer | null = null;
   private controls: OrbitControls | null = null;
   private currentObject: THREE.Object3D | null = null;
-  private emberField: THREE.Points | null = null;
+  private displayStage: THREE.Mesh | null = null;
   private resizeObserver: ResizeObserver | null = null;
+  private visibilityObserver: IntersectionObserver | null = null;
+  private isViewerVisible = true;
   private animationFrameId: number | null = null;
   private loadSequence = 0;
   private modelSize = 1;
-  private elapsedTime = 0;
   private loadTimeoutId: number | null = null;
 
   constructor() {
-    effect(onCleanup => {
+    effect((onCleanup) => {
       const modelPath = this.resolvedModelUrl();
       const ready = this.viewReady();
       const format = this.resolveFormat(modelPath);
@@ -96,6 +109,15 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     document.addEventListener('fullscreenchange', this.handleFullscreenChange);
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+    const shell = this.viewerShellRef()?.nativeElement;
+    if (shell) {
+      this.visibilityObserver = new IntersectionObserver((entries) => {
+        this.isViewerVisible = entries.some((entry) => entry.isIntersecting);
+        this.updateRenderActivity();
+      });
+      this.visibilityObserver.observe(shell);
+    }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       this.isAutoRotating.set(false);
     }
@@ -104,11 +126,13 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    this.visibilityObserver?.disconnect();
     this.disposeViewer();
   }
 
   toggleAutoRotate(): void {
-    this.isAutoRotating.update(value => !value);
+    this.isAutoRotating.update((value) => !value);
     if (this.controls) {
       this.controls.autoRotate = this.isAutoRotating();
     }
@@ -123,11 +147,11 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     const isDark = colorHex === '#18181b';
     const targetColor = new THREE.Color(colorHex);
 
-    this.currentObject.traverse(child => {
+    this.currentObject.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.isMesh && mesh.material) {
         if (Array.isArray(mesh.material)) {
-          mesh.material.forEach(mat => {
+          mesh.material.forEach((mat) => {
             if ('color' in mat) {
               (mat as THREE.MeshStandardMaterial).color.copy(targetColor);
               (mat as THREE.MeshStandardMaterial).metalness = isDark ? 0.25 : 0.08;
@@ -157,18 +181,13 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.recenterAndRefit();
   }
 
-  flipUpright(): void {
-    if (!this.currentObject) return;
-    this.currentObject.rotation.x += Math.PI;
-    this.recenterAndRefit();
-  }
-
   private recenterAndRefit(): void {
     if (!this.currentObject) return;
     this.currentObject.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(this.currentObject);
     const center = box.getCenter(new THREE.Vector3());
     this.currentObject.position.sub(center);
+    this.addDisplayStage(box.getSize(new THREE.Vector3()));
     if (this.controls && this.camera) {
       this.fitCameraToObject(this.currentObject);
     }
@@ -188,18 +207,19 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.adjustZoom(1.28);
   }
 
-  toggleFullscreen(): void {
+  async toggleFullscreen(): Promise<void> {
     const shell = this.viewerShellRef()?.nativeElement;
     if (!shell) {
       return;
     }
 
-    if (document.fullscreenElement) {
-      void document.exitFullscreen();
-      return;
+    this.viewerNotice.set('');
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await shell.requestFullscreen();
+    } catch {
+      this.viewerNotice.set('عرض ملء الشاشة مش متاح دلوقتي. تقدر تكمل المعاينة هنا.');
     }
-
-    void shell.requestFullscreen();
   }
 
   retryModel(): void {
@@ -217,7 +237,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
       cancelAnimationFrame(this.animationFrameId);
       this.animationFrameId = null;
     }
-    this.handleModelError('The 3D graphics context was interrupted. The viewer will reload when it is restored.');
+    this.handleModelError('المعاينة اتوقفت مؤقتًا. هنحاول تحميلها تاني لما المتصفح يكون جاهز.');
   }
 
   onWebglContextRestored(): void {
@@ -232,7 +252,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
     const productType = this.product()?.modelType?.toString().toUpperCase();
     const requestedType = productType || this.modelType();
-    const matchingType = Object.values(ProductModelType).find(type => type === requestedType);
+    const matchingType = Object.values(ProductModelType).find((type) => type === requestedType);
     return matchingType ?? ProductModelType.GLB;
   }
 
@@ -243,23 +263,27 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.isSafeModelUrl(modelPath)) {
-      this.handleModelError('The interactive model URL is not valid. Product photos and ordering remain available.');
-      return;
-    }
-
-    if (!this.supportsWebGl()) {
-      this.handleModelError('Interactive 3D is unavailable in this browser. You can continue using the product photos and details.');
-      return;
-    }
-
+    this.loadSequence += 1;
+    const activeLoad = this.loadSequence;
+    this.clearLoadTimeout();
     this.disposeSceneResources();
     this.isLoaded.set(false);
     this.hasError.set(false);
     this.errorMessage.set('');
     this.loadProgress.set(0);
-    this.loadSequence += 1;
-    const activeLoad = this.loadSequence;
+    this.selectedColor.set('');
+
+    if (!this.isSafeModelUrl(modelPath)) {
+      this.handleModelError('رابط المجسم غير متاح. تقدر ترجع للصور وتفاصيل المنتج وتكمل طلبك.');
+      return;
+    }
+
+    if (!this.supportsWebGl()) {
+      this.handleModelError(
+        'المتصفح ده مش بيدعم المعاينة التفاعلية. تقدر تشوف صور المنتج وتفاصيله.',
+      );
+      return;
+    }
 
     const width = Math.max(shell.clientWidth, 320);
     const height = Math.max(shell.clientHeight, this.compact() ? 288 : 520);
@@ -272,7 +296,9 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     try {
       this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
       this.renderer.setSize(width, height, false);
-      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, VIEWER_RENDER_SETTINGS.maxPixelRatio));
+      this.renderer.setPixelRatio(
+        Math.min(window.devicePixelRatio, VIEWER_RENDER_SETTINGS.maxPixelRatio),
+      );
       this.renderer.outputColorSpace = THREE.SRGBColorSpace;
       this.renderer.toneMapping = THREE.NoToneMapping;
       this.renderer.toneMappingExposure = 1;
@@ -287,18 +313,19 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
       this.controls.autoRotateSpeed = VIEWER_RENDER_SETTINGS.autoRotateSpeed;
 
       this.addNeutralLights();
-      this.createEmberField();
       this.observeViewerSize(shell);
       this.loadModel(modelPath, format, activeLoad);
       this.loadTimeoutId = window.setTimeout(() => {
         if (!this.isLoaded() && activeLoad === this.loadSequence) {
-          this.handleModelError('The interactive model took too long to load. Product photos and ordering remain available.');
+          this.handleModelError(
+            'تحميل المجسم أخد وقت أطول من المتوقع. حاول تاني أو ارجع لصور المنتج.',
+          );
         }
       }, 30000);
       this.startRenderLoop();
     } catch {
       this.disposeSceneResources();
-      this.handleModelError('Interactive 3D could not start. You can continue using the product photos and details.');
+      this.handleModelError('تعذر تشغيل المعاينة. صور المنتج وتفاصيله لسه متاحة.');
     }
   }
 
@@ -325,33 +352,6 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.scene.add(backLight);
   }
 
-  private createEmberField(): void {
-    if (!this.scene) {
-      return;
-    }
-
-    const count = VIEWER_RENDER_SETTINGS.backgroundEmberCount;
-    const positions = new Float32Array(count * 3);
-    for (let index = 0; index < count; index += 1) {
-      positions[index * 3] = (Math.random() - 0.5) * 12;
-      positions[index * 3 + 1] = (Math.random() - 0.5) * 10;
-      positions[index * 3 + 2] = (Math.random() - 0.5) * 6 - 2;
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({
-      color: 0xff6a00,
-      size: 0.045,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    this.emberField = new THREE.Points(geometry, material);
-    this.scene.add(this.emberField);
-  }
-
   private loadModel(modelPath: string, format: ProductModelType, activeLoad: number): void {
     const complete = (object: THREE.Object3D): void => {
       if (activeLoad !== this.loadSequence) {
@@ -368,26 +368,41 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     };
 
     if (format === ProductModelType.STL) {
-      new STLLoader().load(modelPath, geometry => {
-        geometry.computeVertexNormals();
-        geometry.rotateX(-Math.PI / 2);
-        geometry.center();
-        complete(new THREE.Mesh(geometry, this.createFallbackMaterial(false)));
-      }, event => this.updateLoadProgress(event), fail);
+      new STLLoader().load(
+        modelPath,
+        (geometry) => {
+          geometry.computeVertexNormals();
+          geometry.rotateX(-Math.PI / 2);
+          geometry.center();
+          complete(new THREE.Mesh(geometry, this.createFallbackMaterial(false)));
+        },
+        (event) => this.updateLoadProgress(event),
+        fail,
+      );
       return;
     }
 
     if (format === ProductModelType.OBJ) {
-      new OBJLoader().load(modelPath, object => complete(object), event => this.updateLoadProgress(event), fail);
+      new OBJLoader().load(
+        modelPath,
+        (object) => complete(object),
+        (event) => this.updateLoadProgress(event),
+        fail,
+      );
       return;
     }
 
     if (format === ProductModelType.PLY) {
-      new PLYLoader().load(modelPath, geometry => {
-        geometry.computeVertexNormals();
-        const material = this.createFallbackMaterial(geometry.hasAttribute('color'));
-        complete(new THREE.Mesh(geometry, material));
-      }, event => this.updateLoadProgress(event), fail);
+      new PLYLoader().load(
+        modelPath,
+        (geometry) => {
+          geometry.computeVertexNormals();
+          const material = this.createFallbackMaterial(geometry.hasAttribute('color'));
+          complete(new THREE.Mesh(geometry, material));
+        },
+        (event) => this.updateLoadProgress(event),
+        fail,
+      );
       return;
     }
 
@@ -396,19 +411,19 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     loader.load(
       modelPath,
       (gltf: GLTF) => complete(gltf.scene),
-      event => this.updateLoadProgress(event),
-      fail
+      (event) => this.updateLoadProgress(event),
+      fail,
     );
   }
 
   private createFallbackMaterial(vertexColors: boolean): THREE.MeshStandardMaterial {
-    const colorHex = this.selectedColor();
+    const colorHex = this.selectedColor() || '#f8fafc';
     const isDark = colorHex === '#18181b';
     return new THREE.MeshStandardMaterial({
       color: new THREE.Color(colorHex),
       metalness: isDark ? 0.25 : 0.08,
       roughness: isDark ? 0.45 : 0.42,
-      vertexColors
+      vertexColors,
     });
   }
 
@@ -426,11 +441,11 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
     if (!this.hasRenderableGeometry(object)) {
       this.disposeObject(object);
-      this.handleModelError(`This ${this.detectedFormat()} file does not contain renderable 3D geometry.`);
+      this.handleModelError('الملف مفيهوش مجسم قابل للعرض. تقدر تستخدم صور المنتج للمراجعة.');
       return;
     }
 
-    object.traverse(child => {
+    object.traverse((child) => {
       const mesh = child as THREE.Mesh;
       if (mesh.isMesh) {
         mesh.castShadow = true;
@@ -442,9 +457,9 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     const center = initialBox.getCenter(new THREE.Vector3());
     const size = initialBox.getSize(new THREE.Vector3());
     const bounds = [center.x, center.y, center.z, size.x, size.y, size.z];
-    if (initialBox.isEmpty() || !bounds.every(value => Number.isFinite(value))) {
+    if (initialBox.isEmpty() || !bounds.every((value) => Number.isFinite(value))) {
       this.disposeObject(object);
-      this.handleModelError(`This ${this.detectedFormat()} file has invalid model dimensions.`);
+      this.handleModelError('تعذر قراءة أبعاد المجسم. تقدر تستخدم صور المنتج للمراجعة.');
       return;
     }
     object.position.sub(center);
@@ -465,7 +480,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
   private hasRenderableGeometry(object: THREE.Object3D): boolean {
     let hasGeometry = false;
-    object.traverse(child => {
+    object.traverse((child) => {
       const mesh = child as THREE.Mesh;
       const positionAttribute = mesh.geometry?.getAttribute('position');
       if (mesh.isMesh && positionAttribute && positionAttribute.count > 0) {
@@ -480,37 +495,27 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    if (this.displayStage) {
+      this.scene.remove(this.displayStage);
+      this.disposeObject(this.displayStage);
+    }
+
     const radius = Math.max(size.x, size.z, this.modelSize * 0.55) * 0.78;
     const floorY = -(size.y / 2) - this.modelSize * 0.025;
 
     const floorMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0x08030a,
-      metalness: 0.48,
-      roughness: 0.38,
+      color: 0xc5cdbf,
+      metalness: 0,
+      roughness: 0.9,
       transparent: true,
-      opacity: 0.88
+      opacity: 0.88,
     });
     const floor = new THREE.Mesh(new THREE.CircleGeometry(radius * 1.35, 72), floorMaterial);
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = floorY;
     floor.receiveShadow = true;
+    this.displayStage = floor;
     this.scene.add(floor);
-
-    const auraMaterial = new THREE.MeshBasicMaterial({
-      color: 0xff3d00,
-      transparent: true,
-      opacity: 0.62,
-      blending: THREE.AdditiveBlending,
-      side: THREE.DoubleSide,
-      depthWrite: false
-    });
-    const auraRing = new THREE.Mesh(
-      new THREE.RingGeometry(radius * 0.88, radius, 96),
-      auraMaterial
-    );
-    auraRing.rotation.x = -Math.PI / 2;
-    auraRing.position.y = floorY + this.modelSize * 0.006;
-    this.scene.add(auraRing);
   }
 
   private fitCameraToObject(object: THREE.Object3D): void {
@@ -547,7 +552,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     const nextDistance = THREE.MathUtils.clamp(
       direction.length() * factor,
       this.controls.minDistance,
-      this.controls.maxDistance
+      this.controls.maxDistance,
     );
     direction.setLength(nextDistance);
     this.camera.position.copy(this.controls.target).add(direction);
@@ -556,7 +561,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
   private observeViewerSize(shell: HTMLElement): void {
     this.resizeObserver?.disconnect();
-    this.resizeObserver = new ResizeObserver(entries => {
+    this.resizeObserver = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry || !this.renderer || !this.camera) {
         return;
@@ -574,7 +579,10 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   private startRenderLoop(): void {
     if (this.animationFrameId !== null) {
       cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
+
+    if (!this.isViewerVisible || document.hidden || this.hasError()) return;
 
     this.ngZone.runOutsideAngular(() => {
       const render = (): void => {
@@ -583,13 +591,7 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
         }
 
         this.animationFrameId = requestAnimationFrame(render);
-        this.elapsedTime += 0.008;
         this.controls?.update();
-
-        if (this.emberField) {
-          this.emberField.rotation.y += 0.0007;
-          this.emberField.position.y = Math.sin(this.elapsedTime) * this.modelSize * 0.035;
-        }
 
         this.renderer.render(this.scene, this.camera);
       };
@@ -599,18 +601,27 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
 
   private handleModelError(message?: string): void {
     this.clearLoadTimeout();
+    this.loadSequence += 1;
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
     this.analytics.track(AnalyticsEventName.VIEWER_FAILED, { format: this.detectedFormat() });
     this.ngZone.run(() => {
       this.isLoaded.set(true);
       this.hasError.set(true);
-      this.errorMessage.set(message || `This ${this.detectedFormat()} file could not be loaded. Product photos and ordering remain available.`);
+      this.errorMessage.set(
+        message || 'تعذر تحميل المجسم. تقدر ترجع لصور المنتج وتفاصيله وتكمل طلبك.',
+      );
     });
   }
 
   private supportsWebGl(): boolean {
     try {
       const canvas = document.createElement('canvas');
-      return Boolean(window.WebGLRenderingContext && (canvas.getContext('webgl2') || canvas.getContext('webgl')));
+      return Boolean(
+        window.WebGLRenderingContext && (canvas.getContext('webgl2') || canvas.getContext('webgl')),
+      );
     } catch {
       return false;
     }
@@ -619,7 +630,9 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   private isSafeModelUrl(path: string): boolean {
     try {
       const url = new URL(path, document.baseURI);
-      return (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password;
+      return (
+        (url.protocol === 'https:' || url.protocol === 'http:') && !url.username && !url.password
+      );
     } catch {
       return false;
     }
@@ -635,6 +648,19 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
   private handleFullscreenChange = (): void => {
     this.isFullscreen.set(document.fullscreenElement === this.viewerShellRef()?.nativeElement);
   };
+
+  private handleVisibilityChange = (): void => {
+    this.updateRenderActivity();
+  };
+
+  private updateRenderActivity(): void {
+    if (this.isViewerVisible && !document.hidden) {
+      this.startRenderLoop();
+    } else if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+  }
 
   private disposeViewer(): void {
     this.loadSequence += 1;
@@ -663,20 +689,26 @@ export class Product3dViewerComponent implements AfterViewInit, OnDestroy {
     this.scene = null;
     this.camera = null;
     this.currentObject = null;
-    this.emberField = null;
+    this.displayStage = null;
   }
 
   private disposeObject(object: THREE.Object3D): void {
-    object.traverse(child => {
+    object.traverse((child) => {
       const mesh = child as THREE.Mesh;
-      if (!mesh.isMesh && !(child instanceof THREE.LineSegments) && !(child instanceof THREE.Points)) {
+      if (
+        !mesh.isMesh &&
+        !(child instanceof THREE.LineSegments) &&
+        !(child instanceof THREE.Points)
+      ) {
         return;
       }
 
       const renderable = child as THREE.Mesh;
       renderable.geometry?.dispose();
-      const materials = Array.isArray(renderable.material) ? renderable.material : [renderable.material];
-      materials.forEach(material => material?.dispose());
+      const materials = Array.isArray(renderable.material)
+        ? renderable.material
+        : [renderable.material];
+      materials.forEach((material) => material?.dispose());
     });
   }
 }

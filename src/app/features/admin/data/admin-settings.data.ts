@@ -6,7 +6,7 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   brandName: APP_CONSTANTS.BRAND_NAME,
   slogan: '',
   whatsappNumber: environment.whatsAppNumber,
-  whatsappDefaultMessage: 'Hello 3D Otaku, I would like to ask about an order.',
+  whatsappDefaultMessage: '',
   email: '',
   phone: environment.storePhone,
   address: '',
@@ -14,8 +14,8 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   instagramUrl: '',
   tiktokUrl: '',
   youtubeUrl: '',
-  heroTitle: 'Your favorite character, made for your world.',
-  heroSubtitle: 'Browse available designs or send your idea for a feasibility review.',
+  heroTitle: '',
+  heroSubtitle: '',
   heroImageUrl: '',
   defaultCurrency: environment.defaultCurrency,
   deliveryNote: '',
@@ -23,5 +23,4 @@ export const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   maintenanceMode: false,
   deliveryFee: null,
   deliveryDays: '',
-  deliveryInfoNote: ''
 };

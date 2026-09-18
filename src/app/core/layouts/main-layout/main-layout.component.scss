@@ -1,1 +1,17 @@
-/* Main Layout SCSS */
+.storefront-layout {
+  background: var(--shop-bg);
+  color: var(--shop-ink);
+}
+.skip-link {
+  position: fixed;
+  inset-inline-start: 1rem;
+  inset-block-start: -5rem;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  background: var(--shop-primary);
+  color: white;
+  border-radius: 0.5rem;
+}
+.skip-link:focus {
+  inset-block-start: 1rem;
+}

@@ -1,0 +1,165 @@
+<div class="tracking-page shop-container" dir="rtl">
+  <header class="page-heading">
+    <p class="eyebrow">طلبك المحفوظ</p>
+    <h1>{{ text.title }}</h1>
+    <p>{{ text.description }}</p>
+  </header>
+
+  @if (!order()) {
+    <p class="privacy-note">{{ text.privacy }}</p>
+  }
+
+  @switch (state()) {
+    @case (states.Initializing) {
+      <p class="state-panel" role="status">{{ text.loading }}</p>
+    }
+    @case (states.Loading) {
+      <p class="state-panel" role="status">{{ text.loading }}</p>
+    }
+    @case (states.Missing) {
+      <section class="state-panel" aria-label="فتح متابعة الطلب">
+        <p>{{ text.missing }}</p>
+        @if (canShowSaved()) {
+          <button type="button" class="primary-button" (click)="showSavedOrder()">
+            {{ text.saved }}
+          </button>
+          <p class="muted">{{ text.savedHint }}</p>
+        }
+      </section>
+    }
+    @case (states.Invalid) {
+      <p class="state-panel error-note" role="alert">{{ text.invalid }}</p>
+    }
+    @case (states.Error) {
+      <section class="state-panel">
+        <p class="error-note" role="alert">{{ error() }}</p>
+        <button type="button" class="primary-button" [disabled]="!canRetry()" (click)="retry()">
+          {{ text.retry }}
+        </button>
+      </section>
+    }
+  }
+
+  @if (order(); as receipt) {
+    <section class="receipt" aria-labelledby="tracked-order-title">
+      <header class="receipt-heading">
+        <div>
+          <h2 id="tracked-order-title" tabindex="-1">تفاصيل طلبك</h2>
+          <p class="order-number">
+            رقم الطلب: <bdi>{{ receipt.orderNumber }}</bdi>
+          </p>
+        </div>
+        <button type="button" class="secondary-button" [disabled]="!canRetry()" (click)="retry()">
+          {{ text.refresh }}
+        </button>
+      </header>
+
+      <div class="status-panel">
+        <strong>{{ status().labelAr }}</strong>
+        <p>{{ status().descriptionAr }}</p>
+      </div>
+
+      <app-private-order-link [order]="receipt" />
+
+      <div class="receipt-grid">
+        <section class="receipt-section" aria-labelledby="tracking-items-heading">
+          <h3 id="tracking-items-heading">القطع المسجّلة في الطلب</h3>
+          <ul class="order-items">
+            @for (item of receipt.items; track item.productId) {
+              <li>
+                <div class="item-heading">
+                  <strong>{{ item.name }}</strong>
+                  <span>{{ item.lineTotal | number: '1.0-2' }} ج.م</span>
+                </div>
+                <p class="muted">الكمية: {{ item.quantity }}</p>
+                <app-order-item-configuration [configuration]="item.configuration ?? null" />
+              </li>
+            }
+          </ul>
+          <dl class="totals">
+            <div>
+              <dt>إجمالي القطع</dt>
+              <dd>{{ receipt.subtotal | number: '1.0-2' }} ج.م</dd>
+            </div>
+            @if (receipt.discount > 0) {
+              <div>
+                <dt>الخصم</dt>
+                <dd>{{ receipt.discount | number: '1.0-2' }} ج.م</dd>
+              </div>
+            }
+            <div>
+              <dt>رسوم الشحن</dt>
+              <dd>
+                @if (receipt.deliveryFeeConfirmed) {
+                  {{ receipt.deliveryFee | number: '1.0-2' }} ج.م
+                } @else {
+                  تُحدّد بالاتفاق معك
+                }
+              </dd>
+            </div>
+            <div class="total">
+              <dt>{{ totalLabel() }}</dt>
+              <dd>{{ receipt.total | number: '1.0-2' }} ج.م</dd>
+            </div>
+          </dl>
+          <app-order-payment-summary [summary]="receipt.paymentSummary ?? null" />
+        </section>
+
+        <section class="receipt-section" aria-labelledby="tracking-delivery-heading">
+          <h3 id="tracking-delivery-heading">بيانات التوصيل المسجّلة</h3>
+          <dl class="delivery-details">
+            <div>
+              <dt>الاسم</dt>
+              <dd>{{ receipt.customer.fullName }}</dd>
+            </div>
+            <div>
+              <dt>رقم الهاتف</dt>
+              <dd>
+                <bdi>{{ receipt.customer.phone }}</bdi>
+              </dd>
+            </div>
+            @if (receipt.customer.governorate) {
+              <div>
+                <dt>المحافظة</dt>
+                <dd>{{ receipt.customer.governorate }}</dd>
+              </div>
+            }
+            @if (receipt.customer.city) {
+              <div>
+                <dt>المدينة أو المنطقة</dt>
+                <dd>{{ receipt.customer.city }}</dd>
+              </div>
+            }
+            <div>
+              <dt>العنوان</dt>
+              <dd>{{ receipt.customer.address }}</dd>
+            </div>
+          </dl>
+          @if (history().length) {
+            <h3>{{ historyText.title }}</h3>
+            <ol class="order-history" [attr.aria-label]="historyText.listLabel">
+              @for (event of history(); track event.id) {
+                <li>
+                  <strong>{{ event.label }}</strong>
+                  <time [attr.datetime]="event.createdAt">{{
+                    event.createdAt | date: 'dd/MM/yyyy، HH:mm'
+                  }}</time>
+                  @if (event.publicNote) {
+                    <p>{{ event.publicNote }}</p>
+                  }
+                </li>
+              }
+            </ol>
+          }
+        </section>
+      </div>
+      <p class="muted">{{ text.notPayment }}</p>
+    </section>
+  }
+
+  <nav class="tracking-links" aria-label="المساعدة والتسوق">
+    <a routerLink="/contact">تواصل مع المتجر</a>
+    <a routerLink="/cart">الرجوع للسلة</a>
+    <a routerLink="/products">تصفّح المنتجات</a>
+  </nav>
+</div>

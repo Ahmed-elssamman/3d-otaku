@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.private-order-link {
+  border-color: var(--shop-line);
+  background: var(--shop-surface, #faf9f5);
+  color: var(--shop-ink);
+}
+
+.muted {
+  color: var(--shop-muted);
+}
+
+.secondary-button {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--shop-line);
+  border-radius: 0.8rem;
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
+}
+
+button:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--shop-primary);
+  outline-offset: 3px;
+}
+
+textarea {
+  border-color: var(--shop-line);
+  overflow-wrap: anywhere;
+  resize: vertical;
+}

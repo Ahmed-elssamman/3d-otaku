@@ -19,5 +19,4 @@ export interface AdminSettings {
   maintenanceMode: boolean;
   deliveryFee?: number | null;
   deliveryDays?: string;
-  deliveryInfoNote?: string;
 }

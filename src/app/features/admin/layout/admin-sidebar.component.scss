@@ -1,3 +1,44 @@
 :host {
   display: contents;
 }
+
+.admin-nav-link {
+  color: var(--shop-muted);
+}
+.admin-nav-link:hover,
+.admin-nav-link.admin-nav-active {
+  background: #eef3e9;
+  color: var(--shop-primary);
+}
+
+.admin-sidebar {
+  --closed-offset: -100%;
+  transform: translateX(var(--closed-offset));
+  visibility: hidden;
+  pointer-events: none;
+  transition: transform 180ms ease;
+}
+
+:host-context([dir='rtl']) .admin-sidebar {
+  --closed-offset: 100%;
+}
+
+.admin-sidebar.sidebar-open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+
+@media (min-width: 1024px) {
+  .admin-sidebar {
+    transform: none;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-sidebar {
+    transition: none;
+  }
+}

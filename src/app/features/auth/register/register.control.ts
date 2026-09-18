@@ -1,15 +1,10 @@
-export interface RegisterFormModel {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  acceptTerms: boolean;
-}
+import { RegisterRequest } from '@core/models/user.model';
 
-export const REGISTER_DEFAULT_VALUES: RegisterFormModel = {
+export const REGISTER_DEFAULT_VALUES: RegisterRequest = {
   fullName: '',
   email: '',
   password: '',
   confirmPassword: '',
-  acceptTerms: false
 };
+
+export const REGISTER_PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,128}$/;

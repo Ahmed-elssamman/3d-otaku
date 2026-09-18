@@ -1,122 +1,603 @@
-<main class="mx-auto max-w-6xl space-y-16 px-4 py-12 sm:px-6 lg:px-8">
-  <header class="rounded-3xl border border-purple-500/30 bg-gradient-to-br from-purple-950/30 to-neutral-950 p-8 lg:p-12">
-    <span class="vt-badge vt-badge-pink">Direct Contact & Support</span>
-    <h1 class="mt-4 max-w-4xl text-3xl font-black text-white sm:text-5xl">
-      {{ settings().brandName || '3D Otaku' }} Support & Custom Design Review
-    </h1>
-    <p class="mt-4 max-w-3xl text-neutral-300">
-      {{ settings().slogan || 'Have questions or a custom anime prop in mind? Connect directly with our studio or submit your design for feasibility review.' }}
+<div class="contact-page shop-container py-10 md:py-16">
+  <header class="contact-intro">
+    <span class="eyebrow">فكرة جديدة، أو سؤال بسيط</span>
+    <h1>خلّينا نساعدك تاخد الخطوة الجاية.</h1>
+    <p>
+      قطعة لمكتبك، هدية بطابعك، أو تصميم في بالك. ابعتلنا التفاصيل ونراجع معاك إمكانية الطباعة
+      والتكلفة قبل التنفيذ.
     </p>
   </header>
 
-  <!-- Direct Store Contact Channels from Admin Settings -->
-  <section aria-label="Direct Contact Channels">
-    <h2 class="text-2xl font-black text-white mb-6">Contact Channels</h2>
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      
-      <!-- WhatsApp Support -->
-      @if (settings().whatsappNumber) {
-        <a [href]="whatsappDirectUrl()" target="_blank" rel="noopener noreferrer" class="group rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-950/20 to-neutral-950 p-5 transition-all hover:border-emerald-400 hover:scale-[1.02] shadow-lg">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500/30">
-            <i class="pi pi-whatsapp text-xl"></i>
-          </div>
-          <h3 class="mt-3 font-bold text-white">WhatsApp Support</h3>
-          <p class="mt-1 text-sm font-semibold text-emerald-400">{{ settings().whatsappNumber }}</p>
-          <span class="mt-2 block text-xs text-neutral-400">Instant chat & order tracking</span>
-        </a>
-      }
-
-      <!-- Direct Phone Call -->
-      @if (settings().phone) {
-        <a [href]="phoneUrl()" class="group rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-950/20 to-neutral-950 p-5 transition-all hover:border-purple-400 hover:scale-[1.02] shadow-lg">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 group-hover:bg-purple-500/30">
-            <i class="pi pi-phone text-xl"></i>
-          </div>
-          <h3 class="mt-3 font-bold text-white">Direct Phone Call</h3>
-          <p class="mt-1 text-sm font-semibold text-purple-300">{{ settings().phone }}</p>
-          <span class="mt-2 block text-xs text-neutral-400">Call for immediate inquiries</span>
-        </a>
-      }
-
-      <!-- Official Email -->
-      @if (settings().email) {
-        <a [href]="emailUrl()" class="group rounded-2xl border border-pink-500/30 bg-gradient-to-b from-pink-950/20 to-neutral-950 p-5 transition-all hover:border-pink-400 hover:scale-[1.02] shadow-lg">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-500/20 text-pink-400 group-hover:bg-pink-500/30">
-            <i class="pi pi-envelope text-xl"></i>
-          </div>
-          <h3 class="mt-3 font-bold text-white">Email Us</h3>
-          <p class="mt-1 text-sm font-semibold text-pink-300 truncate">{{ settings().email }}</p>
-          <span class="mt-2 block text-xs text-neutral-400">Commercial & custom quotes</span>
-        </a>
-      }
-
-      <!-- Store Location -->
-      @if (settings().address) {
-        <div class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5 shadow-lg">
-          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-800 text-neutral-300">
-            <i class="pi pi-map-marker text-xl"></i>
-          </div>
-          <h3 class="mt-3 font-bold text-white">Workshop & Studio</h3>
-          <p class="mt-1 text-sm font-semibold text-neutral-200">{{ settings().address }}</p>
-          <span class="mt-2 block text-xs text-neutral-400">Production and dispatch hub</span>
-        </div>
-      }
-
-    </div>
-
-    <!-- Social Media Channels & Working Hours -->
-    @if (socialLinks().length > 0 || settings().deliveryDays) {
-      <div class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-800/80 bg-neutral-950/60 p-4 text-xs text-neutral-400">
-        @if (settings().deliveryDays) {
-          <div class="flex items-center gap-2">
-            <i class="pi pi-clock text-amber-400"></i>
-            <span><strong>Working & Delivery Hours:</strong> {{ settings().deliveryDays }}</span>
-          </div>
-        }
-        @if (socialLinks().length > 0) {
-          <div class="flex items-center gap-3">
-            <span class="font-bold text-neutral-300">Follow Our Studio:</span>
-            @for (link of socialLinks(); track link.id) {
-              <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label" class="flex h-7 w-7 items-center justify-center rounded-lg bg-neutral-900 text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white">
-                <i [class]="link.icon"></i>
-              </a>
-            }
-          </div>
+  <div class="contact-layout mt-10 lg:mt-14">
+    <div class="min-w-0">
+      <div class="mode-switch" role="group" aria-label="نوع التواصل">
+        @for (option of modes; track option.value) {
+          <button
+            type="button"
+            [class.selected]="mode() === option.value"
+            [attr.aria-pressed]="mode() === option.value"
+            [disabled]="isBusy()"
+            (click)="selectMode(option.value)"
+          >
+            {{ option.label }}
+          </button>
         }
       </div>
-    }
+
+      @if (draftStorageUnavailable()) {
+        <p class="form-error draft-storage-error" role="alert">
+          {{ recoveryText.draftStorageUnavailable }}
+        </p>
+      }
+
+      @if (mode() === contactMode.Custom) {
+        @if (requestNumber()) {
+          <section class="form-card result-card" aria-labelledby="custom-result" aria-live="polite">
+            <span class="result-icon pi pi-check" aria-hidden="true"></span>
+            <h2 id="custom-result" tabindex="-1">وصلنا طلبك للمراجعة</h2>
+            <p>احتفظ برقم الطلب للمتابعة:</p>
+            <strong class="reference-number" dir="ltr">{{ requestNumber() }}</strong>
+            <p>
+              هنراجع التصميم والتفاصيل ونتواصل معاك على الرقم اللي كتبته. إرسال الطلب مش تأكيد شراء
+              أو بدء تنفيذ.
+            </p>
+            @if (customReceiptSummary(); as summary) {
+              <section class="request-summary" [attr.aria-label]="recoveryText.savedDetails">
+                <h3>{{ recoveryText.savedDetails }}</h3>
+                <p>
+                  {{ summary.fullName }} · <bdi dir="ltr">{{ summary.contact }}</bdi>
+                </p>
+                <p class="request-description">{{ summary.description }}</p>
+                @if (summary.dimensions) {
+                  <p>
+                    المقاس التقريبي: <bdi>{{ summary.dimensions }}</bdi>
+                  </p>
+                }
+              </section>
+            }
+            @if (retainsCustomDraft()) {
+              <p class="draft-retained" role="status">{{ recoveryText.retained }}</p>
+            }
+            <div class="flex flex-wrap justify-center gap-3 mt-6">
+              @if (generatedWhatsAppUrl()) {
+                <a
+                  [href]="generatedWhatsAppUrl()"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="shop-button shop-button-primary"
+                  >تابع على واتساب <i class="pi pi-whatsapp" aria-hidden="true"></i
+                ></a>
+              }
+              <button
+                type="button"
+                (click)="resetCustomForm()"
+                class="shop-button shop-button-secondary"
+              >
+                {{ customReturnLabel() }}
+              </button>
+              <a routerLink="/products" class="text-link">تصفح المنتجات</a>
+            </div>
+          </section>
+        } @else {
+          <section class="form-card" aria-labelledby="custom-title">
+            <h2 id="custom-title" tabindex="-1">احكيلنا عن فكرتك</h2>
+            <p class="form-description">
+              الوصف ورقمك كفاية كبداية. التفاصيل الإضافية بتساعدنا نراجع طلبك.
+            </p>
+            @if (hasPendingCustom()) {
+              <section class="request-recovery" aria-labelledby="custom-pending">
+                <h3 id="custom-pending" tabindex="-1">{{ recoveryText.pendingCustom }}</h3>
+                @if (customRecoveryUnavailable()) {
+                  <p role="alert">{{ recoveryText.unreadable }}</p>
+                } @else {
+                  <p>{{ recoveryText.explanation }}</p>
+                  @if (pendingCustomSummary(); as summary) {
+                    <div class="request-summary" [attr.aria-label]="recoveryText.pendingDetails">
+                      <p>
+                        {{ summary.fullName }} · <bdi dir="ltr">{{ summary.contact }}</bdi>
+                      </p>
+                      <p class="request-description">{{ summary.description }}</p>
+                      @if (summary.dimensions) {
+                        <p>
+                          المقاس التقريبي: <bdi>{{ summary.dimensions }}</bdi>
+                        </p>
+                      }
+                    </div>
+                  } @else {
+                    <p>{{ recoveryText.unavailable }}</p>
+                  }
+                  @if (!draftStorageUnavailable()) {
+                    <p class="field-help">{{ recoveryText.pendingStorage }}</p>
+                  }
+                }
+                <button
+                  type="button"
+                  class="shop-button shop-button-secondary"
+                  [disabled]="!canReplayCustom()"
+                  (click)="retryCustomRequest()"
+                >
+                  {{ recoveryText.retryCustom }}
+                </button>
+              </section>
+            }
+            <form id="custom-form" [formGroup]="customForm" (ngSubmit)="onSubmit()" novalidate>
+              <fieldset [disabled]="isSubmitting()" class="form-fields">
+                <legend class="sr-only">بيانات طلب طباعة خاص</legend>
+                <div class="grid gap-5 sm:grid-cols-2">
+                  <div class="field">
+                    <label for="custom-name">الاسم <span aria-hidden="true">*</span></label>
+                    <input
+                      id="custom-name"
+                      formControlName="fullName"
+                      autocomplete="name"
+                      maxlength="100"
+                      required
+                      [attr.aria-invalid]="customErrors().fullName"
+                      aria-describedby="custom-name-error"
+                    />
+                    <span id="custom-name-error" class="field-error">
+                      @if (customErrors().fullName) {
+                        اكتب اسمك، ٣ حروف على الأقل.
+                      }
+                    </span>
+                  </div>
+                  <div class="field">
+                    <label for="custom-phone"
+                      >رقم الموبايل / واتساب <span aria-hidden="true">*</span></label
+                    >
+                    <input
+                      id="custom-phone"
+                      formControlName="phone"
+                      type="tel"
+                      autocomplete="tel"
+                      placeholder="01xxxxxxxxx"
+                      dir="ltr"
+                      required
+                      [attr.aria-invalid]="customErrors().phone"
+                      aria-describedby="custom-phone-error"
+                    />
+                    <span id="custom-phone-error" class="field-error">
+                      @if (customErrors().phone) {
+                        اكتب رقم موبايل مصري صحيح، مثال: 01012345678.
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="custom-source">عندك تصميم جاهز ولا فكرة؟</label>
+                  <select id="custom-source" formControlName="designSource">
+                    @for (option of designSourceOptions; track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+                @if (referenceRequired()) {
+                  <div class="field">
+                    <label for="custom-reference"
+                      >رابط التصميم أو الصورة <span aria-hidden="true">*</span></label
+                    >
+                    <input
+                      id="custom-reference"
+                      formControlName="referenceUrl"
+                      type="url"
+                      placeholder="https://…"
+                      dir="ltr"
+                      maxlength="2000"
+                      aria-required="true"
+                      [attr.aria-invalid]="customErrors().referenceUrl"
+                      aria-describedby="reference-help reference-error"
+                    />
+                    <p id="reference-help" class="field-help">
+                      ابعت رابط الصفحة الأصلي باستخدام HTTPS، وهنراجع ترخيص التصميم معاك.
+                    </p>
+                    <span id="reference-error" class="field-error">
+                      @if (customErrors().referenceUrl) {
+                        اكتب رابط HTTPS كامل وصحيح، من غير بيانات دخول في الرابط.
+                      }
+                    </span>
+                  </div>
+                }
+                <div class="field">
+                  <label for="custom-details">وصف الفكرة <span aria-hidden="true">*</span></label>
+                  <textarea
+                    id="custom-details"
+                    formControlName="details"
+                    rows="5"
+                    maxlength="5000"
+                    required
+                    placeholder="مثلًا: منظم للمكتب فيه مكان للأقلام والموبايل، بلون أخضر هادي…"
+                    [attr.aria-invalid]="customErrors().details"
+                    aria-describedby="custom-details-error"
+                  ></textarea>
+                  <span id="custom-details-error" class="field-error">
+                    @if (customErrors().details) {
+                      اكتب تفاصيل أكتر عن فكرتك، ١٠ حروف على الأقل.
+                    }
+                  </span>
+                </div>
+                <div class="grid gap-5 sm:grid-cols-2">
+                  <div class="field">
+                    <label for="custom-type">نوع القطعة</label>
+                    <select id="custom-type" formControlName="productType">
+                      @for (option of productTypeOptions; track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="custom-quantity">الكمية <span aria-hidden="true">*</span></label>
+                    <input
+                      id="custom-quantity"
+                      formControlName="quantity"
+                      type="number"
+                      inputmode="numeric"
+                      min="1"
+                      max="99"
+                      step="1"
+                      required
+                      [attr.aria-invalid]="customErrors().quantity"
+                      aria-describedby="custom-quantity-error"
+                    />
+                    <span id="custom-quantity-error" class="field-error">
+                      @if (customErrors().quantity) {
+                        اختار عددًا صحيحًا من ١ إلى ٩٩ قطعة.
+                      }
+                    </span>
+                  </div>
+                </div>
+                <details class="extra-details">
+                  <summary>تفاصيل إضافية <span>اختياري</span></summary>
+                  <div class="grid gap-5 sm:grid-cols-2 mt-5">
+                    <div class="field">
+                      <label for="custom-size">المقاس التقريبي بالسنتيمتر</label
+                      ><input
+                        id="custom-size"
+                        formControlName="dimensions"
+                        maxlength="200"
+                        placeholder="الطول × العرض × الارتفاع"
+                      />
+                    </div>
+                    <div class="field">
+                      <label for="custom-color">اللون والتشطيب</label
+                      ><input
+                        id="custom-color"
+                        formControlName="colorFinish"
+                        maxlength="200"
+                        placeholder="اللون اللي تفضله"
+                      />
+                    </div>
+                    <div class="field">
+                      <label for="custom-material">الخامة المفضلة</label>
+                      <select id="custom-material" formControlName="material">
+                        @for (option of materialOptions; track option.value) {
+                          <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="custom-email">البريد الإلكتروني</label>
+                      <input
+                        id="custom-email"
+                        formControlName="email"
+                        type="email"
+                        autocomplete="email"
+                        maxlength="254"
+                        dir="ltr"
+                        [attr.aria-invalid]="customErrors().email"
+                        aria-describedby="custom-email-error"
+                      />
+                      <span id="custom-email-error" class="field-error">
+                        @if (customErrors().email) {
+                          راجع صيغة البريد الإلكتروني.
+                        }
+                      </span>
+                    </div>
+                  </div>
+                </details>
+                <div>
+                  <label class="rights-check" for="custom-rights">
+                    <input
+                      id="custom-rights"
+                      formControlName="rightsConfirmed"
+                      type="checkbox"
+                      required
+                      [attr.aria-invalid]="customErrors().rightsConfirmed"
+                      aria-describedby="custom-rights-error"
+                    />
+                    <span
+                      >الفكرة أو التصميم ملكي أو عندي إذن باستخدامه للطباعة، وفاهم إن الطلب محتاج
+                      مراجعة قبل القبول والتنفيذ.</span
+                    >
+                  </label>
+                  <span id="custom-rights-error" class="field-error">
+                    @if (customErrors().rightsConfirmed) {
+                      أكد موافقتك على مراجعة حقوق استخدام التصميم.
+                    }
+                  </span>
+                </div>
+              </fieldset>
+              @if (invalidCustomSubmission()) {
+                <p class="form-error" role="alert">راجع الحقول الموضحة عشان نقدر نستلم فكرتك.</p>
+              }
+              @if (submitError()) {
+                <p class="form-error" role="alert">{{ submitError() }}</p>
+              }
+              <button
+                type="submit"
+                class="shop-button shop-button-primary submit-button"
+                [disabled]="isSubmitting()"
+              >
+                @if (isSubmitting()) {
+                  جاري إرسال طلبك…
+                } @else {
+                  ابعت الفكرة للمراجعة <i class="pi pi-arrow-up-left" aria-hidden="true"></i>
+                }
+              </button>
+              <p class="form-footnote">
+                مفيش دفع في الخطوة دي. هنستخدم بياناتك للتواصل بخصوص طلبك.
+              </p>
+            </form>
+          </section>
+        }
+      } @else {
+        @if (messageNumber()) {
+          <section
+            class="form-card result-card"
+            aria-labelledby="message-result"
+            aria-live="polite"
+          >
+            <span class="result-icon pi pi-check" aria-hidden="true"></span>
+            <h2 id="message-result" tabindex="-1">وصلتنا رسالتك</h2>
+            <p>رقم رسالتك للمتابعة:</p>
+            <strong class="reference-number" dir="ltr">{{ messageNumber() }}</strong>
+            <p>هنراجع استفسارك ونتواصل معاك على البريد الإلكتروني أو الموبايل اللي كتبته.</p>
+            @if (messageReceiptSummary(); as summary) {
+              <section class="request-summary" [attr.aria-label]="recoveryText.savedDetails">
+                <h3>{{ recoveryText.savedDetails }}</h3>
+                <p>
+                  {{ summary.fullName }} · <bdi dir="ltr">{{ summary.contact }}</bdi>
+                </p>
+                <p>
+                  <strong>{{ summary.title }}</strong>
+                </p>
+                <p class="request-description">{{ summary.description }}</p>
+              </section>
+            }
+            @if (retainsMessageDraft()) {
+              <p class="draft-retained" role="status">{{ recoveryText.retained }}</p>
+            }
+            <button
+              type="button"
+              (click)="resetMessageForm()"
+              class="shop-button shop-button-secondary mt-6"
+            >
+              {{ messageReturnLabel() }}
+            </button>
+          </section>
+        } @else {
+          <section class="form-card" aria-labelledby="message-title">
+            <h2 id="message-title" tabindex="-1">نقدر نساعدك في إيه؟</h2>
+            <p class="form-description">
+              لو بتسأل عن طلب سابق، اكتب رقمه في الرسالة عشان نقدر نتابعه.
+            </p>
+            @if (hasPendingMessage()) {
+              <section class="request-recovery" aria-labelledby="message-pending">
+                <h3 id="message-pending" tabindex="-1">{{ recoveryText.pendingMessage }}</h3>
+                @if (messageRecoveryUnavailable()) {
+                  <p role="alert">{{ recoveryText.unreadable }}</p>
+                } @else {
+                  <p>{{ recoveryText.explanation }}</p>
+                  @if (pendingMessageSummary(); as summary) {
+                    <div class="request-summary" [attr.aria-label]="recoveryText.pendingDetails">
+                      <p>
+                        {{ summary.fullName }} · <bdi dir="ltr">{{ summary.contact }}</bdi>
+                      </p>
+                      <p>
+                        <strong>{{ summary.title }}</strong>
+                      </p>
+                      <p class="request-description">{{ summary.description }}</p>
+                    </div>
+                  } @else {
+                    <p>{{ recoveryText.unavailable }}</p>
+                  }
+                  @if (!draftStorageUnavailable()) {
+                    <p class="field-help">{{ recoveryText.pendingStorage }}</p>
+                  }
+                }
+                <button
+                  type="button"
+                  class="shop-button shop-button-secondary"
+                  [disabled]="!canReplayMessage()"
+                  (click)="retryMessage()"
+                >
+                  {{ recoveryText.retryMessage }}
+                </button>
+              </section>
+            }
+            <form id="message-form" [formGroup]="messageForm" (ngSubmit)="sendMessage()" novalidate>
+              <fieldset [disabled]="isSendingMessage()" class="form-fields">
+                <legend class="sr-only">بيانات الاستفسار</legend>
+                <div class="field">
+                  <label for="message-name">الاسم <span aria-hidden="true">*</span></label>
+                  <input
+                    id="message-name"
+                    formControlName="fullName"
+                    autocomplete="name"
+                    maxlength="100"
+                    required
+                    [attr.aria-invalid]="messageErrors().fullName"
+                    aria-describedby="message-name-error"
+                  />
+                  <span id="message-name-error" class="field-error">
+                    @if (messageErrors().fullName) {
+                      اكتب اسمك، ٣ حروف على الأقل.
+                    }
+                  </span>
+                </div>
+                <div class="grid gap-5 sm:grid-cols-2">
+                  <div class="field">
+                    <label for="message-email"
+                      >البريد الإلكتروني <span aria-hidden="true">*</span></label
+                    >
+                    <input
+                      id="message-email"
+                      formControlName="email"
+                      type="email"
+                      autocomplete="email"
+                      maxlength="254"
+                      dir="ltr"
+                      required
+                      [attr.aria-invalid]="messageErrors().email"
+                      aria-describedby="message-email-error"
+                    />
+                    <span id="message-email-error" class="field-error">
+                      @if (messageErrors().email) {
+                        اكتب بريدًا إلكترونيًا صحيحًا للرد عليك.
+                      }
+                    </span>
+                  </div>
+                  <div class="field">
+                    <label for="message-phone"
+                      >رقم الموبايل <span class="optional">اختياري</span></label
+                    >
+                    <input
+                      id="message-phone"
+                      formControlName="phone"
+                      type="tel"
+                      autocomplete="tel"
+                      placeholder="01xxxxxxxxx"
+                      dir="ltr"
+                      [attr.aria-invalid]="messageErrors().phone"
+                      aria-describedby="message-phone-error"
+                    />
+                    <span id="message-phone-error" class="field-error">
+                      @if (messageErrors().phone) {
+                        اكتب رقم موبايل مصري صحيح أو سيب الحقل فاضي.
+                      }
+                    </span>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="message-subject">الموضوع <span aria-hidden="true">*</span></label>
+                  <input
+                    id="message-subject"
+                    formControlName="subject"
+                    maxlength="150"
+                    required
+                    [attr.aria-invalid]="messageErrors().subject"
+                    aria-describedby="message-subject-error"
+                  />
+                  <span id="message-subject-error" class="field-error">
+                    @if (messageErrors().subject) {
+                      اكتب عنوانًا قصيرًا لاستفسارك، ٣ حروف على الأقل.
+                    }
+                  </span>
+                </div>
+                <div class="field">
+                  <label for="message-text">رسالتك <span aria-hidden="true">*</span></label>
+                  <textarea
+                    id="message-text"
+                    formControlName="message"
+                    rows="6"
+                    maxlength="5000"
+                    required
+                    [attr.aria-invalid]="messageErrors().message"
+                    aria-describedby="message-text-error"
+                  ></textarea>
+                  <span id="message-text-error" class="field-error">
+                    @if (messageErrors().message) {
+                      وضح استفسارك في ١٠ حروف على الأقل.
+                    }
+                  </span>
+                </div>
+              </fieldset>
+              @if (invalidMessageSubmission()) {
+                <p class="form-error" role="alert">راجع الحقول الموضحة قبل إرسال الرسالة.</p>
+              }
+              @if (messageError()) {
+                <p class="form-error" role="alert">{{ messageError() }}</p>
+              }
+              <button
+                type="submit"
+                class="shop-button shop-button-primary submit-button"
+                [disabled]="isSendingMessage()"
+              >
+                @if (isSendingMessage()) {
+                  جاري إرسال رسالتك…
+                } @else {
+                  ابعت الرسالة
+                }
+              </button>
+              <p class="form-footnote">
+                هنستخدم بياناتك للرد على استفسارك. ما تكتبش كلمات مرور أو بيانات دفع في الرسالة.
+              </p>
+            </form>
+          </section>
+        }
+      }
+    </div>
+
+    <aside class="contact-aside">
+      <section aria-labelledby="steps-title">
+        <span class="eyebrow">من الفكرة للقطعة</span>
+        <h2 id="steps-title">كل خطوة واضحة.</h2>
+        <ol class="steps-list">
+          @for (step of steps; track step.number) {
+            <li>
+              <span class="step-number" aria-hidden="true">{{ step.number }}</span>
+              <div>
+                <h3>{{ step.title }}</h3>
+                <p>{{ step.description }}</p>
+              </div>
+            </li>
+          }
+        </ol>
+      </section>
+      @if (hasDirectContact()) {
+        <section class="direct-contact" aria-labelledby="direct-title">
+          <h2 id="direct-title">تواصل معانا مباشرة</h2>
+          @if (whatsappDirectUrl()) {
+            <a [href]="whatsappDirectUrl()" target="_blank" rel="noopener noreferrer"
+              ><i class="pi pi-whatsapp" aria-hidden="true"></i><span>ابدأ محادثة على واتساب</span
+              ><i class="pi pi-arrow-up-left" aria-hidden="true"></i
+            ></a>
+          }
+          @if (phoneUrl()) {
+            <a [href]="phoneUrl()"
+              ><i class="pi pi-phone" aria-hidden="true"></i
+              ><span dir="ltr">{{ settings().phone }}</span></a
+            >
+          }
+          @if (emailUrl()) {
+            <a [href]="emailUrl()"
+              ><i class="pi pi-envelope" aria-hidden="true"></i
+              ><span dir="ltr">{{ settings().email }}</span></a
+            >
+          }
+        </section>
+      }
+      <div class="shipping-note">
+        <i class="pi pi-map-marker" aria-hidden="true"></i>
+        <p>
+          الطباعة والتوصيل داخل مصر. المقاس واللون والسعر وموعد التجهيز بيتأكدوا قبل تنفيذ الطلب
+          الخاص.
+        </p>
+      </div>
+    </aside>
+  </div>
+
+  <section class="faq-section" aria-labelledby="faq-title">
+    <div>
+      <span class="eyebrow">قبل ما تبعت فكرتك</span>
+      <h2 id="faq-title">أسئلة ممكن تكون في بالك</h2>
+    </div>
+    <div class="faq-list">
+      @for (faq of faqItems; track faq.id) {
+        <details>
+          <summary>{{ faq.question }}</summary>
+          <p>{{ faq.answer }}</p>
+        </details>
+      }
+    </div>
   </section>
-
-  <section class="grid gap-6 md:grid-cols-3" aria-label="Custom request process">
-    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-pink-400">01</span><h2 class="mt-3 font-bold text-white">Share the design</h2><p class="mt-2 text-sm text-neutral-400">Send a permitted model page, reference, or written idea.</p></article>
-    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-purple-400">02</span><h2 class="mt-3 font-bold text-white">Feasibility review</h2><p class="mt-2 text-sm text-neutral-400">The store reviews printability, dimensions, material, rights, and production needs.</p></article>
-    <article class="rounded-2xl border border-neutral-800 bg-neutral-950 p-6"><span class="text-cyan-400">03</span><h2 class="mt-3 font-bold text-white">Quote and confirmation</h2><p class="mt-2 text-sm text-neutral-400">If feasible, continue on WhatsApp to confirm price and production time.</p></article>
-  </section>
-
-  <section class="rounded-3xl border border-amber-500/30 bg-amber-950/15 p-6">
-    <h2 class="font-bold text-white">Using MakerWorld as a discovery source</h2>
-    <p class="mt-2 text-sm leading-relaxed text-neutral-300">You may <a href="https://makerworld.com/en" target="_blank" rel="noopener noreferrer" class="font-bold text-amber-300 underline">search MakerWorld</a>, review the model page, check whether permitted files are available, and send the page URL. Each model can have a different license; some prohibit commercial use or selling printed copies. Do not send a file unless you own it or have permission to request a printed copy.</p>
-  </section>
-
-  @if (isSubmitted()) {
-    <section class="rounded-3xl border border-purple-500/40 bg-neutral-950 p-8 text-center" aria-live="polite">
-      @if (wasPersisted()) { <span class="vt-badge vt-badge-pink">Pending design review</span><h2 class="mt-4 text-3xl font-black text-white">Request received</h2><p class="mt-3 text-neutral-300">Request number: <strong>{{ requestNumber() }}</strong></p><p class="mt-2 text-sm text-neutral-400">The store will review feasibility, rights, price, and production requirements before acceptance.</p> } @else { <span class="vt-badge">WhatsApp-only fallback</span><h2 class="mt-4 text-3xl font-black text-white">The request was not saved</h2><p class="mt-3 text-sm text-red-300" role="alert">{{ submitError() }}</p> }
-      <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row">@if (generatedWhatsAppUrl()) { <a [href]="generatedWhatsAppUrl()" target="_blank" rel="noopener noreferrer" class="rounded-xl bg-emerald-600 px-6 py-3 font-bold text-white">Continue on WhatsApp</a> }<button type="button" (click)="resetForm()" class="rounded-xl border border-neutral-700 px-6 py-3 font-bold text-white">Start another request</button></div>
-    </section>
-  } @else {
-    <section class="rounded-3xl border border-neutral-800 bg-neutral-950 p-6 lg:p-10">
-      <h2 class="text-2xl font-black text-white">Send my design for review</h2><p class="mt-2 text-sm text-neutral-400">Start with the information needed for an initial feasibility check.</p>
-      <form [formGroup]="customForm" (ngSubmit)="onSubmit()" class="mt-8 space-y-6">
-        <div class="grid gap-5 md:grid-cols-2"><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Full name *</span><input formControlName="fullName" autocomplete="name" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (customForm.controls.fullName.invalid && customForm.controls.fullName.touched) { <span class="block text-xs text-red-300" role="alert">Enter at least 3 characters.</span> }</label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">WhatsApp number *</span><input formControlName="phone" type="tel" autocomplete="tel" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Email (optional)</span><input formControlName="email" type="email" autocomplete="email" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Design source *</span><select formControlName="designSource" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white">@for (option of designSourceOptions; track option.value) { <option [value]="option.value">{{ option.label }}</option> }</select></label></div>
-        <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Model or reference URL</span><input formControlName="referenceUrl" type="url" placeholder="https://…" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /><span class="block text-xs text-neutral-500">Required for URL/reference sources. HTTPS links only.</span></label>
-        <div class="grid gap-5 md:grid-cols-2"><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Desired product / use *</span><select formControlName="productType" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white">@for (option of productTypeOptions; track option.value) { <option [value]="option.value">{{ option.label }}</option> }</select></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Approximate size</span><input formControlName="dimensions" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Preferred material</span><select formControlName="material" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white">@for (option of materialOptions; track option.label) { <option [value]="option.value">{{ option.label }}</option> }</select></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Preferred color / finish</span><input formControlName="colorFinish" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label><label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Quantity *</span><input formControlName="quantity" type="number" min="1" max="99" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label></div>
-        <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Design notes *</span><textarea formControlName="details" rows="5" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"></textarea></label>
-        <label class="flex items-start gap-3 rounded-xl border border-neutral-800 p-4"><input formControlName="rightsConfirmed" type="checkbox" class="mt-1 h-5 w-5" /><span class="text-sm leading-relaxed text-neutral-300">I confirm that I own this design or have permission to request a printed copy, and I understand that final acceptance depends on design review.</span></label>@if (customForm.controls.rightsConfirmed.invalid && customForm.controls.rightsConfirmed.touched) { <p class="text-sm text-red-300" role="alert">You must confirm the rights acknowledgement before sending.</p> }
-        @if (submitError()) { <p class="text-sm text-red-300" role="alert">{{ submitError() }}</p> }
-        <button type="submit" [disabled]="isSubmitting()" class="w-full rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 px-6 py-4 font-black text-white disabled:opacity-50">@if (isSubmitting()) { Sending for review… } @else { Send my design for review }</button>
-      </form>
-    </section>
-  }
-
-  <section><h2 class="text-2xl font-black text-white">Custom request FAQ</h2><div class="mt-6 grid gap-4 md:grid-cols-2">@for (faq of faqItems; track faq.id) { <details class="rounded-2xl border border-neutral-800 bg-neutral-950 p-5"><summary class="cursor-pointer font-bold text-white">{{ faq.question }}</summary><p class="mt-3 text-sm text-neutral-400">{{ faq.answer }}</p></details> }</div></section>
-</main>
+</div>

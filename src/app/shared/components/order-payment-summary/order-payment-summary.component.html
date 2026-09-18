@@ -1,0 +1,37 @@
+<section class="payment-summary" dir="rtl" [attr.aria-label]="copy.title">
+  <p class="summary-title">{{ copy.title }}</p>
+  <p class="summary-state">{{ presentation().label }}</p>
+  <p class="summary-message">{{ presentation().message }}</p>
+  @if (presentation().showRecordedAmounts) {
+    <dl class="summary-amounts">
+      <div>
+        <dt>{{ copy.collected }}</dt>
+        <dd>{{ payment().recordedCollected | number: '1.0-2' }} {{ copy.currency }}</dd>
+      </div>
+      <div>
+        <dt>{{ copy.refunded }}</dt>
+        <dd>{{ payment().recordedRefunded | number: '1.0-2' }} {{ copy.currency }}</dd>
+      </div>
+      <div class="summary-net">
+        <dt>{{ copy.net }}</dt>
+        <dd>{{ payment().recordedNet | number: '1.0-2' }} {{ copy.currency }}</dd>
+      </div>
+      @if (presentation().showBalance) {
+        <div>
+          <dt>{{ copy.balance }}</dt>
+          <dd>{{ payment().balanceDue | number: '1.0-2' }} {{ copy.currency }}</dd>
+        </div>
+        @if (hasCredit()) {
+          <div>
+            <dt>{{ copy.credit }}</dt>
+            <dd>{{ payment().credit | number: '1.0-2' }} {{ copy.currency }}</dd>
+          </div>
+        }
+      }
+    </dl>
+    @if (hasCredit()) {
+      <p class="summary-note">{{ copy.creditNote }}</p>
+    }
+    <p class="summary-note">{{ copy.basis }}</p>
+  }
+</section>

@@ -1,137 +1,143 @@
-<section class="space-y-6">
-  <div class="admin-card flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+<section class="settings-page" dir="rtl" aria-labelledby="settings-heading">
+  <header class="settings-header">
     <div>
-      <h2 class="text-2xl font-black text-white">Website Settings</h2>
-      <p class="text-sm text-neutral-400">Brand tone, WhatsApp orders, and storefront hero content all update from this form.</p>
+      <span class="eyebrow">بيانات المتجر</span>
+      <h2 id="settings-heading">إعدادات المتجر</h2>
+      <p>حدّث قنوات التواصل وإعدادات التوصيل واستقبال الطلبات من البيانات المؤكدة لديك.</p>
     </div>
-    <div class="flex flex-wrap gap-3">
-      <p-button label="Save Settings" (onClick)="saveSettings()" />
-      <p-button label="Reset to Default" severity="secondary" variant="outlined" (onClick)="resetSettings()" />
-      <p-button label="Preview Website" severity="contrast" variant="outlined" (onClick)="previewWebsite()" />
+    <a routerLink="/" class="shop-button shop-button-secondary">زيارة المتجر</a>
+  </header>
+  @if (isLoading()) {
+    <p class="settings-notice" role="status">جارٍ تحميل الإعدادات الحالية…</p>
+  } @else if (loadError()) {
+    <div class="settings-notice settings-error" role="alert">
+      <p>{{ loadError() }}</p>
+      <button type="button" class="shop-button shop-button-secondary" (click)="loadSettings()">
+        إعادة المحاولة
+      </button>
     </div>
-  </div>
-
-  <form [formGroup]="settingsForm" class="space-y-6">
-    <p-tabs value="brand">
-      <p-tablist>
-        <p-tab value="brand">Brand Settings</p-tab>
-        <p-tab value="contact">Contact Settings</p-tab>
-        <p-tab value="social">Social Media</p-tab>
-        <p-tab value="store">Store Settings</p-tab>
-      </p-tablist>
-
-      <p-tabpanels>
-        <p-tabpanel value="brand">
-          <div class="admin-form-grid">
-            <div class="admin-card p-4">
-              <label class="admin-label">Brand Name</label>
-              <input pInputText formControlName="brandName" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Slogan</label>
-              <input pInputText formControlName="slogan" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Hero Title</label>
-              <input pInputText formControlName="heroTitle" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Hero Image URL</label>
-              <input pInputText formControlName="heroImageUrl" class="w-full" />
-            </div>
-            <div class="admin-card p-4 xl:col-span-2">
-              <label class="admin-label">Hero Subtitle</label>
-              <textarea pTextarea formControlName="heroSubtitle" class="w-full" rows="4"></textarea>
-            </div>
-          </div>
-        </p-tabpanel>
-
-        <p-tabpanel value="contact">
-          <div class="admin-form-grid">
-            <div class="admin-card p-4">
-              <label class="admin-label">WhatsApp Number</label>
-              <input pInputText formControlName="whatsappNumber" class="w-full" />
-              <p class="mt-2 text-xs text-neutral-500">Use international format without +, spaces, or dashes. Example: 201001234567</p>
-              @if (settingsForm.controls.whatsappNumber.invalid && settingsForm.controls.whatsappNumber.touched) {
-                <p-message severity="error" text="Enter 10 to 15 digits only." />
-              }
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Email</label>
-              <input pInputText formControlName="email" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Phone</label>
-              <input pInputText formControlName="phone" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Address</label>
-              <input pInputText formControlName="address" class="w-full" />
-            </div>
-            <div class="admin-card p-4 xl:col-span-2">
-              <label class="admin-label">WhatsApp Default Message</label>
-              <textarea pTextarea formControlName="whatsappDefaultMessage" class="w-full" rows="4"></textarea>
-            </div>
-          </div>
-        </p-tabpanel>
-
-        <p-tabpanel value="social">
-          <div class="admin-form-grid">
-            <div class="admin-card p-4">
-              <label class="admin-label">Facebook URL</label>
-              <input pInputText formControlName="facebookUrl" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Instagram URL</label>
-              <input pInputText formControlName="instagramUrl" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">TikTok URL</label>
-              <input pInputText formControlName="tiktokUrl" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">YouTube URL</label>
-              <input pInputText formControlName="youtubeUrl" class="w-full" />
-            </div>
-          </div>
-        </p-tabpanel>
-
-        <p-tabpanel value="store">
-          <div class="admin-form-grid">
-            <div class="admin-card p-4">
-              <label class="admin-label">Default Currency</label>
-              <input pInputText formControlName="defaultCurrency" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Delivery Fee (Store Currency, Optional)</label>
-              <input pInputText type="number" formControlName="deliveryFee" class="w-full" />
-            </div>
-            <div class="admin-card p-4">
-              <label class="admin-label">Estimated Delivery Timeframe</label>
-              <input pInputText formControlName="deliveryDays" class="w-full" placeholder="Configured delivery timeframe" />
-            </div>
-            <div class="admin-card flex items-center justify-between p-4">
-              <div>
-                <label class="admin-label">Maintenance Mode</label>
-                <p class="text-sm text-neutral-500">Toggle a maintenance banner state for future backend integration.</p>
+  } @else {
+    <form [formGroup]="settingsForm" (ngSubmit)="saveSettings()">
+      @for (section of sections(); track section.id) {
+        <section class="settings-card" [attr.aria-labelledby]="'settings-' + section.id">
+          <h3 [id]="'settings-' + section.id">{{ section.title }}</h3>
+          <p class="section-description">{{ section.description }}</p>
+          <div class="settings-grid">
+            @for (field of section.fields; track field.key) {
+              <div class="settings-field" [class.field-wide]="field.wide">
+                <label [for]="'setting-' + field.key">{{ field.label }}</label>
+                @if (field.type === inputTypes.Multiline) {
+                  <textarea
+                    [id]="'setting-' + field.key"
+                    [formControlName]="field.key"
+                    rows="3"
+                    [attr.aria-invalid]="field.invalid"
+                    [attr.aria-describedby]="'setting-hint-' + field.key"
+                  ></textarea>
+                } @else {
+                  <input
+                    [id]="'setting-' + field.key"
+                    [formControlName]="field.key"
+                    [type]="field.type"
+                    [attr.dir]="field.ltr ? 'ltr' : 'auto'"
+                    [attr.aria-invalid]="field.invalid"
+                    [attr.aria-describedby]="'setting-hint-' + field.key"
+                  />
+                }
+                <div [id]="'setting-hint-' + field.key">
+                  @if (field.invalid) {
+                    <p class="field-error">{{ field.error }}</p>
+                  } @else if (field.hint) {
+                    <p class="field-hint">{{ field.hint }}</p>
+                  }
+                </div>
               </div>
-              <p-toggleswitch formControlName="maintenanceMode" />
-            </div>
-            <div class="admin-card p-4 xl:col-span-2">
-              <label class="admin-label">Delivery Info Note (Storefront & WhatsApp Note)</label>
-              <textarea pTextarea formControlName="deliveryInfoNote" class="w-full" rows="3"></textarea>
-            </div>
-            <div class="admin-card p-4 xl:col-span-2">
-              <label class="admin-label">Delivery Note</label>
-              <textarea pTextarea formControlName="deliveryNote" class="w-full" rows="3"></textarea>
-            </div>
-            <div class="admin-card p-4 xl:col-span-2">
-              <label class="admin-label">Safety Note</label>
-              <textarea pTextarea formControlName="safetyNote" class="w-full" rows="3"></textarea>
-            </div>
+            }
           </div>
-        </p-tabpanel>
-      </p-tabpanels>
-    </p-tabs>
-  </form>
+        </section>
+      }
+      <section class="settings-card" aria-labelledby="settings-delivery">
+        <h3 id="settings-delivery">التوصيل واستقبال الطلبات</h3>
+        <div class="settings-grid">
+          <div class="settings-field">
+            <span class="field-label">عملة المتجر</span>
+            <p class="fixed-value" id="setting-currency">الجنيه المصري · EGP</p>
+            <p class="field-hint">الأسعار والطلبات تُسجل بالجنيه المصري.</p>
+          </div>
+          <div class="settings-field">
+            <label for="setting-deliveryFee">رسوم التوصيل (ج.م)</label
+            ><input
+              id="setting-deliveryFee"
+              type="number"
+              min="0"
+              max="10000"
+              step="0.01"
+              formControlName="deliveryFee"
+              [attr.aria-invalid]="invalidFee()"
+              aria-describedby="setting-fee-hint"
+            />
+            <p id="setting-fee-hint" class="field-hint">
+              الحقل الفارغ يعني أن الرسوم غير مؤكدة بعد. القيمة صفر تعني توصيلًا بدون رسوم.
+            </p>
+            @if (invalidFee()) {
+              <p class="field-error">{{ deliveryFeeError }}</p>
+            }
+          </div>
+          <div class="settings-field field-wide">
+            <label for="setting-deliveryDays">المدة التقديرية للتوصيل (اختيارية)</label
+            ><input
+              id="setting-deliveryDays"
+              formControlName="deliveryDays"
+              maxlength="100"
+              [attr.aria-invalid]="invalidDays()"
+            />
+            <p class="field-hint">
+              أدخل المدة المؤكدة في سياستك فقط؛ اتركها فارغة إذا كانت تُحدد بعد التواصل.
+            </p>
+            @if (invalidDays()) {
+              <p class="field-error">استخدم 100 حرف بحد أقصى.</p>
+            }
+          </div>
+          <div class="maintenance-field field-wide">
+            <div>
+              <label for="setting-maintenanceMode">إيقاف استقبال طلبات المنتجات مؤقتًا</label>
+              <p class="field-hint">
+                عند التفعيل يرفض الخادم إنشاء طلبات منتجات جديدة، وتظل بيانات المتجر متاحة للعرض.
+              </p>
+            </div>
+            <p-toggleswitch inputId="setting-maintenanceMode" formControlName="maintenanceMode" />
+          </div>
+        </div>
+      </section>
+      @if (saveError()) {
+        <p class="settings-notice settings-error" role="alert">{{ saveError() }}</p>
+      }
+      @if (savedMessage()) {
+        <p class="settings-notice settings-success" role="status">{{ savedMessage() }}</p>
+      }
+      <div class="settings-actions">
+        <button type="submit" class="shop-button shop-button-primary" [disabled]="!canSave()">
+          @if (isSubmitting()) {
+            جارٍ الحفظ…
+          } @else {
+            حفظ الإعدادات
+          }</button
+        ><button
+          type="button"
+          class="shop-button shop-button-secondary"
+          (click)="discardChanges()"
+          [disabled]="isSubmitting()"
+        >
+          إلغاء التعديلات غير المحفوظة</button
+        ><button
+          type="button"
+          class="shop-button shop-button-secondary"
+          (click)="loadSettings()"
+          [disabled]="isSubmitting()"
+        >
+          تحميل القيم المحفوظة
+        </button>
+      </div>
+    </form>
+  }
 </section>

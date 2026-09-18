@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "primeiconsVersion": "7.0.0",
+  "primengVersion": "21.1.10",
+  "sources": [
+    {
+      "path": "node_modules/primeicons/primeicons.css",
+      "bytes": 16992,
+      "sha256": "deaffeeecc7da86b2329ac9d565877306603999be0c4d436da8f2eb2f161d89b"
+    },
+    {
+      "path": "node_modules/primeicons/fonts/primeicons.woff2",
+      "bytes": 35148,
+      "sha256": "9eea6e0bcb974ec568fdcb1eec182d3b5383a3a23899a690140b2c0167886882"
+    },
+    {
+      "path": "node_modules/primeicons/LICENSE",
+      "bytes": 1070,
+      "sha256": "140e5886a54d897d852dbf7eeffd2c464467eddfcb04374241f90c61658493bd"
+    }
+  ],
+  "generated": [
+    {
+      "path": "src/assets/primeicons/primeicons-subset.woff2",
+      "bytes": 9568,
+      "sha256": "a101ac093ebe1739894ab8acaf846ccc381f5b7b9cd7667778480ec91618c8ef"
+    },
+    {
+      "path": "src/assets/primeicons/primeicons.css",
+      "bytes": 18278,
+      "sha256": "56b099f3c011d6b0271b4b0a96b17c57e1fed3f2963f7c0c0431d871015bdd9a"
+    },
+    {
+      "path": "public/assets/fonts/primeicons-license.txt",
+      "bytes": 1070,
+      "sha256": "140e5886a54d897d852dbf7eeffd2c464467eddfcb04374241f90c61658493bd"
+    }
+  ],
+  "generatedCssHeader": "/*! PrimeIcons 7.0.0 — reviewed 54-glyph WOFF2 subset.\nMIT License\n\nCopyright (c) 2018-2021 PrimeTek\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n*/\n",
+  "requiredMappings": {
+    "pi-arrow-left": 59674,
+    "pi-arrow-right": 59675,
+    "pi-arrow-up-left": 59861,
+    "pi-bars": 59677,
+    "pi-bolt": 59867,
+    "pi-box": 59865,
+    "pi-chart-bar": 59757,
+    "pi-check": 59657,
+    "pi-check-circle": 59658,
+    "pi-cog": 59722,
+    "pi-comments": 59774,
+    "pi-desktop": 59795,
+    "pi-envelope": 59769,
+    "pi-external-link": 59708,
+    "pi-eye": 59750,
+    "pi-facebook": 59828,
+    "pi-image": 59762,
+    "pi-images": 59763,
+    "pi-inbox": 59745,
+    "pi-instagram": 59852,
+    "pi-list": 59751,
+    "pi-map-marker": 59752,
+    "pi-palette": 59797,
+    "pi-pause": 59826,
+    "pi-pencil": 59714,
+    "pi-phone": 59832,
+    "pi-play": 59827,
+    "pi-plus": 59661,
+    "pi-plus-circle": 59662,
+    "pi-refresh": 59704,
+    "pi-replay": 59725,
+    "pi-search": 59656,
+    "pi-search-minus": 59792,
+    "pi-search-plus": 59791,
+    "pi-share-alt": 59770,
+    "pi-shield": 59833,
+    "pi-shopping-bag": 59877,
+    "pi-sign-out": 59761,
+    "pi-sliders-h": 59794,
+    "pi-sparkles": 59953,
+    "pi-spinner": 59686,
+    "pi-star": 59703,
+    "pi-sync": 59878,
+    "pi-th-large": 59672,
+    "pi-tiktok": 59937,
+    "pi-times": 59659,
+    "pi-truck": 59904,
+    "pi-user": 59705,
+    "pi-user-plus": 59711,
+    "pi-wallet": 59843,
+    "pi-whatsapp": 59856,
+    "pi-window-maximize": 59707,
+    "pi-window-minimize": 59706,
+    "pi-youtube": 59845
+  },
+  "helpers": ["pi-spin", "pi-fw"],
+  "reviewedDynamicBindings": [
+    {
+      "file": "src/app/features/about/pages/about-page/about-page.component.html",
+      "expression": "principle.icon"
+    },
+    {
+      "file": "src/app/features/admin/components/admin-stat-card.component.html",
+      "expression": "accentClass()"
+    },
+    {
+      "file": "src/app/features/admin/components/admin-stat-card.component.html",
+      "expression": "icon()"
+    },
+    {
+      "file": "src/app/features/admin/layout/admin-sidebar.component.html",
+      "expression": "item.icon"
+    },
+    {
+      "file": "src/app/features/admin/pages/dashboard/admin-dashboard-page.component.html",
+      "expression": "card.icon"
+    },
+    {
+      "file": "src/app/features/admin/pages/dashboard/admin-dashboard-page.component.html",
+      "expression": "link.icon"
+    },
+    {
+      "file": "src/app/features/auth/login/login-page/login-page.component.html",
+      "expression": "benefit.icon"
+    },
+    {
+      "file": "src/app/features/auth/register/register-page/register-page.component.html",
+      "expression": "benefit.icon"
+    },
+    {
+      "file": "src/app/features/home/pages/home-page/home-page.component.html",
+      "expression": "category.icon"
+    },
+    {
+      "file": "src/app/shared/components/anime-hero/anime-hero.component.html",
+      "expression": "selectedProductIndex() === i ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white border-red-400 shadow-[0_0_20px_rgba(239,68,68,0.5)] scale-105' : 'bg-neutral-900/80 text-neutral-300 border-neutral-800 hover:border-neutral-700 hover:text-white'"
+    },
+    {
+      "file": "src/app/shared/components/anime-hero/anime-hero.component.html",
+      "expression": "stat.icon"
+    },
+    {
+      "file": "src/app/shared/components/anime-hero/anime-hero.component.html",
+      "expression": "is3dViewActive() ? 'pi pi-image' : 'pi pi-box'"
+    },
+    {
+      "file": "src/app/shared/components/app-footer/app-footer.component.html",
+      "expression": "link.icon"
+    },
+    {
+      "file": "src/app/shared/components/app-header/app-header.component.html",
+      "expression": "menuIcon()"
+    },
+    {
+      "file": "src/app/shared/components/category-card/category-card.component.html",
+      "expression": "category().icon"
+    },
+    {
+      "file": "src/app/shared/components/glow-button/glow-button.component.html",
+      "expression": "icon()"
+    }
+  ],
+  "tooling": {
+    "fontTools": "4.65.0",
+    "brotli": "1.2.0",
+    "harfbuzzRepacker": false
+  },
+  "subsetOptions": {
+    "retain_gids": true,
+    "notdef_glyph": true,
+    "notdef_outline": true,
+    "recommended_glyphs": true,
+    "glyph_names": true,
+    "name_IDs": ["*"],
+    "name_languages": ["*"],
+    "name_legacy": true,
+    "layout_features": ["*"],
+    "layout_scripts": ["*"],
+    "drop_tables": [],
+    "passthrough_tables": true,
+    "prune_unicode_ranges": false,
+    "prune_codepage_ranges": false,
+    "recalc_bounds": false,
+    "recalc_timestamp": false,
+    "recalc_average_width": false
+  }
+}

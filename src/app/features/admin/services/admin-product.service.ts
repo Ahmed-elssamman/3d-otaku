@@ -1,200 +1,103 @@
-import { Injectable, computed, inject } from '@angular/core';
-import { Observable, of, map } from 'rxjs';
-import { ProductService } from '@core/services/product.service';
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { Product } from '@core/models/product.model';
 import { AdminProductQuery } from '../../products/models/product-query.model';
 import { ApiResponse, PaginatedResponse } from '@core/models/api-response.model';
 import { ApiService } from '@core/api/api.service';
 import { API_ENDPOINTS } from '@core/api/api-endpoints';
-import { environment } from '../../../../environments/environment';
+import {
+  AdminProductPayload,
+  AdminProductRecord,
+  AdminProductRevisionRequest,
+  AdminProductUpdateRequest,
+} from '../models/admin-product-form.model';
+import { AdminProductCategory } from '../models/admin-product-category.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class AdminProductService {
   private api = inject(ApiService);
-  private productService = inject(ProductService);
 
-  products = this.productService.adminProducts;
-  totalProducts = computed(() => this.products().length);
-  featuredProducts = computed(() => this.products().filter(product => product.isFeatured).length);
-  categories = computed(() => [...new Set(this.products().map(product => product.category))]);
-  averagePrice = computed(() => {
-    const products = this.products();
-    if (!products.length) return 0;
-    const total = products.reduce((sum, product) => sum + product.price, 0);
-    return total / products.length;
-  });
+  getCategories(): Observable<ApiResponse<AdminProductCategory[]>> {
+    return this.api.get<AdminProductCategory[]>(API_ENDPOINTS.admin.products.categories);
+  }
 
-  getProducts(query?: AdminProductQuery): Observable<PaginatedResponse<Product>> {
-    if (environment.useMockApi) {
-      let items = [...this.productService.loadFromStorage()];
+  getProducts(query?: AdminProductQuery): Observable<PaginatedResponse<AdminProductRecord>> {
+    return this.api
+      .getPaginated<AdminProductRecord, AdminProductQuery>(
+        API_ENDPOINTS.admin.products.list,
+        query ?? null,
+      )
+      .pipe(
+        map((response) => ({
+          ...response,
+          data: response.data.map((product) => this.normalizeProduct(product)),
+        })),
+      );
+  }
 
-      if (query?.status && query.status !== 'all') {
-        items = items.filter(p => (query.status === 'active' ? p.isActive : !p.isActive));
-      }
+  getProductById(id: string): Observable<ApiResponse<AdminProductRecord>> {
+    return this.api
+      .get<AdminProductRecord>(API_ENDPOINTS.admin.products.details(id))
+      .pipe(map((response) => ({ ...response, data: this.normalizeProduct(response.data) })));
+  }
 
-      if (typeof query?.featured === 'boolean') {
-        items = items.filter(p => p.isFeatured);
-      }
+  createProduct(payload: Product): Observable<ApiResponse<AdminProductRecord>> {
+    return this.api
+      .post<AdminProductRecord>(API_ENDPOINTS.admin.products.create, this.toApiPayload(payload))
+      .pipe(map((response) => ({ ...response, data: this.normalizeProduct(response.data) })));
+  }
 
-      if (query?.search) {
-        const searchLower = query.search.toLowerCase();
-        items = items.filter(
-          p => p.name.toLowerCase().includes(searchLower) || p.slug.toLowerCase().includes(searchLower)
-        );
-      }
+  updateProduct(
+    id: string,
+    payload: Product,
+    expectedRevision: number,
+  ): Observable<ApiResponse<AdminProductRecord>> {
+    const request: AdminProductUpdateRequest = { ...this.toApiPayload(payload), expectedRevision };
+    return this.api
+      .put<AdminProductRecord, AdminProductUpdateRequest>(
+        API_ENDPOINTS.admin.products.update(id),
+        request,
+      )
+      .pipe(map((response) => ({ ...response, data: this.normalizeProduct(response.data) })));
+  }
 
-      if (query?.category && query.category !== 'all') {
-        items = items.filter(p => p.category === query.category);
-      }
-
-      const page = query?.page || 1;
-      const limit = query?.limit || 20;
-      const totalItems = items.length;
-      const totalPages = Math.ceil(totalItems / limit) || 1;
-      const start = (page - 1) * limit;
-      const paginatedData = items.slice(start, start + limit);
-
-      return of({
-        success: true,
-        message: 'Admin products fetched successfully.',
-        data: paginatedData,
-        meta: {
-          page,
-          limit,
-          totalItems,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1
-        }
-      });
-    }
-
-    return this.api.getPaginated<Product, AdminProductQuery>(API_ENDPOINTS.admin.products.list, query ?? null).pipe(
-      map(res => {
-        if (res.data) {
-          const normalized = res.data.map(p => ({
-            ...p,
-            id: p.id || p._id || ''
-          }));
-          return { ...res, data: normalized };
-        }
-        return res;
-      })
+  deleteProduct(id: string, expectedRevision: number): Observable<ApiResponse<null>> {
+    const request: AdminProductRevisionRequest = { expectedRevision };
+    return this.api.delete<null, AdminProductRevisionRequest>(
+      API_ENDPOINTS.admin.products.delete(id),
+      request,
     );
   }
 
-  getProductById(id: string): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      const product = this.productService.getProductById(id);
-      return of({
-        success: !!product,
-        message: product ? 'Admin product fetched successfully.' : 'Product not found.',
-        data: product as Product
-      });
-    }
-
-    return this.api.get<Product>(API_ENDPOINTS.admin.products.details(id)).pipe(
-      map(res => {
-        if (res.data) {
-          return { ...res, data: { ...res.data, id: res.data.id || res.data._id || id } };
-        }
-        return res;
-      })
-    );
+  duplicateProduct(id: string): Observable<ApiResponse<AdminProductRecord>> {
+    return this.api.post<AdminProductRecord>(API_ENDPOINTS.admin.products.duplicate(id));
   }
 
-  createProduct(payload: Product): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      this.productService.createProduct(payload);
-      return of({
-        success: true,
-        message: 'Product created successfully.',
-        data: payload
-      });
-    }
-
-    return this.api.post<Product>(API_ENDPOINTS.admin.products.create, this.toApiPayload(payload));
+  private normalizeProduct(product: AdminProductRecord): AdminProductRecord {
+    return {
+      ...product,
+      id: product.id || product._id || '',
+      revision:
+        Number.isSafeInteger(product.revision) && product.revision !== null && product.revision >= 0
+          ? product.revision
+          : null,
+    };
   }
 
-  updateProduct(id: string, payload: Product): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      this.productService.updateProduct(id, payload);
-      return of({
-        success: true,
-        message: 'Product updated successfully.',
-        data: payload
-      });
-    }
-
-    return this.api.put<Product>(API_ENDPOINTS.admin.products.update(id), this.toApiPayload(payload));
-  }
-
-  deleteProduct(id: string): Observable<ApiResponse<{ id: string }>> {
-    if (environment.useMockApi) {
-      this.productService.deleteProduct(id);
-      return of({
-        success: true,
-        message: 'Product deleted successfully.',
-        data: { id }
-      });
-    }
-
-    return this.api.delete<{ id: string }>(API_ENDPOINTS.admin.products.delete(id));
-  }
-
-  duplicateProduct(id: string): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      const duplicate = this.productService.duplicateProduct(id);
-      return of({
-        success: !!duplicate,
-        message: duplicate ? 'Product duplicated successfully.' : 'Original product not found.',
-        data: duplicate as Product
-      });
-    }
-
-    return this.api.post<Product>(API_ENDPOINTS.admin.products.duplicate(id));
-  }
-
-  toggleActive(id: string, isActive?: boolean): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      this.productService.toggleActive(id);
-      const updated = this.productService.getProductById(id);
-      return of({
-        success: true,
-        message: 'Product status updated successfully.',
-        data: updated as Product
-      });
-    }
-
-    return this.api.patch<Product>(API_ENDPOINTS.admin.products.status(id), { isActive });
-  }
-
-  toggleFeatured(id: string, isFeatured?: boolean): Observable<ApiResponse<Product>> {
-    if (environment.useMockApi) {
-      this.productService.toggleFeatured(id);
-      const updated = this.productService.getProductById(id);
-      return of({
-        success: true,
-        message: 'Product featured status updated successfully.',
-        data: updated as Product
-      });
-    }
-
-    return this.api.patch<Product>(API_ENDPOINTS.admin.products.featured(id), { isFeatured });
-  }
-
-  loadFromStorage(): Product[] {
-    return this.productService.loadFromStorage();
-  }
-
-  saveToStorage(): void {
-    this.productService.saveToStorage();
-  }
-
-  private toApiPayload(product: Product): Omit<Product, 'id' | '_id' | 'createdAt' | 'updatedAt' | 'deletedAt'> {
-    const { id, _id, createdAt, updatedAt, deletedAt, ...editableFields } = product;
+  private toApiPayload(product: Product): AdminProductPayload {
+    const {
+      id,
+      _id,
+      createdAt,
+      updatedAt,
+      deletedAt,
+      imageVariants,
+      configurationFingerprint,
+      revision,
+      requiresManufacturingReview,
+      manufacturingReview,
+      ...editableFields
+    } = product as AdminProductRecord;
     return editableFields;
   }
 }

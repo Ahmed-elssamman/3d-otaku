@@ -14,6 +14,7 @@ export interface CustomerDeliveryInfo {
   email?: string;
   secondaryPhone?: string;
   governorate?: string;
+  country?: string;
   city?: string;
   address: string;
   notes?: string;

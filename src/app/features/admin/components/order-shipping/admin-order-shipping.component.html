@@ -1,0 +1,198 @@
+@if (snapshot(); as saved) {
+  <section
+    class="shipping-editor"
+    aria-labelledby="order-shipping-title"
+    [attr.aria-busy]="isBusy()"
+  >
+    <h4 id="order-shipping-title">رسوم الشحن المتفق عليها</h4>
+    <p class="muted">
+      سجّل المبلغ بعد الاتفاق مع العميل. هذا الإجراء يؤكد رسوم التوصيل ويحدّث الإجمالي، ولا يسجّل
+      تحصيل دفع أو يغيّر حالة الطلب.
+    </p>
+    <p class="current-shipping">
+      الرسوم المسجلة:
+      @if (saved.deliveryFeeConfirmed) {
+        <strong>{{ saved.deliveryFee | number: '1.0-2' }} ج.م</strong>
+      } @else {
+        <strong>غير مؤكدة</strong>
+      }
+      <span>الإجمالي المسجل: {{ saved.total | number: '1.0-2' }} ج.م</span>
+    </p>
+    @if (!isEditable()) {
+      <p class="notice" role="status">حالة الطلب الحالية لا تسمح بتأكيد أو تعديل رسوم الشحن.</p>
+    }
+    @if (error()) {
+      <p class="error-state" role="alert">{{ error() }}</p>
+    }
+    @if (message()) {
+      <p class="success-state" role="status">{{ message() }}</p>
+    }
+    <form [formGroup]="form" (ngSubmit)="requestReview()">
+      <fieldset [disabled]="fieldsDisabled()">
+        <label for="order-shipping-fee"
+          >رسوم الشحن بالجنيه المصري
+          <input
+            id="order-shipping-fee"
+            type="number"
+            min="0"
+            [max]="limits.maximumFee"
+            step="0.01"
+            inputmode="decimal"
+            formControlName="deliveryFee"
+            aria-describedby="order-shipping-fee-hint"
+            [attr.aria-invalid]="feeError()"
+            (blur)="feeBlurred()"
+          />
+        </label>
+        <p id="order-shipping-fee-hint" class="muted">
+          الصفر مبلغ صحيح عند الاتفاق على توصيل دون رسوم. اترك الحقل فارغًا إن لم يُحدَّد المبلغ؛ لا
+          يمكن تأكيد قيمة فارغة.
+        </p>
+        @if (feeError()) {
+          <p class="field-error">أدخل مبلغًا من صفر إلى ١٠٬٠٠٠٬٠٠٠، بحد أقصى منزلتين عشريتين.</p>
+        }
+        <label for="order-shipping-note"
+          >ملاحظة للإدارة فقط (اختياري)
+          <textarea
+            id="order-shipping-note"
+            rows="3"
+            [maxLength]="limits.noteLength"
+            formControlName="note"
+            aria-describedby="order-shipping-note-hint"
+            [attr.aria-invalid]="noteError()"
+          ></textarea>
+        </label>
+        <p id="order-shipping-note-hint" class="muted">
+          تُحفظ في سجل الشحن الخاص بالإدارة، ولا تظهر في إيصال العميل أو حسابه.
+        </p>
+        @if (noteError()) {
+          <p class="field-error">الملاحظة لا تتجاوز ١٠٠٠ حرف.</p>
+        }
+        <label class="agreement" for="order-shipping-agreement">
+          <input
+            id="order-shipping-agreement"
+            type="checkbox"
+            formControlName="agreement"
+            [attr.aria-invalid]="agreementError()"
+          />
+          <span>أؤكد الاتفاق مع العميل على رسوم الشحن والإجمالي الناتج.</span>
+        </label>
+        @if (agreementError()) {
+          <p class="field-error">يلزم تأكيد الاتفاق مع العميل قبل الحفظ.</p>
+        }
+      </fieldset>
+      @if (unchangedConfirmed()) {
+        <p class="muted">هذا المبلغ مسجّل ومؤكد بالفعل؛ لا يحتاج إلى حفظ جديد.</p>
+      }
+      <div class="shipping-actions">
+        <button type="submit" class="shop-button shop-button-primary" [disabled]="!canReview()">
+          مراجعة رسوم الشحن
+        </button>
+        <button
+          type="button"
+          class="shop-button shop-button-secondary"
+          (click)="reloadOrder()"
+          [disabled]="!canReload()"
+        >
+          تحميل أحدث تفاصيل الطلب
+        </button>
+        @if (isDirty()) {
+          <button
+            type="button"
+            class="shop-button shop-button-secondary"
+            (click)="discardDraft()"
+            [disabled]="isBusy()"
+          >
+            تجاهل مسودة الشحن
+          </button>
+        }
+      </div>
+    </form>
+    @if (isSaving()) {
+      <p role="status">جارٍ حفظ رسوم الشحن…</p>
+    }
+    @if (isReloading()) {
+      <p role="status">جارٍ تحميل أحدث تفاصيل الطلب…</p>
+    }
+    @if (review(); as confirmed) {
+      <div class="shipping-review" role="group" aria-label="تأكيد رسوم الشحن">
+        <h5>راجع المبلغ قبل الحفظ</h5>
+        <dl>
+          <div>
+            <dt>قيمة المنتجات</dt>
+            <dd>{{ saved.subtotal | number: '1.0-2' }} ج.م</dd>
+          </div>
+          @if (saved.discount > 0) {
+            <div>
+              <dt>الخصم</dt>
+              <dd>−{{ saved.discount | number: '1.0-2' }} ج.م</dd>
+            </div>
+          }
+          <div>
+            <dt>رسوم الشحن المتفق عليها</dt>
+            <dd>{{ confirmed.request.deliveryFee | number: '1.0-2' }} ج.م</dd>
+          </div>
+          <div class="total">
+            <dt>الإجمالي بعد التأكيد</dt>
+            <dd>{{ confirmed.total | number: '1.0-2' }} ج.م</dd>
+          </div>
+        </dl>
+        <p class="muted">
+          سيُعرض الإجمالي المحفوظ للعميل عند تحديث الإيصال أو طلباته. الحفظ لا يعني تحصيل المبلغ.
+        </p>
+        <div class="shipping-actions">
+          <button
+            type="button"
+            class="shop-button shop-button-primary"
+            (click)="saveShipping()"
+            [disabled]="!canConfirm()"
+          >
+            تأكيد وحفظ الشحن
+          </button>
+          <button
+            type="button"
+            class="shop-button shop-button-secondary"
+            (click)="cancelReview()"
+            [disabled]="isBusy()"
+          >
+            الرجوع لتعديل الشحن
+          </button>
+        </div>
+      </div>
+    }
+    <section class="shipping-history" aria-labelledby="order-shipping-history-title">
+      <h5 id="order-shipping-history-title">سجل تغييرات الشحن — للإدارة فقط</h5>
+      @if (saved.history.length === 0) {
+        <p class="muted">لا توجد تغييرات مسجلة للشحن.</p>
+      } @else {
+        <ol>
+          @for (entry of saved.history; track entry.revision) {
+            <li>
+              <strong>مراجعة {{ entry.revision }}</strong>
+              <time>{{ entry.createdAt | date: 'dd/MM/yyyy، HH:mm' }}</time>
+              <p>
+                الشحن السابق:
+                @if (entry.previousDeliveryFeeConfirmed) {
+                  {{ entry.previousDeliveryFee | number: '1.0-2' }} ج.م
+                } @else {
+                  غير مؤكد
+                }
+                · بعد الاتفاق: {{ entry.deliveryFee | number: '1.0-2' }} ج.م
+              </p>
+              <p>
+                الإجمالي: {{ entry.previousTotal | number: '1.0-2' }} ←
+                {{ entry.total | number: '1.0-2' }} ج.م
+              </p>
+              @if (entry.customerAgreementConfirmed) {
+                <p>سُجّل إقرار الاتفاق مع العميل.</p>
+              }
+              @if (entry.note) {
+                <p class="private-note">ملاحظة خاصة بالإدارة: {{ entry.note }}</p>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </section>
+  </section>
+}

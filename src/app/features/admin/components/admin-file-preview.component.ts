@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, effect, input, signal } from '@angular/core';
 import { ProductModelType } from '@core/enums/product-model-type.enum';
 import { Product3dViewerComponent } from '@shared/components/product-3d-viewer/product-3d-viewer.component';
 
@@ -7,12 +7,24 @@ import { Product3dViewerComponent } from '@shared/components/product-3d-viewer/p
   standalone: true,
   imports: [Product3dViewerComponent],
   templateUrl: './admin-file-preview.component.html',
-  styleUrl: './admin-file-preview.component.scss'
+  styleUrl: './admin-file-preview.component.scss',
 })
 export class AdminFilePreviewComponent {
   imageUrl = input<string | null>(null);
   modelUrl = input<string | null>(null);
   modelType = input<ProductModelType>(ProductModelType.GLB);
   posterImage = input<string | null>(null);
-  productName = input<string>('Preview');
+  productName = input<string>('معاينة المنتج');
+  imageFailed = signal(false);
+
+  constructor() {
+    effect(() => {
+      this.imageUrl();
+      this.imageFailed.set(false);
+    });
+  }
+
+  onImageError(): void {
+    this.imageFailed.set(true);
+  }
 }

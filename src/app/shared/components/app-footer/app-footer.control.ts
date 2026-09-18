@@ -1,26 +1,50 @@
+import { ProductCategory } from '@core/enums/product-category.enum';
+
+export interface FooterLink {
+  label: string;
+  url: string;
+  query?: { category: ProductCategory };
+}
 export interface FooterLinkGroup {
   title: string;
-  links: { label: string; url: string; external?: boolean }[];
+  links: FooterLink[];
 }
-
+export interface FooterSocialDefinition {
+  id: string;
+  label: string;
+  icon: string;
+}
 export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
   {
-    title: 'Explore Categories',
+    title: 'اختار عالمك',
     links: [
-      { label: 'Anime Swords', url: '/products?category=Anime%20Swords' },
-      { label: 'Daggers & Tanto', url: '/products?category=Daggers' },
-      { label: 'Cosplay Props', url: '/products?category=Cosplay%20Props' },
-      { label: 'Desk Models', url: '/products?category=Desk%20Models' },
-      { label: 'Collectibles', url: '/products?category=Collectibles' }
-    ]
+      { label: 'كل المنتجات', url: '/products' },
+      {
+        label: 'إكسسوارات المكتب',
+        url: '/products',
+        query: { category: ProductCategory.DESK_MODELS },
+      },
+      {
+        label: 'مجسمات ومقتنيات',
+        url: '/products',
+        query: { category: ProductCategory.COLLECTIBLES },
+      },
+      { label: 'اطبع فكرتك', url: '/contact' },
+    ],
   },
   {
-    title: 'Company',
+    title: 'نساعدك تطلب',
     links: [
-      { label: 'About 3D Otaku', url: '/about' },
-      { label: 'Custom 3D Printing', url: '/contact' },
-      { label: 'Safety Guidelines', url: '/about' },
-      { label: 'Contact Us', url: '/contact' }
-    ]
-  }
+      { label: 'عن 3D Otaku', url: '/about' },
+      { label: 'تواصل معانا', url: '/contact' },
+      { label: 'طلباتي', url: '/orders' },
+      { label: 'سلة التسوق', url: '/cart' },
+    ],
+  },
+];
+export const FOOTER_SOCIAL_DEFINITIONS: FooterSocialDefinition[] = [
+  { id: 'facebook', label: 'Facebook', icon: 'pi pi-facebook' },
+  { id: 'instagram', label: 'Instagram', icon: 'pi pi-instagram' },
+  { id: 'tiktok', label: 'TikTok', icon: 'pi pi-tiktok' },
+  { id: 'youtube', label: 'YouTube', icon: 'pi pi-youtube' },
 ];

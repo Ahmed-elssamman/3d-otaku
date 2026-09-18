@@ -1,0 +1,158 @@
+:host {
+  display: block;
+}
+.payment-editor {
+  margin-block: 1.5rem;
+  border-block: 1px solid var(--shop-line);
+  padding-block: 1.5rem;
+  overflow-wrap: anywhere;
+}
+h4,
+h5 {
+  font-weight: 750;
+  color: var(--shop-ink);
+  margin-block-end: 0.75rem;
+}
+h4 {
+  font-size: 1.1rem;
+}
+p {
+  line-height: 1.9;
+  margin-block: 0.65rem;
+}
+.muted {
+  color: var(--shop-muted);
+  font-size: 0.85rem;
+}
+form,
+fieldset {
+  display: grid;
+  gap: 0.8rem;
+}
+form {
+  margin-block: 1.25rem;
+  max-width: 46rem;
+}
+fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+.payment-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+input:not([type='checkbox']),
+select,
+textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--shop-line);
+  border-radius: 0.5rem;
+  background: white;
+  color: var(--shop-ink);
+  padding: 0.7rem;
+}
+input[type='number'] {
+  direction: ltr;
+}
+textarea {
+  resize: vertical;
+}
+.attestation {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  line-height: 1.9;
+}
+input[type='checkbox'] {
+  flex: 0 0 auto;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-block-start: 0.3rem;
+  accent-color: var(--shop-primary);
+}
+button {
+  min-height: 44px;
+  justify-self: start;
+}
+.payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-block: 1rem;
+}
+.payment-review,
+.notice,
+.error-state {
+  padding: 1rem;
+  border-radius: 0.6rem;
+}
+.payment-review,
+.notice {
+  background: #f3f6ef;
+  border: 1px solid var(--shop-line);
+}
+.error-state {
+  background: #fff5f3;
+}
+.error-state,
+.field-error {
+  color: #8d2929;
+}
+.field-error {
+  font-size: 0.85rem;
+}
+dl div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.4rem 1rem;
+  padding-block: 0.4rem;
+}
+dd {
+  max-width: 100%;
+}
+.payment-history {
+  margin-block-start: 1.5rem;
+}
+.payment-history ol {
+  list-style: none;
+  padding: 0;
+}
+.payment-history li {
+  border-inline-start: 2px solid var(--shop-line);
+  padding: 0.75rem 1rem;
+  margin-block: 0.75rem;
+  font-size: 0.85rem;
+}
+time {
+  color: var(--shop-muted);
+}
+.private-text {
+  white-space: pre-wrap;
+}
+:is(input, select, textarea, button):focus-visible {
+  outline: 3px solid var(--shop-primary);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .payment-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .payment-actions {
+    display: grid;
+  }
+  button {
+    width: 100%;
+  }
+}

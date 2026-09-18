@@ -1,24 +1,45 @@
 import { DOCUMENT } from '@angular/common';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, RESPONSE_INIT, inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { AdminSettingsService } from '../../features/admin/services/admin-settings.service';
 import { Product } from '../models/product.model';
+import { SITE_ORIGIN } from '../api/site-origin.token';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SeoService {
-  private readonly titleService = inject(Title);
-  private readonly metaService = inject(Meta);
-  private readonly adminSettingsService = inject(AdminSettingsService);
+  private titleService = inject(Title);
+  private metaService = inject(Meta);
+  private adminSettingsService = inject(AdminSettingsService);
   private document = inject(DOCUMENT);
+  private siteOrigin = inject(SITE_ORIGIN);
+  private response = inject(RESPONSE_INIT, { optional: true });
+
+  setResponseStatus(status: number): void {
+    if (this.response) this.response.status = status;
+    this.metaService.updateTag({
+      name: 'robots',
+      content: status >= 400 ? 'noindex, follow' : 'index, follow',
+    });
+  }
 
   setTitle(pageTitle: string): void {
+    const pageUrl = new URL(this.document.location.pathname, this.siteOrigin).href;
     const settings = this.adminSettingsService.getSettings();
-    const fullTitle = pageTitle ? `${pageTitle} | ${settings.brandName}` : `${settings.brandName} - ${settings.slogan}`;
+    const fullTitle = pageTitle
+      ? `${pageTitle} | ${settings.brandName}`
+      : `${settings.brandName} - ${settings.slogan}`;
     this.titleService.setTitle(fullTitle);
     this.metaService.updateTag({ property: 'og:title', content: fullTitle });
-    this.setCanonicalUrl(this.document.location.href.split('?')[0].split('#')[0]);
+    this.metaService.updateTag({ property: 'og:type', content: 'website' });
+    this.metaService.updateTag({
+      property: 'og:url',
+      content: pageUrl,
+    });
+    this.metaService.updateTag({ name: 'robots', content: 'index, follow' });
+    this.metaService.removeTag("property='og:image'");
+    this.setCanonicalUrl(pageUrl);
     this.document.getElementById('product-structured-data')?.remove();
     this.document.getElementById('breadcrumb-structured-data')?.remove();
   }
@@ -31,15 +52,24 @@ export class SeoService {
   setProductMetadata(product: Product, currency: string): void {
     const settings = this.adminSettingsService.getSettings();
     const title = product.metaTitle?.trim() || product.name;
-    const description = product.metaDescription?.trim() || product.shortDescription || product.description;
-    const pageUrl = `${this.document.location.origin}/products/${encodeURIComponent(product.slug)}`;
-    const image = product.socialImage?.trim() || product.image?.trim() || product.posterImage?.trim() || '';
+    const description =
+      product.metaDescription?.trim() || product.shortDescription || product.description;
+    const pageUrl = `${this.siteOrigin}/products/${encodeURIComponent(product.slug)}`;
+    const imagePath =
+      product.socialImage?.trim() || product.image?.trim() || product.posterImage?.trim() || '';
+    const image = imagePath ? new URL(imagePath, this.siteOrigin).href : '';
     const discount = product.discountPrice;
-    const price = typeof discount === 'number' && discount >= 0 && discount < product.price ? discount : product.price;
+    const price =
+      typeof discount === 'number' && discount >= 0 && discount < product.price
+        ? discount
+        : product.price;
 
     this.setTitle(title);
     this.setMetaDescription(description);
-    this.metaService.updateTag({ property: 'og:title', content: `${title} | ${settings.brandName}` });
+    this.metaService.updateTag({
+      property: 'og:title',
+      content: `${title} | ${settings.brandName}`,
+    });
     this.metaService.updateTag({ property: 'og:type', content: 'product' });
     this.metaService.updateTag({ property: 'og:url', content: pageUrl });
     if (image) {
@@ -55,15 +85,22 @@ export class SeoService {
       name: product.name,
       description,
       ...(image ? { image: [image] } : {}),
-      ...(currency ? { offers: { '@type': 'Offer', url: pageUrl, price, priceCurrency: currency } } : {})
+      ...(currency
+        ? { offers: { '@type': 'Offer', url: pageUrl, price, priceCurrency: currency } }
+        : {}),
     };
     const breadcrumbSchema = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Products', item: `${this.document.location.origin}/products` },
-        { '@type': 'ListItem', position: 2, name: product.name, item: pageUrl }
-      ]
+        {
+          '@type': 'ListItem',
+          position: 1,
+          name: 'المنتجات',
+          item: `${this.siteOrigin}/products`,
+        },
+        { '@type': 'ListItem', position: 2, name: product.name, item: pageUrl },
+      ],
     };
     this.setStructuredData('product-structured-data', productSchema);
     this.setStructuredData('breadcrumb-structured-data', breadcrumbSchema);
@@ -84,7 +121,7 @@ export class SeoService {
     const script = this.document.createElement('script');
     script.id = id;
     script.type = 'application/ld+json';
-    script.text = JSON.stringify(data);
+    script.text = JSON.stringify(data).replace(/</g, '\\u003c');
     this.document.head.appendChild(script);
   }
 }

@@ -1,1 +1,76 @@
-// Custom styling for orders tracking page if needed
+:host {
+  display: block;
+  color: #24372f;
+}
+.surface {
+  background: #fff;
+  border-color: #dce2d9;
+}
+.muted {
+  color: #626e66;
+}
+.skeleton,
+.thumbnail,
+.details-panel {
+  background: #edf1e9;
+}
+.order-divider {
+  border-color: #dce2d9;
+}
+.history-item {
+  border-color: #9bb597;
+}
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  padding: 0.7rem 1.15rem;
+  border-radius: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.primary-button {
+  color: #fff;
+  background: #355e4b;
+  border: 1px solid #355e4b;
+}
+.primary-button:hover {
+  background: #284c3b;
+}
+.secondary-button {
+  color: #355e4b;
+  border: 1px solid #dce2d9;
+  background: #fff;
+}
+.secondary-button:hover {
+  background: #f3f5ef;
+}
+.text-button {
+  color: #355e4b;
+  font-weight: 600;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #9ab6a1;
+  outline-offset: 3px;
+}
+.status-chip {
+  border-radius: 99px;
+  padding: 0.4rem 0.8rem;
+  background: #edf3e9;
+  color: #355e4b;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
+}

@@ -6,10 +6,15 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './admin-topbar.component.html',
-  styleUrl: './admin-topbar.component.scss'
+  styleUrl: './admin-topbar.component.scss',
 })
 export class AdminTopbarComponent {
   pageTitle = input.required<string>();
   adminName = input.required<string>();
+  sidebarOpen = input(false);
   toggleSidebar = output<void>();
+
+  toggleNavigation(): void {
+    this.toggleSidebar.emit();
+  }
 }

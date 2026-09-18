@@ -1,3 +1,5 @@
+import { CustomOrderStatus, DesignSource } from '../enums/contact.enum';
+
 export interface CreateCustomOrderRequest {
   fullName: string;
   phone: string;
@@ -9,7 +11,7 @@ export interface CreateCustomOrderRequest {
   estimatedSize?: string;
   referenceImageUrl?: string;
   notes?: string;
-  designSource?: string;
+  designSource?: DesignSource;
   quantity?: number;
   preferredMaterial?: string;
   rightsConfirmed?: boolean;
@@ -17,7 +19,19 @@ export interface CreateCustomOrderRequest {
 
 export interface CustomOrder extends CreateCustomOrderRequest {
   id: string;
-  status: string;
+  requestNumber: string;
+  status: CustomOrderStatus;
   createdAt: string;
   updatedAt?: string;
+}
+
+export interface CustomOrderQuery {
+  page?: number;
+  limit?: number;
+  status?: CustomOrderStatus;
+  search?: string;
+}
+
+export interface CustomOrderStatusRequest {
+  status: CustomOrderStatus;
 }

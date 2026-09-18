@@ -1,74 +1,59 @@
-<footer class="border-t border-neutral-800 bg-[#030308] text-neutral-300">
-  <div class="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-12 lg:px-8">
-    
-    <div class="space-y-4 md:col-span-5">
-      <h2 class="text-2xl font-black text-white">{{ settings().brandName || '3D Otaku' }}</h2>
-      @if (settings().slogan) {
-        <p class="max-w-md text-sm text-neutral-400">{{ settings().slogan }}</p>
-      }
-      <p class="max-w-md text-sm text-neutral-500">Browse product-specific materials, dimensions, prices, and production information before ordering.</p>
-
-      <!-- Dynamic Contact Information from Admin Settings -->
-      <div class="space-y-2 pt-2 text-xs text-neutral-400">
-        @if (settings().phone) {
-          <div class="flex items-center gap-2">
-            <i class="pi pi-phone text-purple-400"></i>
-            <a [href]="phoneUrl()" class="hover:text-purple-300 transition-colors font-medium">{{ settings().phone }}</a>
-          </div>
-        }
-        @if (settings().whatsappNumber) {
-          <div class="flex items-center gap-2">
-            <i class="pi pi-whatsapp text-emerald-400"></i>
-            <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" class="hover:text-emerald-300 transition-colors font-medium">WhatsApp: {{ settings().whatsappNumber }}</a>
-          </div>
-        }
-        @if (settings().email) {
-          <div class="flex items-center gap-2">
-            <i class="pi pi-envelope text-pink-400"></i>
-            <a [href]="emailUrl()" class="hover:text-pink-300 transition-colors font-medium">{{ settings().email }}</a>
-          </div>
-        }
-        @if (settings().address) {
-          <div class="flex items-center gap-2">
-            <i class="pi pi-map-marker text-amber-400"></i>
-            <span>{{ settings().address }}</span>
-          </div>
-        }
-      </div>
+<footer class="shop-footer">
+  <div class="shop-container footer-grid">
+    <div class="footer-brand">
+      <a routerLink="/" dir="ltr">3D OTAKU.</a>
+      <p>
+        حاجات صغيرة، بتعبر عنك.<br />مجسمات وهدايا وإكسسوارات مكتب مطبوعة بتقنية 3D، لركنك المفضل في
+        مصر.
+      </p>
+      <span class="footer-country"
+        ><i class="pi pi-map-marker" aria-hidden="true"></i> مصر · الأسعار بالجنيه المصري</span
+      >
     </div>
-
-    <nav class="grid gap-8 sm:grid-cols-2 md:col-span-7" aria-label="Footer navigation">
+    <nav class="footer-navigation" aria-label="روابط أسفل الصفحة">
       @for (group of linkGroups; track group.title) {
         <div>
-          <h3 class="font-bold text-white">{{ group.title }}</h3>
-          <ul class="mt-4 space-y-2">
-            @for (link of group.links; track link.url) {
+          <h2>{{ group.title }}</h2>
+          <ul>
+            @for (link of group.links; track link.label) {
               <li>
-                <a [routerLink]="link.url" class="text-sm text-neutral-400 hover:text-white transition-colors">{{ link.label }}</a>
+                <a [routerLink]="link.url" [queryParams]="link.query">{{ link.label }}</a>
               </li>
             }
           </ul>
         </div>
       }
     </nav>
-
+    <div class="footer-contact">
+      <h2>خلينا على تواصل</h2>
+      <p>محتاج مساعدة في اختيار قطعة<br />أو عندك فكرة حابب تطبعها؟</p>
+      @if (whatsappUrl()) {
+        <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" class="whatsapp-link"
+          ><i class="pi pi-whatsapp" aria-hidden="true"></i> كلمنا على واتساب
+          <i class="pi pi-arrow-up-left" aria-hidden="true"></i
+        ></a>
+      }
+      @if (phoneUrl()) {
+        <a [href]="phoneUrl()" dir="ltr" class="phone-link">{{ settings().phone }}</a>
+      }
+      @if (emailUrl()) {
+        <a [href]="emailUrl()" class="phone-link">{{ settings().email }}</a>
+      }
+    </div>
   </div>
-
-  <div class="border-t border-neutral-900">
-    <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-5 text-xs text-neutral-500 sm:flex-row sm:px-6 lg:px-8">
-      <span>© {{ currentYear }} {{ settings().brandName || '3D Otaku' }}. All rights reserved.</span>
-      <div class="flex items-center gap-3">
-        @if (whatsappUrl()) {
-          <a [href]="whatsappUrl()" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" class="text-emerald-400 hover:scale-110 transition-transform">
-            <i class="pi pi-whatsapp text-base"></i>
-          </a>
-        }
-        @for (link of socialLinks(); track link.id) {
-          <a [href]="link.url" target="_blank" rel="noopener noreferrer" [attr.aria-label]="link.label" class="text-neutral-400 hover:text-white hover:scale-110 transition-all">
-            <i [class]="link.icon" class="text-base"></i>
-          </a>
-        }
-      </div>
+  <div class="shop-container footer-bottom">
+    <span>© {{ currentYear }} 3D Otaku. كل الحقوق محفوظة.</span
+    ><span>تفاصيل بتفرق، وقطع بتفضل.</span>
+    <div class="social-links">
+      @for (link of socialLinks(); track link.id) {
+        <a
+          [href]="link.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [attr.aria-label]="link.label"
+          ><i [class]="link.icon" aria-hidden="true"></i
+        ></a>
+      }
     </div>
   </div>
 </footer>

@@ -1,84 +1,54 @@
-import { CurrencyPipe } from '@angular/common';
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { AdminProductService } from '../../services/admin-product.service';
+import { EMPTY, Subject, catchError, finalize, startWith, switchMap, tap } from 'rxjs';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
-import { AdminStatCardComponent } from '../../components/admin-stat-card.component';
-import { Product } from '@core/models/product.model';
-import { AdminSettingsService } from '../../services/admin-settings.service';
+import { AdminDashboardStats } from '../../models/admin-dashboard.model';
+import { ADMIN_DASHBOARD_LINKS, buildDashboardCards } from './admin-dashboard-page.control';
 
 @Component({
   selector: 'app-admin-dashboard-page',
   standalone: true,
-  imports: [CurrencyPipe, RouterLink, AdminStatCardComponent],
+  imports: [RouterLink],
   templateUrl: './admin-dashboard-page.component.html',
-  styleUrl: './admin-dashboard-page.component.scss'
+  styleUrl: './admin-dashboard-page.component.scss',
 })
-export class AdminDashboardPageComponent implements OnInit {
-  private adminProductService = inject(AdminProductService);
-  private adminDashboardService = inject(AdminDashboardService);
-  private settingsService = inject(AdminSettingsService);
+export class AdminDashboardPageComponent {
+  private service = inject(AdminDashboardService);
+  private destroyRef = inject(DestroyRef);
+  private reload = new Subject<void>();
+  stats = signal<AdminDashboardStats | null>(null);
+  isLoading = signal(true);
+  loadError = signal('');
+  links = ADMIN_DASHBOARD_LINKS;
+  cards = computed(() => {
+    const stats = this.stats();
+    return stats ? buildDashboardCards(stats) : [];
+  });
 
-  readonly totalProducts = signal<string>('0');
-  readonly featuredProducts = signal<string>('0');
-  readonly activeCategories = signal<string>('0');
-  readonly averagePrice = signal<number>(0);
-  readonly ctaCount = signal<string>('0');
-  readonly customOrders = signal<string>('0');
-  readonly recentProducts = signal<Product[]>([]);
-  readonly isLoading = signal<boolean>(true);
-  readonly hasBusinessStats = signal<boolean>(false);
-
-  ngOnInit(): void {
-    this.adminDashboardService.getStats().subscribe({
-      next: (res) => {
-        if (res.data) {
-          const stats = res.data;
-          this.totalProducts.set(stats.totalProducts.toString());
-          this.featuredProducts.set(stats.featuredProducts.toString());
-          this.activeCategories.set(stats.totalCategories.toString());
-          this.averagePrice.set(stats.averagePrice);
-          this.ctaCount.set(stats.whatsappClicks.toString());
-          this.customOrders.set(stats.totalCustomOrders.toString());
-          this.hasBusinessStats.set(true);
-        } else {
-          this.fallbackLocalStats();
-        }
-      },
-      error: () => this.fallbackLocalStats()
-    });
-
-    this.adminDashboardService.getRecentProducts(5).subscribe({
-      next: (res) => {
-        if (res.data) {
-          this.recentProducts.set(res.data);
-        } else {
-          this.fallbackLocalRecent();
-        }
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.fallbackLocalRecent();
-        this.isLoading.set(false);
-      }
-    });
+  constructor() {
+    this.reload
+      .pipe(
+        startWith(null),
+        switchMap(() => {
+          this.isLoading.set(true);
+          this.loadError.set('');
+          return this.service.getStats().pipe(
+            tap((response) => this.stats.set(response.data)),
+            catchError(() => {
+              this.stats.set(null);
+              this.loadError.set('تعذّر تحميل ملخص المتجر. أعد المحاولة لعرض الأرقام الحالية.');
+              return EMPTY;
+            }),
+            finalize(() => this.isLoading.set(false)),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
   }
 
-  private fallbackLocalStats(): void {
-    this.totalProducts.set(this.adminProductService.totalProducts().toString());
-    this.featuredProducts.set(this.adminProductService.featuredProducts().toString());
-    this.activeCategories.set(this.adminProductService.categories().length.toString());
-    this.averagePrice.set(this.adminProductService.averagePrice());
-    this.ctaCount.set('0');
-    this.customOrders.set('0');
-    this.hasBusinessStats.set(false);
-  }
-
-  private fallbackLocalRecent(): void {
-    this.recentProducts.set(
-      [...this.adminProductService.products()]
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .slice(0, 5)
-    );
+  refresh(): void {
+    this.reload.next();
   }
 }

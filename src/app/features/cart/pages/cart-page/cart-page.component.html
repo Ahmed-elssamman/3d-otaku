@@ -1,59 +1,768 @@
-<main class="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:px-8">
-  <header><a routerLink="/products" class="text-sm text-pink-300">← Continue shopping</a><h1 class="mt-3 text-3xl font-black text-white">Your cart</h1><p class="mt-2 text-sm text-neutral-400">The backend confirms product availability, final pricing, and the payable total when the order is created.</p></header>
-
-  @if (items().length === 0) {
-    <section class="rounded-3xl border border-neutral-800 bg-neutral-950 p-12 text-center"><i class="pi pi-shopping-bag text-4xl text-neutral-600"></i><h2 class="mt-4 text-xl font-bold text-white">Your cart is empty</h2><a routerLink="/products" class="mt-6 inline-flex rounded-xl bg-pink-600 px-5 py-3 font-bold text-white">Browse products</a></section>
-  } @else {
-    <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
-      <div class="space-y-5 lg:col-span-7">
-        <div class="flex items-center justify-between"><p class="text-sm text-neutral-400">{{ itemCount() }} items</p><button type="button" (click)="clearCart()" class="text-sm font-bold text-red-300">Clear cart</button></div>
-        @for (view of itemViews(); track view.id) {
-          <article class="flex flex-col gap-5 rounded-3xl border border-neutral-800 bg-neutral-950 p-5 sm:flex-row">
-            <div class="h-32 w-full shrink-0 overflow-hidden rounded-2xl bg-neutral-900 sm:w-32">@if (view.item.product.image) { <img [src]="view.item.product.image" [alt]="view.item.product.name" width="128" height="128" class="h-full w-full object-cover" /> } @else { <span class="flex h-full items-center justify-center"><i class="pi pi-image text-3xl text-neutral-600"></i></span> }</div>
-            <div class="flex flex-1 flex-col justify-between gap-5"><div><h2 class="font-bold text-white">{{ view.item.product.name }}</h2><p class="mt-1 text-sm text-neutral-400">{{ view.item.product.material }} @if (view.item.product.size) { · {{ view.item.product.size }} }</p><p class="mt-2 font-bold text-white">{{ view.unitPrice | currency: 'EGP' }}</p></div><div class="flex items-center justify-between gap-4"><div class="flex items-center gap-2"><button type="button" (click)="decrementQuantity(view.id, view.item.quantity)" aria-label="Decrease quantity" class="h-10 w-10 rounded-xl border border-neutral-800 text-white">−</button><output class="min-w-8 text-center text-white">{{ view.item.quantity }}</output><button type="button" (click)="incrementQuantity(view.id, view.item.quantity)" aria-label="Increase quantity" class="h-10 w-10 rounded-xl border border-neutral-800 text-white">+</button></div><button type="button" (click)="removeItem(view.id)" class="text-sm font-bold text-red-300">Remove</button></div></div>
-          </article>
-        }
-
-        <form [formGroup]="deliveryForm" class="space-y-5 rounded-3xl border border-neutral-800 bg-neutral-950 p-6" aria-labelledby="delivery-form-title">
-          <div><h2 id="delivery-form-title" class="text-xl font-black text-white">Contact and delivery details</h2><p class="mt-1 text-sm text-neutral-400">These details are sent securely to the order API and are not added to the WhatsApp link.</p></div>
-          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Full name *</span><input formControlName="fullName" autocomplete="name" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.fullName.invalid && deliveryForm.controls.fullName.touched) { <span class="block text-xs text-red-300" role="alert">Enter at least 3 characters.</span> }</label>
-            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">WhatsApp number *</span><input formControlName="whatsappNumber" type="tel" autocomplete="tel" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.whatsappNumber.invalid && deliveryForm.controls.whatsappNumber.touched) { <span class="block text-xs text-red-300" role="alert">Enter a valid phone number.</span> }</label>
-            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">Email (optional)</span><input formControlName="email" type="email" autocomplete="email" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" />@if (deliveryForm.controls.email.invalid && deliveryForm.controls.email.touched) { <span class="block text-xs text-red-300" role="alert">Enter a valid email or leave it blank.</span> }</label>
-            <label class="space-y-2"><span class="text-sm font-bold text-neutral-300">City / area *</span><input formControlName="city" autocomplete="address-level2" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white" /></label>
-          </div>
-          <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Delivery address *</span><textarea formControlName="address" rows="3" autocomplete="street-address" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"></textarea></label>
-          <label class="block space-y-2"><span class="text-sm font-bold text-neutral-300">Order notes (optional)</span><textarea formControlName="notes" rows="3" class="w-full rounded-xl border border-neutral-800 bg-neutral-900 px-4 py-3 text-white"></textarea></label>
-        </form>
+<div class="checkout-page mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12" dir="rtl">
+  @if (checkoutStorageMessage(); as storageMessage) {
+    <section
+      class="pending-checkout mb-6 rounded-2xl border p-5"
+      aria-labelledby="checkout-storage-title"
+    >
+      <h2 id="checkout-storage-title" class="text-lg font-bold">{{ checkoutStorageText.title }}</h2>
+      <p id="checkout-storage-feedback" tabindex="-1" role="alert" class="mt-3 text-sm leading-7">
+        {{ storageMessage }}
+      </p>
+      <p class="muted mt-2 text-sm leading-7">{{ checkoutStorageText.help }}</p>
+      <div class="mt-4 flex flex-wrap gap-3">
+        <button
+          type="button"
+          class="secondary-button"
+          [disabled]="checkoutBusy()"
+          (click)="recheckCheckoutStorage()"
+        >
+          {{ checkoutStorageText.recheck }}
+        </button>
+        <a routerLink="/contact" class="secondary-button">{{ checkoutStorageText.contact }}</a>
       </div>
-
-      <aside class="h-fit rounded-3xl border border-purple-500/30 bg-neutral-950 p-6 lg:sticky lg:top-24 lg:col-span-5">
-        <h2 class="text-xl font-black text-white">Order summary</h2>
-        <dl class="mt-6 space-y-4 text-sm"><div class="flex justify-between"><dt class="text-neutral-400">Product subtotal</dt><dd class="text-white">{{ subtotal() | currency: 'EGP' }}</dd></div><div class="flex justify-between"><dt class="text-neutral-400">Delivery fee</dt><dd class="text-white">@if (deliveryFee() !== null) { {{ deliveryFee() | currency: 'EGP' }} } @else { Confirmed after review }</dd></div><div class="flex justify-between border-t border-neutral-800 pt-4 text-base font-black"><dt class="text-white">Current estimate</dt><dd class="text-white">{{ totalEstimate() | currency: 'EGP' }}</dd></div></dl>
-        <p class="mt-5 rounded-xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs leading-relaxed text-amber-100">Creating the order does not mean payment is complete. The server confirms the order total and the store confirms the next step.</p>
-        @if (submitError()) { <p class="mt-4 text-sm text-red-300" role="alert">{{ submitError() }}</p> }
-        <button type="button" (click)="submitOrderToWhatsApp()" [disabled]="isSubmittingOrder()" class="mt-6 w-full rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 font-black text-white disabled:opacity-50">@if (isSubmittingOrder()) { Creating order… } @else { Create order and continue }</button>
-
-        @if (settings().whatsappNumber || settings().phone) {
-          <div class="mt-5 rounded-2xl border border-neutral-800 bg-neutral-900/60 p-4 text-xs text-neutral-400">
-            <span class="block font-bold text-neutral-200">Need support before placing your order?</span>
-            <div class="mt-2 flex flex-wrap items-center gap-3">
-              @if (settings().whatsappNumber) {
-                <a [href]="whatsappSupportUrl()" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors">
-                  <i class="pi pi-whatsapp"></i>
-                  <span>WhatsApp Help</span>
-                </a>
+    </section>
+  }
+  @if (showReceipt()) {
+    @if (receipt(); as order) {
+      <section
+        class="receipt-card mx-auto max-w-2xl rounded-3xl border p-6 sm:p-10"
+        aria-labelledby="receipt-title"
+      >
+        <span class="receipt-icon" aria-hidden="true"><i class="pi pi-check"></i></span>
+        <p class="eyebrow mt-5">وصلنا طلبك</p>
+        <h1 id="receipt-title" tabindex="-1" class="mt-2 text-3xl font-bold">
+          شكرًا لاختيارك 3D Otaku
+        </h1>
+        <p class="muted mt-3 leading-7">
+          طلبك مسجّل، وهنتواصل معاك لتأكيد التفاصيل وطريقة الدفع قبل التنفيذ.
+        </p>
+        @if (receiptRetainsCheckout()) {
+          <div class="retained-checkout mt-5 rounded-xl p-4" role="status">
+            <p class="text-sm leading-7">
+              هذا الإيصال للطلب السابق ببياناته المحفوظة. احتفظنا بتعديلات السلة وبيانات التوصيل؛ لم
+              تُرسل كطلب جديد.
+            </p>
+            <button type="button" class="secondary-button mt-3" (click)="returnToSavedCart()">
+              الرجوع للسلة المحفوظة
+            </button>
+          </div>
+        }
+        <div
+          class="order-reference mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl p-4"
+        >
+          <div>
+            <p class="muted text-xs">رقم الطلب — احتفظ به للمتابعة</p>
+            <p class="mt-1 select-all text-lg font-bold" dir="ltr">{{ order.orderNumber }}</p>
+          </div>
+          <button type="button" class="secondary-button" (click)="copyOrderNumber()">
+            @if (copiedOrderNumber()) {
+              تم النسخ
+            } @else {
+              نسخ الرقم
+            }
+          </button>
+        </div>
+        <div class="mt-6 flex items-center justify-between gap-3">
+          <span class="status-chip">{{ receiptStatus().labelAr }}</span
+          ><button
+            type="button"
+            class="text-button"
+            (click)="refreshReceipt()"
+            [disabled]="isRefreshingReceipt()"
+          >
+            @if (isRefreshingReceipt()) {
+              جاري التحديث…
+            } @else {
+              تحديث الحالة
+            }
+          </button>
+        </div>
+        <p class="muted mt-3 text-sm">{{ receiptStatus().descriptionAr }}</p>
+        @if (receiptHistory().length > 0) {
+          <section class="mt-6" aria-labelledby="receipt-history-title">
+            <h2 id="receipt-history-title" class="font-bold">{{ historyText.title }}</h2>
+            <ol class="mt-4 space-y-4" [attr.aria-label]="historyText.listLabel">
+              @for (history of receiptHistory(); track history.id) {
+                <li class="border-s-2 ps-4">
+                  <strong class="text-sm">{{ history.label }}</strong>
+                  <p class="muted mt-1 text-xs">
+                    {{ history.createdAt | date: 'dd/MM/yyyy، HH:mm' }}
+                  </p>
+                  @if (history.publicNote) {
+                    <p class="mt-2 break-words whitespace-pre-wrap text-sm leading-7">
+                      {{ history.publicNote }}
+                    </p>
+                  }
+                </li>
               }
-              @if (settings().phone) {
-                <a [href]="phoneUrl()" class="flex items-center gap-1.5 text-purple-300 hover:text-purple-200 font-semibold transition-colors">
-                  <i class="pi pi-phone"></i>
-                  <span>{{ settings().phone }}</span>
-                </a>
+            </ol>
+          </section>
+        }
+        <div class="receipt-lines mt-6 space-y-4 border-y py-5">
+          @for (item of order.items; track item.productId) {
+            <div class="flex justify-between gap-4 text-sm">
+              <span
+                >{{ item.name }} <span class="muted">× {{ item.quantity }}</span></span
+              ><strong class="shrink-0">{{ item.lineTotal | number: '1.0-2' }} ج.م</strong>
+            </div>
+            <app-order-item-configuration [configuration]="item.configuration ?? null" />
+          }
+        </div>
+        <dl class="mt-5 space-y-3 text-sm">
+          <div class="flex justify-between">
+            <dt class="muted">إجمالي المنتجات</dt>
+            <dd>{{ order.subtotal | number: '1.0-2' }} ج.م</dd>
+          </div>
+          @if (order.discount > 0) {
+            <div class="flex justify-between">
+              <dt class="muted">الخصم</dt>
+              <dd>−{{ order.discount | number: '1.0-2' }} ج.م</dd>
+            </div>
+          }
+          <div class="flex justify-between gap-4">
+            <dt class="muted">الشحن داخل مصر</dt>
+            <dd>
+              @if (order.deliveryFeeConfirmed) {
+                {{ order.deliveryFee | number: '1.0-2' }} ج.م
+              } @else {
+                يتحدد بعد تأكيد العنوان
+              }
+            </dd>
+          </div>
+          <div class="flex justify-between gap-4 pt-2 text-lg font-bold">
+            <dt>
+              @if (order.deliveryFeeConfirmed) {
+                إجمالي الطلب
+              } @else {
+                الإجمالي قبل الشحن
+              }
+            </dt>
+            <dd>{{ order.total | number: '1.0-2' }} ج.م</dd>
+          </div>
+        </dl>
+        <app-order-payment-summary class="mt-6" [summary]="order.paymentSummary ?? null" />
+        <app-private-order-link class="mt-6" [order]="order" />
+        <p class="notice mt-6 rounded-xl p-4 text-sm leading-7">
+          تسجيل الطلب لا يعني إتمام الدفع.
+          @if (order.deliveryFeeConfirmed) {
+            رسوم الشحن مؤكدة ضمن الإجمالي المعروض. تحديث الإيصال يعرض أحدث تفاصيل الطلب.
+          } @else {
+            هنعرض عليك تكلفة الشحن والتفاصيل النهائية قبل تأكيد التنفيذ.
+          }
+        </p>
+        @if (receiptError()) {
+          <p class="error-text mt-4 text-sm" role="alert">{{ receiptError() }}</p>
+        }
+        <div class="mt-6 grid gap-3 sm:grid-cols-2">
+          @if (receiptSupportUrl()) {
+            <a
+              [href]="receiptSupportUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="primary-button"
+              ><i class="pi pi-whatsapp" aria-hidden="true"></i> متابعة على واتساب</a
+            >
+          }
+          @if (isAuthenticated()) {
+            <a routerLink="/orders" class="secondary-button">عرض طلباتي</a>
+          }
+          <button type="button" class="secondary-button" (click)="browseProducts()">
+            تصفح منتجات تانية
+          </button>
+        </div>
+        <p class="muted mt-5 text-xs leading-6">
+          تقدر ترجع للتأكيد من السلة في نفس التبويب. احتفظ برقم الطلب للتواصل مع المتجر.
+        </p>
+      </section>
+    }
+  } @else {
+    <header class="mb-8">
+      <a routerLink="/products" class="text-button inline-flex items-center gap-2"
+        ><i class="pi pi-arrow-right" aria-hidden="true"></i> كمل تسوقك</a
+      >
+      <h1 id="cart-title" tabindex="-1" class="mt-4 text-3xl font-bold sm:text-4xl">
+        سلة المشتريات
+      </h1>
+      <p class="muted mt-3">راجع اختياراتك، وسيب الباقي علينا.</p>
+    </header>
+    @if (submitError()) {
+      <p
+        id="checkout-feedback"
+        tabindex="-1"
+        class="error-text mb-6 rounded-xl p-4 text-sm leading-7"
+        role="alert"
+      >
+        {{ submitError() }}
+      </p>
+    }
+    @if (canRetryPendingSubmission()) {
+      @if (pendingCheckout(); as pending) {
+        <section
+          class="pending-checkout mb-6 rounded-2xl border p-5"
+          aria-labelledby="pending-checkout-title"
+        >
+          <h2 id="pending-checkout-title" class="text-lg font-bold">محاولة طلب سابقة</h2>
+          <p class="mt-2 text-sm leading-7">
+            {{ checkoutReviewText.recoveryExplanation }}
+          </p>
+          <dl class="mt-3 space-y-2 text-sm">
+            <div>
+              <dt class="muted inline">الاسم:</dt>
+              <dd class="inline">{{ pending.fullName }}</dd>
+            </div>
+            <div>
+              <dt class="muted inline">العنوان المحفوظ:</dt>
+              <dd class="inline">{{ pending.address }}</dd>
+            </div>
+            <div>
+              <dt class="muted inline">عدد القطع:</dt>
+              <dd class="inline">{{ pending.itemCount }}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            class="secondary-button mt-4"
+            [disabled]="checkoutBusy()"
+            (click)="retryPreviousOrder()"
+          >
+            إعادة محاولة الطلب السابق
+          </button>
+        </section>
+      }
+    } @else if (requiresFreshQuoteReview()) {
+      <p class="pending-checkout mb-6 rounded-2xl border p-5 text-sm leading-7" role="status">
+        {{ checkoutReviewText.notRecorded }}
+      </p>
+    } @else if (canShowSavedReceipt()) {
+      <button type="button" class="text-button mb-5 underline" (click)="showSavedReceipt()">
+        عرض إيصال الطلب السابق
+      </button>
+    }
+    @if (items().length === 0) {
+      <section class="surface rounded-3xl border px-6 py-16 text-center">
+        <i class="pi pi-shopping-bag muted text-4xl" aria-hidden="true"></i>
+        <h2 class="mt-5 text-2xl font-bold">لسه مفيش حاجة في السلة</h2>
+        <p class="muted mt-3">اكتشف قطعة تضيف لمسة مختلفة لمكتبك أو هدية لشخص بتحبه.</p>
+        <a routerLink="/products" class="primary-button mt-6">اكتشف المنتجات</a>
+      </section>
+    } @else {
+      <div class="grid gap-8 lg:grid-cols-12">
+        <div class="space-y-6 lg:col-span-7">
+          <section class="surface rounded-3xl border p-5 sm:p-6" aria-labelledby="cart-items-title">
+            <h2 id="cart-items-title" class="mb-5 text-lg font-bold">
+              اختياراتك <span class="muted text-sm font-normal">({{ itemCount() }} قطعة)</span>
+            </h2>
+            <div class="space-y-6">
+              @for (view of itemViews(); track view.id) {
+                <article class="cart-item flex gap-4 pb-6 last:pb-0">
+                  <a
+                    [routerLink]="['/products', view.item.product.slug]"
+                    class="product-thumbnail h-24 w-24 shrink-0 overflow-hidden rounded-2xl sm:h-28 sm:w-28"
+                  >
+                    @if (view.item.product.image) {
+                      <img
+                        [src]="view.item.product.image"
+                        [alt]="view.item.product.name"
+                        width="112"
+                        height="112"
+                        class="h-full w-full object-cover"
+                      />
+                    } @else {
+                      <span class="flex h-full items-center justify-center"
+                        ><i class="pi pi-box muted text-2xl" aria-hidden="true"></i
+                      ></span>
+                    }
+                  </a>
+                  <div class="min-w-0 flex-1">
+                    <a
+                      [routerLink]="['/products', view.item.product.slug]"
+                      class="font-bold leading-6"
+                      >{{ view.item.product.name }}</a
+                    >
+                    @if (view.productDetails) {
+                      <p class="product-meta muted mt-1 text-xs">{{ view.productDetails }}</p>
+                    }
+                    <app-order-item-configuration
+                      class="mt-3 block"
+                      [configuration]="view.configuration"
+                      [title]="checkoutReviewText.cartConfiguration"
+                      [missingText]="checkoutReviewText.cartConfigurationMissing"
+                    />
+                    <p class="muted mt-2 text-xs">
+                      {{ checkoutReviewText.cartPrice }}: {{ view.unitPrice | number: '1.0-2' }} ج.م
+                    </p>
+                    <p class="mt-2 font-bold">{{ view.lineTotal | number: '1.0-2' }} ج.م</p>
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                      <div class="quantity-control flex items-center rounded-xl border">
+                        <button
+                          type="button"
+                          (click)="decrementQuantity(view.id, view.item.quantity)"
+                          [disabled]="checkoutBusy() || view.item.quantity === 1"
+                          aria-label="تقليل الكمية"
+                        >
+                          −</button
+                        ><output class="min-w-8 text-center text-sm" aria-live="polite">{{
+                          view.item.quantity
+                        }}</output
+                        ><button
+                          type="button"
+                          (click)="incrementQuantity(view.id, view.item.quantity)"
+                          [disabled]="checkoutBusy() || !view.canIncrease"
+                          aria-label="زيادة الكمية"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="removeItem(view.id)"
+                        [disabled]="checkoutBusy()"
+                        class="remove-button text-xs"
+                      >
+                        إزالة
+                      </button>
+                    </div>
+                    @if (view.error) {
+                      <p class="field-error cart-item-error" role="alert">{{ view.error }}</p>
+                    }
+                  </div>
+                </article>
               }
             </div>
-          </div>
-        }
-      </aside>
-    </div>
+          </section>
+          <form
+            id="delivery-form"
+            [formGroup]="deliveryForm"
+            (ngSubmit)="submitOrder()"
+            class="surface rounded-3xl border p-5 sm:p-6"
+            aria-labelledby="delivery-form-title"
+            novalidate
+          >
+            <h2 id="delivery-form-title" class="text-xl font-bold">نوصل طلبك فين؟</h2>
+            <p class="muted mt-2 text-sm leading-6">
+              التوصيل داخل مصر. هنستخدم بياناتك للتواصل بخصوص الطلب وتسليمه.
+            </p>
+            @if (!isAuthenticated()) {
+              <p class="account-note mt-4 rounded-xl p-3 text-sm leading-7">
+                تقدر تكمل من غير حساب، أو
+                <button type="button" class="text-button underline" (click)="signIn()">
+                  تسجل دخول
+                </button>
+                عشان تتابع كل طلباتك من مكان واحد.
+              </p>
+            }
+            <fieldset [disabled]="checkoutBusy()" class="mt-6 grid min-w-0 gap-5 sm:grid-cols-2">
+              <div>
+                <label for="checkout-name">الاسم بالكامل <span aria-hidden="true">*</span></label
+                ><input
+                  id="checkout-name"
+                  formControlName="fullName"
+                  autocomplete="name"
+                  maxlength="100"
+                  required
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.fullName.invalid && deliveryForm.controls.fullName.touched
+                  "
+                  aria-describedby="name-error"
+                />
+                @if (
+                  deliveryForm.controls.fullName.invalid && deliveryForm.controls.fullName.touched
+                ) {
+                  <p id="name-error" class="field-error">اكتب اسمك بالكامل، 3 حروف على الأقل.</p>
+                }
+              </div>
+              <div>
+                <label for="checkout-phone"
+                  >رقم الموبايل / واتساب <span aria-hidden="true">*</span></label
+                ><input
+                  id="checkout-phone"
+                  formControlName="whatsappNumber"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="01xxxxxxxxx"
+                  dir="ltr"
+                  maxlength="22"
+                  required
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.whatsappNumber.invalid &&
+                    deliveryForm.controls.whatsappNumber.touched
+                  "
+                  aria-describedby="phone-error"
+                />
+                @if (
+                  deliveryForm.controls.whatsappNumber.invalid &&
+                  deliveryForm.controls.whatsappNumber.touched
+                ) {
+                  <p id="phone-error" class="field-error">
+                    اكتب رقم موبايل مصري صحيح يبدأ بـ 010 أو 011 أو 012 أو 015.
+                  </p>
+                }
+              </div>
+              <div>
+                <label for="checkout-governorate">المحافظة <span aria-hidden="true">*</span></label
+                ><select
+                  id="checkout-governorate"
+                  formControlName="governorate"
+                  autocomplete="address-level1"
+                  required
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.governorate.invalid &&
+                    deliveryForm.controls.governorate.touched
+                  "
+                  aria-describedby="governorate-error"
+                >
+                  <option value="" disabled>اختار المحافظة</option>
+                  @for (governorate of governorates; track governorate) {
+                    <option [value]="governorate">{{ governorate }}</option>
+                  }
+                </select>
+                @if (
+                  deliveryForm.controls.governorate.invalid &&
+                  deliveryForm.controls.governorate.touched
+                ) {
+                  <p id="governorate-error" class="field-error">اختار المحافظة اللي هنوصل لها.</p>
+                }
+              </div>
+              <div>
+                <label for="checkout-city"
+                  >المدينة / المنطقة <span aria-hidden="true">*</span></label
+                ><input
+                  id="checkout-city"
+                  formControlName="city"
+                  autocomplete="address-level2"
+                  maxlength="100"
+                  required
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.city.invalid && deliveryForm.controls.city.touched
+                  "
+                  aria-describedby="city-error"
+                />
+                @if (deliveryForm.controls.city.invalid && deliveryForm.controls.city.touched) {
+                  <p id="city-error" class="field-error">اكتب اسم المدينة أو المنطقة.</p>
+                }
+              </div>
+              <div class="sm:col-span-2">
+                <label for="checkout-address"
+                  >العنوان بالتفصيل <span aria-hidden="true">*</span></label
+                ><textarea
+                  id="checkout-address"
+                  formControlName="address"
+                  rows="3"
+                  autocomplete="street-address"
+                  placeholder="الشارع، رقم العمارة، الدور والشقة، وعلامة مميزة"
+                  maxlength="500"
+                  required
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.address.invalid && deliveryForm.controls.address.touched
+                  "
+                  aria-describedby="address-error"
+                ></textarea>
+                @if (
+                  deliveryForm.controls.address.invalid && deliveryForm.controls.address.touched
+                ) {
+                  <p id="address-error" class="field-error">
+                    اكتب عنوانًا واضحًا، 10 حروف على الأقل، لتسهيل التوصيل.
+                  </p>
+                }
+              </div>
+              <div class="sm:col-span-2">
+                <label for="checkout-email"
+                  >البريد الإلكتروني <span class="muted font-normal">(اختياري)</span></label
+                ><input
+                  id="checkout-email"
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  dir="ltr"
+                  maxlength="254"
+                  [attr.aria-invalid]="
+                    deliveryForm.controls.email.invalid && deliveryForm.controls.email.touched
+                  "
+                  aria-describedby="email-error"
+                />
+                @if (deliveryForm.controls.email.invalid && deliveryForm.controls.email.touched) {
+                  <p id="email-error" class="field-error">راجع البريد الإلكتروني أو سيبه فاضي.</p>
+                }
+              </div>
+              <div class="sm:col-span-2">
+                <label for="checkout-notes"
+                  >ملاحظات على الطلب <span class="muted font-normal">(اختياري)</span></label
+                ><textarea
+                  id="checkout-notes"
+                  formControlName="notes"
+                  rows="2"
+                  maxlength="1000"
+                  placeholder="أي تفاصيل تحب نعرفها قبل ما نتواصل معاك"
+                ></textarea>
+              </div>
+            </fieldset>
+          </form>
+        </div>
+        <aside
+          class="surface order-summary h-fit rounded-3xl border p-6 lg:sticky lg:top-28 lg:col-span-5"
+          aria-labelledby="summary-title"
+        >
+          <p class="eyebrow">خطوة وتبقى قطعتك أقرب</p>
+          <h2 id="summary-title" class="mt-2 text-2xl font-bold">ملخص الطلب</h2>
+          @if (!pricingReview()) {
+            <dl class="mt-6 space-y-5 text-sm">
+              <div class="flex justify-between">
+                <dt class="muted">إجمالي المنتجات</dt>
+                <dd class="font-semibold">{{ subtotal() | number: '1.0-2' }} ج.م</dd>
+              </div>
+              <div class="flex justify-between gap-3">
+                <dt class="muted">الشحن داخل مصر</dt>
+                <dd class="text-end">
+                  @if (deliveryFee() !== null) {
+                    {{ deliveryFee() | number: '1.0-2' }} ج.م
+                  } @else {
+                    يتحدد حسب العنوان
+                  }
+                </dd>
+              </div>
+              <div class="summary-total flex justify-between gap-3 border-t pt-5 text-lg font-bold">
+                <dt>
+                  @if (deliveryFee() !== null) {
+                    الإجمالي المتوقع
+                  } @else {
+                    الإجمالي قبل الشحن
+                  }
+                </dt>
+                <dd>{{ totalEstimate() | number: '1.0-2' }} ج.م</dd>
+              </div>
+            </dl>
+          }
+          <p class="muted mt-5 text-sm leading-7">
+            الأسعار بالجنيه المصري. هنراجع توفّر القطع ونتواصل معاك لتأكيد الشحن وطريقة الدفع قبل
+            التنفيذ.
+          </p>
+          @if (attemptedSubmit() && deliveryForm.invalid) {
+            <p class="field-error mt-4" role="alert">
+              راجع الحقول الموضحة في بيانات التوصيل عشان نكمل الطلب.
+            </p>
+          }
+          @if (pricingReview(); as review) {
+            <section
+              id="checkout-price-review"
+              class="pending-checkout mt-5 rounded-2xl border p-4"
+              aria-labelledby="checkout-review-title"
+              tabindex="-1"
+            >
+              <h3 id="checkout-review-title" class="text-lg font-bold">
+                {{ checkoutReviewText.title }}
+              </h3>
+              <p class="mt-2 text-sm leading-7">{{ review.introduction }}</p>
+              <div class="mt-4 space-y-4">
+                @for (line of review.items; track line.productId) {
+                  <article class="quote-review-item border-b pb-4 text-sm">
+                    <h4 class="font-bold">{{ line.name }}</h4>
+                    @if (line.nameChanged) {
+                      <p class="muted mt-2">
+                        {{ checkoutReviewText.previousName }}: {{ line.previousName }}
+                      </p>
+                    }
+                    <div class="mt-3 flex flex-wrap gap-4">
+                      @if (line.imageChanged && line.previousImage) {
+                        <figure>
+                          <img
+                            [src]="line.previousImage"
+                            [alt]="line.previousName"
+                            width="80"
+                            height="80"
+                            class="h-20 w-20 object-contain"
+                          />
+                          <figcaption class="muted mt-1 text-xs">
+                            {{ checkoutReviewText.previousImage }}
+                          </figcaption>
+                        </figure>
+                      }
+                      @if (line.image) {
+                        <figure>
+                          <img
+                            [src]="line.image"
+                            [alt]="line.name"
+                            width="80"
+                            height="80"
+                            class="h-20 w-20 object-contain"
+                          />
+                          <figcaption class="mt-1 text-xs">
+                            {{ checkoutReviewText.currentImage }}
+                          </figcaption>
+                        </figure>
+                      }
+                    </div>
+                    @if (line.configurationUnverified) {
+                      <p class="mt-3 leading-7">{{ checkoutReviewText.configurationUnverified }}</p>
+                    } @else if (line.designChanged) {
+                      <p class="mt-3 leading-7">{{ checkoutReviewText.designChanged }}</p>
+                    }
+                    <a
+                      [routerLink]="line.productLink"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="text-button mt-3 inline-flex underline"
+                      >{{ checkoutReviewText.inspectProduct }}</a
+                    >
+                    @if (line.configurationChanges.length && !line.configurationUnverified) {
+                      <table class="mt-3 w-full table-fixed text-start">
+                        <caption class="text-start font-bold">
+                          {{
+                            checkoutReviewText.configurationChanges
+                          }}
+                        </caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">{{ checkoutReviewText.specification }}</th>
+                            <th scope="col">{{ checkoutReviewText.previousValue }}</th>
+                            <th scope="col">{{ checkoutReviewText.currentValue }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (change of line.configurationChanges; track change.id) {
+                            <tr class="align-top">
+                              <th scope="row" class="break-words py-2 text-start">
+                                {{ change.label }}
+                              </th>
+                              <td dir="auto" class="break-words px-2 py-2 whitespace-pre-wrap">
+                                {{ change.previousValue }}
+                              </td>
+                              <td dir="auto" class="break-words px-2 py-2 whitespace-pre-wrap">
+                                {{ change.currentValue }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    }
+                    @if (line.configurationUnverified || line.designChanged) {
+                      <p class="mt-3 font-bold">{{ checkoutReviewText.currentConfiguration }}</p>
+                      <dl class="mt-2 space-y-2">
+                        @for (spec of line.configurationRows; track spec.id) {
+                          <div class="flex flex-wrap justify-between gap-3">
+                            <dt class="muted">{{ spec.label }}</dt>
+                            <dd dir="auto" class="break-words whitespace-pre-wrap">
+                              {{ spec.value }}
+                            </dd>
+                          </div>
+                        }
+                      </dl>
+                    }
+                    <dl class="mt-2 space-y-2">
+                      @if (line.priceChanged) {
+                        <div class="flex justify-between gap-3">
+                          <dt class="muted">{{ checkoutReviewText.previousPrice }}</dt>
+                          <dd>{{ line.previousUnitPrice | number: '1.0-2' }} ج.م</dd>
+                        </div>
+                      }
+                      <div class="flex justify-between gap-3">
+                        <dt>{{ checkoutReviewText.currentPrice }}</dt>
+                        <dd class="font-bold">{{ line.unitPrice | number: '1.0-2' }} ج.م</dd>
+                      </div>
+                      <div class="flex justify-between gap-3">
+                        <dt>{{ checkoutReviewText.quantity }}</dt>
+                        <dd>{{ line.quantity }}</dd>
+                      </div>
+                      <div class="flex justify-between gap-3">
+                        <dt>{{ checkoutReviewText.lineTotal }}</dt>
+                        <dd>{{ line.lineTotal | number: '1.0-2' }} ج.م</dd>
+                      </div>
+                    </dl>
+                  </article>
+                }
+              </div>
+              <dl class="mt-4 space-y-3 text-sm">
+                <div class="flex justify-between gap-3">
+                  <dt class="muted">{{ checkoutReviewText.previousShipping }}</dt>
+                  <dd>
+                    @if (review.previous.deliveryFee !== null) {
+                      {{ review.previous.deliveryFee | number: '1.0-2' }} ج.م
+                    } @else {
+                      {{ checkoutReviewText.unknownShipping }}
+                    }
+                  </dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                  <dt>{{ checkoutReviewText.shipping }}</dt>
+                  <dd>
+                    @if (review.quote.deliveryFeeConfirmed) {
+                      {{ review.quote.deliveryFee | number: '1.0-2' }} ج.م
+                    } @else {
+                      {{ checkoutReviewText.unknownShipping }}
+                    }
+                  </dd>
+                </div>
+                <div class="flex justify-between gap-3 border-t pt-3 font-bold">
+                  <dt>
+                    @if (review.quote.deliveryFeeConfirmed) {
+                      {{ checkoutReviewText.totalWithShipping }}
+                    } @else {
+                      {{ checkoutReviewText.totalBeforeShipping }}
+                    }
+                  </dt>
+                  <dd>{{ review.quote.total | number: '1.0-2' }} ج.م</dd>
+                </div>
+              </dl>
+              <p class="mt-4 text-sm leading-7">
+                @if (review.quote.deliveryFeeConfirmed) {
+                  {{ checkoutReviewText.knownShippingNotice }}
+                } @else {
+                  {{ checkoutReviewText.unknownShippingNotice }}
+                }
+              </p>
+              <button
+                type="button"
+                class="primary-button mt-4 w-full"
+                [disabled]="checkoutBusy()"
+                (click)="confirmPricingReview()"
+              >
+                @if (isSubmittingOrder()) {
+                  جاري تسجيل طلبك…
+                } @else {
+                  {{ checkoutReviewText.confirm }}
+                }
+              </button>
+              <button
+                type="button"
+                class="text-button mt-3 w-full"
+                [disabled]="checkoutBusy()"
+                (click)="returnToCartFromReview()"
+              >
+                {{ checkoutReviewText.back }}
+              </button>
+            </section>
+          } @else {
+            <button
+              type="submit"
+              form="delivery-form"
+              [disabled]="checkoutBusy()"
+              class="primary-button mt-6 w-full"
+            >
+              @if (isQuoting()) {
+                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                {{ checkoutReviewText.loading }}
+              } @else if (isSubmittingOrder()) {
+                <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> جاري تسجيل طلبك…
+              } @else {
+                تأكيد طلب الشراء <i class="pi pi-arrow-left" aria-hidden="true"></i>
+              }
+            </button>
+          }
+          <p class="muted mt-3 text-center text-xs">لن يتم خصم أي مبلغ في هذه الخطوة.</p>
+          @if (whatsappSupportUrl()) {
+            <div class="support-note mt-6 border-t pt-5">
+              <p class="muted text-sm">محتاج مساعدة قبل الطلب؟</p>
+              <a
+                [href]="whatsappSupportUrl()"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-button mt-2 inline-flex items-center gap-2 text-sm"
+                ><i class="pi pi-whatsapp" aria-hidden="true"></i> كلمنا على واتساب</a
+              >
+            </div>
+          }
+        </aside>
+      </div>
+    }
   }
-</main>
+</div>

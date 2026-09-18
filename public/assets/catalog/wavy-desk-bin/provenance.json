@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "slug": "wavy-desk-bin",
+  "verifiedDate": "2026-09-16",
+  "sourceRepository": "https://github.com/wireddown/openscad-models",
+  "sourceRevision": "da5e93de58652028f552e12e73840e45502361ce",
+  "author": "wireddown",
+  "license": "CC0-1.0",
+  "scale": 0.55,
+  "parts": [
+    {
+      "file": "wavy-bin.stl",
+      "quantity": 1
+    }
+  ],
+  "notes": [
+    "STL source retained unchanged. Preview uniformly scales the source to 55%.",
+    "BOSL BSD-2-Clause notice retained. Exact BOSL revision used by upstream author is not known."
+  ],
+  "sourceUnit": "millimeter",
+  "previewModelUnit": "meter",
+  "previewCoordinateOrder": "width-height-depth (Y up)",
+  "previewKind": "source-mesh-render",
+  "previewIsPhotograph": false,
+  "manufacturingVerified": false,
+  "saleReady": false,
+  "previewGeometryDimensionsMm": [
+    72.18,
+    140.72,
+    110.03
+  ],
+  "meshMeasurements": [
+    {
+      "file": "wavy-bin.stl",
+      "sha256": "75c0d1208ab84215c04bbd519d436e04a83c56b0dff5ce56c8c0affeec1190e5",
+      "bytes": 2536684,
+      "triangleCount": 50732,
+      "sourceDimensionsMm": [
+        131.23,
+        200.051,
+        255.848
+      ]
+    }
+  ],
+  "downloads": [
+    {
+      "file": "LICENSE",
+      "sourceUrl": "https://raw.githubusercontent.com/wireddown/openscad-models/da5e93de58652028f552e12e73840e45502361ce/LICENSE",
+      "bytes": 7048,
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499"
+    },
+    {
+      "file": "wavy-bin.stl",
+      "sourceUrl": "https://raw.githubusercontent.com/wireddown/openscad-models/da5e93de58652028f552e12e73840e45502361ce/wavy-bin/wavy-bin.stl",
+      "bytes": 2536684,
+      "sha256": "75c0d1208ab84215c04bbd519d436e04a83c56b0dff5ce56c8c0affeec1190e5"
+    },
+    {
+      "file": "wavy-bin.scad",
+      "sourceUrl": "https://raw.githubusercontent.com/wireddown/openscad-models/da5e93de58652028f552e12e73840e45502361ce/wavy-bin/wavy-bin.scad",
+      "bytes": 3306,
+      "sha256": "ad072b067f68ff60f5489938929c78a7ae86fdc989390b5f2aabaa45c195c469"
+    },
+    {
+      "file": "BOSL-LICENSE.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/revarbat/BOSL/4ce427a8a38786e5f74b728c1e33d9fe7d4904d2/LICENSE",
+      "bytes": 1318,
+      "sha256": "a876ed2430b8d90c207638cd42bbfb740823207065076527e1aa54e8916189fd"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "model.glb",
+      "bytes": 3370388,
+      "sha256": "293cab33a1de2ca0b81b6fe0e8965185cb5da1b03f3d0d603c0f698580fcdde2"
+    },
+    {
+      "file": "preview.webp",
+      "bytes": 115688,
+      "sha256": "4a131c978e6ef5f192b1dea37945626ee27fc6c60f81400799c8800c0cba8297"
+    }
+  ],
+  "rendering": {
+    "engine": "Three.js 0.185.1",
+    "browser": "Google Chrome via Playwright",
+    "resolution": [
+      960,
+      960
+    ],
+    "imageFormat": "WebP",
+    "meshOptimization": "Shared geometry per source mesh; merge duplicate vertices with tolerance 0.00001 mm. No mesh simplification or image generation."
+  }
+}

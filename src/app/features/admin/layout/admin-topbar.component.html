@@ -1,26 +1,30 @@
-<header class="admin-card sticky top-0 z-30 flex items-center justify-between gap-4 px-4 py-4 lg:px-6">
-  <div class="flex items-center gap-3">
-    <button class="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white lg:hidden" (click)="toggleSidebar.emit()">
-      <i class="pi pi-bars"></i>
+<header
+  class="admin-topbar flex items-center justify-between gap-3 rounded-xl border border-[var(--shop-line)] bg-white px-4 py-4 lg:px-6"
+>
+  <div class="flex min-w-0 items-center gap-3">
+    <button
+      id="admin-navigation-toggle"
+      type="button"
+      aria-label="فتح قائمة الإدارة"
+      aria-controls="admin-navigation"
+      [attr.aria-expanded]="sidebarOpen()"
+      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[var(--shop-line)] lg:hidden"
+      (click)="toggleNavigation()"
+    >
+      <i class="pi pi-bars" aria-hidden="true"></i>
     </button>
     <div>
-      <p class="text-xs uppercase tracking-[0.3em] text-neutral-500">Admin Page</p>
-      <h1 class="text-2xl font-black text-white">{{ pageTitle() }}</h1>
+      <p class="text-xs text-[var(--shop-muted)]">إدارة أوتاكو</p>
+      <h1 class="text-lg font-bold text-[var(--shop-ink)] lg:text-2xl">{{ pageTitle() }}</h1>
     </div>
   </div>
-
-  <div class="flex items-center gap-3">
-    <a routerLink="/" class="hidden rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/15 md:inline-flex">
-      View Store
-    </a>
-    <div class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2">
-      <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/40 to-cyan-400/25 text-white">
-        <i class="pi pi-user"></i>
-      </div>
-      <div class="hidden text-left sm:block">
-        <p class="text-xs text-neutral-500">Signed in as</p>
-        <p class="text-sm font-semibold text-white">{{ adminName() }}</p>
-      </div>
+  <div class="flex items-center gap-4">
+    <a routerLink="/" class="text-link hidden md:inline-flex"
+      >زيارة المتجر <i class="pi pi-arrow-up-left" aria-hidden="true"></i
+    ></a>
+    <div class="hidden border-s border-[var(--shop-line)] ps-4 sm:block">
+      <p class="text-xs text-[var(--shop-muted)]">حساب الإدارة</p>
+      <p class="max-w-40 truncate text-sm font-bold">{{ adminName() }}</p>
     </div>
   </div>
 </header>

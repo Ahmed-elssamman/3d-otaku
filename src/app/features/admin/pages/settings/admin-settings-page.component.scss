@@ -1,3 +1,135 @@
 :host {
   display: block;
+  min-width: 0;
+}
+.settings-page {
+  color: var(--shop-ink);
+}
+.settings-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: 1.5rem;
+}
+.settings-header h2 {
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 700;
+  margin-block: 0.5rem;
+}
+.settings-header p,
+.section-description {
+  color: var(--shop-muted);
+  font-size: 0.85rem;
+  line-height: 1.9;
+}
+.settings-card,
+.settings-notice {
+  border: 1px solid var(--shop-line);
+  background: white;
+  border-radius: 0.8rem;
+  padding: 1.4rem;
+  margin-block-end: 1.25rem;
+}
+.settings-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.section-description {
+  margin-block: 0.5rem 1.1rem;
+}
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem 1.4rem;
+  margin-block-start: 1rem;
+}
+.settings-field {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.5rem;
+}
+.field-wide {
+  grid-column: 1 / -1;
+}
+label,
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+input,
+textarea {
+  width: 100%;
+  border: 1px solid #b3c0b0;
+  border-radius: 0.45rem;
+  background: white;
+  color: var(--shop-ink);
+  padding: 0.7rem;
+  font: inherit;
+  font-size: 0.9rem;
+  min-height: 2.85rem;
+}
+textarea {
+  resize: vertical;
+}
+input[aria-invalid='true'],
+textarea[aria-invalid='true'] {
+  border-color: #a13838;
+}
+.field-hint,
+.field-error {
+  font-size: 0.78rem;
+  line-height: 1.9;
+  color: var(--shop-muted);
+}
+.field-error,
+.settings-error {
+  color: #8d2929;
+}
+.settings-error {
+  background: #fff5f3;
+}
+.settings-success {
+  background: #eef3e9;
+  color: var(--shop-primary);
+}
+.settings-notice {
+  line-height: 1.9;
+}
+.settings-notice button {
+  margin-block-start: 1rem;
+}
+.fixed-value {
+  border: 1px solid var(--shop-line);
+  background: #f6f7f2;
+  border-radius: 0.45rem;
+  padding: 0.7rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.maintenance-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  border-block-start: 1px solid var(--shop-line);
+  padding-block-start: 1.1rem;
+}
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+@media (max-width: 640px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-card {
+    padding: 1rem;
+  }
+  .settings-actions .shop-button {
+    width: 100%;
+  }
 }

@@ -1,0 +1,203 @@
+:host {
+  display: block;
+}
+.tracking-page {
+  padding-block: clamp(2rem, 5vw, 4rem);
+  color: var(--shop-ink);
+}
+.page-heading {
+  max-width: 46rem;
+  margin-block-end: 1.5rem;
+}
+.page-heading h1 {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin-block: 0.4rem 0.8rem;
+}
+.page-heading p,
+.muted {
+  color: var(--shop-muted);
+}
+.eyebrow {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+p {
+  line-height: 1.8;
+}
+.privacy-note,
+.state-panel,
+.receipt {
+  padding: clamp(1rem, 3vw, 1.8rem);
+  border: 1px solid var(--shop-line);
+  border-radius: 1rem;
+}
+.privacy-note {
+  background: var(--shop-bg);
+  margin-block: 1.5rem;
+}
+.state-panel,
+.receipt {
+  background: var(--shop-surface);
+  margin-block: 1.5rem;
+}
+.state-panel p:first-child {
+  margin-block-start: 0;
+}
+.error-note {
+  color: #913b35;
+}
+.receipt-heading,
+.item-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+h2,
+h3 {
+  margin-block-start: 0;
+  line-height: 1.5;
+}
+.order-number {
+  overflow-wrap: anywhere;
+}
+.status-panel {
+  background: var(--shop-bg);
+  border-inline-start: 3px solid var(--shop-primary);
+  padding: 1rem;
+  margin-block: 1.25rem;
+  border-radius: 0.5rem;
+}
+.status-panel p {
+  margin-block: 0.4rem 0;
+}
+.receipt-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 2rem;
+  margin-block: 2rem;
+}
+.receipt-section {
+  min-width: 0;
+}
+.order-items {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.order-items li {
+  padding-block: 1rem;
+  border-block-end: 1px solid var(--shop-line);
+}
+.order-items li:first-child {
+  padding-block-start: 0;
+}
+.item-heading strong {
+  overflow-wrap: anywhere;
+}
+.item-heading span {
+  white-space: nowrap;
+}
+.order-items p {
+  margin-block: 0.35rem 0.75rem;
+}
+.totals {
+  margin-block: 1rem 1.5rem;
+}
+.totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 0.5rem;
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.totals dd {
+  text-align: end;
+}
+.total {
+  font-weight: 700;
+  border-block-start: 1px solid var(--shop-line);
+  margin-block-start: 0.5rem;
+}
+.delivery-details {
+  margin-block: 0 2rem;
+  display: grid;
+  gap: 1rem;
+}
+.delivery-details dt {
+  color: var(--shop-muted);
+  font-size: 0.9rem;
+  margin-block-end: 0.25rem;
+}
+.order-history {
+  margin: 0;
+  padding-inline-start: 1.25rem;
+}
+.order-history li {
+  padding-inline-start: 0.4rem;
+  margin-block-end: 1rem;
+}
+.order-history time {
+  display: block;
+  color: var(--shop-muted);
+  font-size: 0.85rem;
+  margin-block-start: 0.3rem;
+}
+.order-history p {
+  margin-block: 0.4rem 0;
+  overflow-wrap: anywhere;
+}
+.primary-button,
+.secondary-button {
+  min-height: 44px;
+  padding: 0.7rem 1rem;
+  border-radius: 0.65rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--shop-primary);
+}
+.primary-button {
+  color: white;
+  background: var(--shop-primary);
+}
+.secondary-button {
+  color: var(--shop-primary);
+  background: var(--shop-surface);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+button:focus-visible,
+a:focus-visible,
+#tracked-order-title:focus-visible {
+  outline: 3px solid var(--shop-primary);
+  outline-offset: 4px;
+}
+.tracking-links {
+  display: flex;
+  gap: 1rem 1.5rem;
+  flex-wrap: wrap;
+  margin-block-start: 2rem;
+}
+.tracking-links a {
+  color: var(--shop-primary);
+  text-underline-offset: 0.3rem;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 700px) {
+  .receipt-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .receipt-heading > button {
+    width: 100%;
+  }
+}

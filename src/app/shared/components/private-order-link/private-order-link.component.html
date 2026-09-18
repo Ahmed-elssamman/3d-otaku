@@ -1,0 +1,38 @@
+@if (link()) {
+  <section
+    class="private-order-link rounded-2xl border p-4 text-start sm:p-5"
+    aria-labelledby="private-link-title"
+  >
+    <h2 id="private-link-title" class="font-bold">{{ text.title }}</h2>
+    <p class="mt-2 text-sm leading-7">{{ text.description }}</p>
+    <p id="private-link-privacy" class="muted mt-2 text-xs leading-6">{{ text.privacy }}</p>
+    <button
+      class="secondary-button mt-3"
+      type="button"
+      (click)="copyLink()"
+      [disabled]="isCopying()"
+      aria-describedby="private-link-privacy"
+    >
+      {{ text.copy }}
+    </button>
+    @if (isCopied()) {
+      <p class="mt-2 text-sm" role="status">{{ text.copied }}</p>
+    }
+    @if (manualLink()) {
+      <p id="private-link-fallback" class="mt-3 text-sm leading-7" role="status">
+        {{ text.manual }}
+      </p>
+      <label for="private-link-value" class="sr-only">{{ text.label }}</label>
+      <textarea
+        id="private-link-value"
+        class="mt-2 w-full rounded-xl border bg-white p-3 text-sm"
+        dir="ltr"
+        readonly
+        rows="4"
+        [value]="manualLink()"
+        aria-describedby="private-link-privacy private-link-fallback"
+        (focus)="selectLink($event)"
+      ></textarea>
+    }
+  </section>
+}
